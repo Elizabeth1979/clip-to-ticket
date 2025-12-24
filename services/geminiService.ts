@@ -61,7 +61,7 @@ export class GeminiService {
     };
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/analyze-video`, {
+      const response = await fetch(`${API_BASE_URL}/analyze-video`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -134,7 +134,7 @@ class ProxyChat {
   async sendMessageStream({ message }: { message: string }): Promise<AsyncIterable<{ text: string }>> {
     // Create session if not exists
     if (!this.sessionId) {
-      const response = await fetch(`${API_BASE_URL}/api/create-chat`, {
+      const response = await fetch(`${API_BASE_URL}/create-chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ systemInstruction: this.systemInstruction })
@@ -149,7 +149,7 @@ class ProxyChat {
     }
 
     // Send message and stream response
-    const response = await fetch(`${API_BASE_URL}/api/chat/${this.sessionId}/message`, {
+    const response = await fetch(`${API_BASE_URL}/chat/${this.sessionId}/message`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message })
