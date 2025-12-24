@@ -5,8 +5,10 @@ import { DEQUE_CHECKLIST_WCAG22, ARIA_APG_REFERENCE, AXE_CORE_RULES_411, WCAG22_
 
 // Elli is the queen
 
-// Use relative /api path in production, localhost in development
-const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:3001');
+// Use Render backend in production, localhost in development
+const API_BASE_URL = import.meta.env.PROD
+  ? 'https://cliptoticket-backend.onrender.com'
+  : 'http://localhost:3001';
 
 export class GeminiService {
   async analyzeVideo(videoBase64: string, mimeType: string): Promise<{ transcript: string; issues: A11yIssue[] }> {
