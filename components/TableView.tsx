@@ -1,0 +1,164 @@
+
+import React, { useState, useMemo } from 'react';
+import { A11yIssue, Severity } from '../types';
+
+interface TableViewProps {
+  issues: A11yIssue[];
+  onSeek: (timestamp: string) => void;
+}
+
+type SortKey = 'timestamp' | 'issue_title' | 'severity' | 'wcag_reference' | 'axe_rule_id';
+type SortDirection = 'asc' | 'desc';
+
+const severityOrder = { [Severity.CRITICAL]: 0, [Severity.SERIOUS]: 1, [Severity.MODERATE]: 2, [Severity.MINOR]: 3 };
+
+const getSeverityBadge = (severity: Severity) => {
+  switch (severity) {
+    case Severity.CRITICAL: return 'bg-red-50 text-red-600 border-red-100';
+    case Severity.SERIOUS: return 'bg-orange-50 text-orange-600 border-orange-100';
+    case Severity.MODERATE: return 'bg-indigo-50 text-indigo-600 border-indigo-100';
+    case Severity.MINOR: return 'bg-slate-50 text-slate-600 border-slate-100';
+    default: return 'bg-slate-50 text-slate-600 border-slate-100';
+  }
+};
+
+const getWCAGLink = (reference: string) => {
+  const match = reference.match(/\d+\.\d+\.\d+\s+(.*)/);
+  if (match && match[1]) {
+    const slug = match[1].toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    return `https://www.w3.org/WAI/WCAG21/Understanding/${slug}.html`;
+  }
+  return `https://www.w3.org/WAI/WCAG21/Understanding/`;
+};
+
+export const TableView: React.FC<TableViewProps> = ({ issues, onSeek }) => {
+  const [sortKey, setSortKey] = useState<SortKey>('severity');
+  const [direction, setDirection] = useState<SortDirection>('asc');
+
+  const sortedIssues = useMemo(() => {
+    const sorted = [...issues].sort((a, b) => {
+      let valA: any = a[sortKey];
+      let valB: any = b[sortKey];
+
+      if (sortKey === 'severity') {
+        valA = severityOrder[a.severity as Severity] ?? 99;
+        valB = severityOrder[b.severity as Severity] ?? 99;
+      }
+
+      if (valA < valB) return direction === 'asc' ? -1 : 1;
+      if (valA > valB) return direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+    return sorted;
+  }, [issues, sortKey, direction]);
+
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setDirection(direction === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setDirection('asc');
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-[2rem] shadow-sm border border-slate-200 overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="w-full text-left border-collapse table-auto">
+          <thead>
+            <tr className="bg-slate-50 border-b border-slate-100">
+              <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer group whitespace-nowrap" onClick={() => handleSort('timestamp')}>
+                Time {sortKey === 'timestamp' && (direction === 'asc' ? '↑' : '↓')}
+              </th>
+              <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer group" onClick={() => handleSort('issue_title')}>
+                Issue & Context {sortKey === 'issue_title' && (direction === 'asc' ? '↑' : '↓')}
+              </th>
+              <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer group whitespace-nowrap" onClick={() => handleSort('severity')}>
+                Impact {sortKey === 'severity' && (direction === 'asc' ? '↑' : '↓')}
+              </th>
+              <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer group" onClick={() => handleSort('wcag_reference')}>
+                Standards {sortKey === 'wcag_reference' && (direction === 'asc' ? '↑' : '↓')}
+              </th>
+              <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer group" onClick={() => handleSort('axe_rule_id')}>
+                Axe Rule {sortKey === 'axe_rule_id' && (direction === 'asc' ? '↑' : '↓')}
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-50">
+            {sortedIssues.map((issue, idx) => {
+              const isManual = !issue.axe_rule_id || 
+                               issue.axe_rule_id.toLowerCase().includes('manual') || 
+                               issue.axe_rule_id.toLowerCase().includes('none') ||
+                               issue.axe_rule_id === 'no-axe-rule';
+
+              return (
+                <tr key={idx} className="hover:bg-slate-50/50 transition-colors align-top">
+                  <td className="px-8 py-6">
+                    <button 
+                      onClick={() => onSeek(issue.timestamp)}
+                      className="text-xs font-black text-slate-900 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 hover:border-indigo-600 transition-colors whitespace-nowrap"
+                    >
+                      {issue.timestamp}
+                    </button>
+                  </td>
+                  <td className="px-8 py-6 min-w-[350px]">
+                    <div className="space-y-2">
+                      <p className="text-sm font-bold text-slate-900 leading-snug">{issue.issue_title}</p>
+                      <p className="text-xs text-slate-600 leading-relaxed font-medium">{issue.issue_description}</p>
+                      <div className="pt-2 border-t border-slate-50 mt-2">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Fix Path:</span>
+                        <p className="text-xs text-slate-900 font-bold mt-1">{issue.suggested_fix}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-8 py-6">
+                    <span className={`text-[10px] font-black px-2.5 py-1 rounded-md border uppercase tracking-widest whitespace-nowrap ${getSeverityBadge(issue.severity)}`}>
+                      {issue.severity}
+                    </span>
+                  </td>
+                  <td className="px-8 py-6 min-w-[200px]">
+                    <a 
+                      href={getWCAGLink(issue.wcag_reference)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="group/link flex flex-col gap-1 hover:no-underline"
+                    >
+                      <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest group-hover/link:underline">
+                        {issue.wcag_reference.split(' ')[0]}
+                      </span>
+                      <span className="text-[10px] font-bold text-slate-400 group-hover/link:text-slate-900 transition-colors">
+                        {issue.wcag_reference.split(' ').slice(1).join(' ')}
+                      </span>
+                    </a>
+                  </td>
+                  <td className="px-8 py-6">
+                    {isManual ? (
+                      <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest italic">
+                        Manual Verification
+                      </span>
+                    ) : (
+                      <a 
+                        href={`https://dequeuniversity.com/rules/axe/4.1/${issue.axe_rule_id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[10px] font-black text-indigo-600 uppercase tracking-widest hover:underline whitespace-nowrap"
+                      >
+                        {issue.axe_rule_id}
+                      </a>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      {sortedIssues.length === 0 && (
+        <div className="p-20 text-center">
+          <p className="text-slate-400 text-sm font-black uppercase tracking-[0.2em]">No audit data present</p>
+          <p className="text-slate-300 text-xs mt-2 font-medium italic">Upload and process a recording to generate insights</p>
+        </div>
+      )}
+    </div>
+  );
+};

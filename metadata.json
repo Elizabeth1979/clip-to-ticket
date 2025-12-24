@@ -1,0 +1,8 @@
+{
+  "name": "Clip to ticket",
+  "description": "An AI-powered accessibility QA tool that turns narrated screen recordings into structured, Jira-ready reports using WCAG and axe-core compliance standards.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
