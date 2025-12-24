@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: cliptoticket-backend
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    rootDir: server
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: FRONTEND_URL
+        value: https://clip-to-ticket.vercel.app
+      - key: GEMINI_API_KEY
+        sync: false
