@@ -1,17 +1,13 @@
 
-import { GoogleGenAI, Type, GenerateContentResponse, Chat } from "@google/genai";
+import { Type } from "@google/genai";
 import { A11yIssue, Severity, AnalysisResult } from "../types";
 import { DEQUE_CHECKLIST_WCAG22, ARIA_APG_REFERENCE, AXE_CORE_RULES_411, WCAG22_QUICKREF } from "../documentation";
 
 // Elli is the queen
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
 export class GeminiService {
-  private ai: GoogleGenAI;
-
-  constructor() {
-    this.ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  }
-
   async analyzeVideo(videoBase64: string, mimeType: string): Promise<{ transcript: string; issues: A11yIssue[] }> {
     const systemInstruction = `
       You are a Senior Accessibility QA Architect using the Deque WCAG 2.2 Checklist and Axe-core 4.11 as your primary standards.
@@ -36,66 +32,66 @@ export class GeminiService {
       FORMATTING: JSON ONLY. Use actual newline characters in the transcript string.
     `;
 
-    const response = await this.ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: {
-        parts: [
-          {
-            inlineData: {
-              data: videoBase64,
-              mimeType: mimeType,
+    const responseSchema = {
+      type: Type.OBJECT,
+      properties: {
+        transcript: { type: Type.STRING },
+        issues: {
+          type: Type.ARRAY,
+          items: {
+            type: Type.OBJECT,
+            properties: {
+              issue_title: { type: Type.STRING },
+              issue_description: { type: Type.STRING },
+              wcag_reference: { type: Type.STRING },
+              axe_rule_id: { type: Type.STRING },
+              severity: { type: Type.STRING, enum: Object.values(Severity) },
+              suggested_fix: { type: Type.STRING },
+              generated_alt_text: { type: Type.STRING },
+              timestamp: { type: Type.STRING },
+              status: { type: Type.STRING },
+              disclaimer: { type: Type.STRING }
             },
-          },
-          {
-            text: "Perform an exhaustive accessibility audit using Deque WCAG 2.2 and Axe-core 4.11 standards. Provide the transcript and structured issues list.",
-          },
-        ],
-      },
-      config: {
-        systemInstruction,
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            transcript: { type: Type.STRING },
-            issues: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  issue_title: { type: Type.STRING },
-                  issue_description: { type: Type.STRING },
-                  wcag_reference: { type: Type.STRING },
-                  axe_rule_id: { type: Type.STRING },
-                  severity: { type: Type.STRING, enum: Object.values(Severity) },
-                  suggested_fix: { type: Type.STRING },
-                  generated_alt_text: { type: Type.STRING },
-                  timestamp: { type: Type.STRING },
-                  status: { type: Type.STRING },
-                  disclaimer: { type: Type.STRING }
-                },
-                required: ["issue_title", "issue_description", "wcag_reference", "axe_rule_id", "severity", "suggested_fix", "timestamp", "status", "disclaimer"]
-              }
-            }
-          },
-          required: ["transcript", "issues"]
+            required: ["issue_title", "issue_description", "wcag_reference", "axe_rule_id", "severity", "suggested_fix", "timestamp", "status", "disclaimer"]
+          }
         }
       },
-    });
+      required: ["transcript", "issues"]
+    };
 
     try {
-      const data = JSON.parse(response.text || '{}');
+      const response = await fetch(`${API_BASE_URL}/api/analyze-video`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          videoBase64,
+          mimeType,
+          systemInstruction,
+          responseSchema
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: response.statusText }));
+        throw new Error(errorData.error || `Analysis failed: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const parsedData = JSON.parse(data.text || '{}');
+
       return {
-        transcript: data.transcript || "No transcript generated.",
-        issues: data.issues || []
+        transcript: parsedData.transcript || "No transcript generated.",
+        issues: parsedData.issues || []
       };
-    } catch (err) {
-      console.error("Failed to parse Gemini response:", err);
-      throw new Error("Analysis failed to produce a valid report.");
+    } catch (err: any) {
+      console.error("Failed to analyze video:", err);
+      throw new Error(err.message || "Analysis failed to produce a valid report.");
     }
   }
 
-  createAnalystChat(result: AnalysisResult): Chat {
+  createAnalystChat(result: AnalysisResult): ProxyChat {
     const context = `
       You are the ClipToTicket AI Analyst. You provide ultra-concise, technical support for fixing accessibility barriers.
       
@@ -121,12 +117,81 @@ export class GeminiService {
       Do not repeat the audit findings in full. Focus on answering the user's specific technical question.
     `;
 
-    return this.ai.chats.create({
-      model: 'gemini-3-pro-preview',
-      config: {
-        systemInstruction: context,
-        tools: [{ googleSearch: {} }]
+    return new ProxyChat(context);
+  }
+}
+
+// Proxy chat class that communicates with backend
+class ProxyChat {
+  private sessionId: string | null = null;
+  private systemInstruction: string;
+
+  constructor(systemInstruction: string) {
+    this.systemInstruction = systemInstruction;
+  }
+
+  async sendMessageStream({ message }: { message: string }): Promise<AsyncIterable<{ text: string }>> {
+    // Create session if not exists
+    if (!this.sessionId) {
+      const response = await fetch(`${API_BASE_URL}/api/create-chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ systemInstruction: this.systemInstruction })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create chat session');
       }
+
+      const data = await response.json();
+      this.sessionId = data.sessionId;
+    }
+
+    // Send message and stream response
+    const response = await fetch(`${API_BASE_URL}/api/chat/${this.sessionId}/message`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message })
     });
+
+    if (!response.ok) {
+      throw new Error('Failed to send message');
+    }
+
+    // Parse SSE stream
+    const reader = response.body?.getReader();
+    if (!reader) {
+      throw new Error('No response body');
+    }
+
+    const decoder = new TextDecoder();
+    const chunks: { text: string }[] = [];
+
+    return {
+      async *[Symbol.asyncIterator]() {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const text = decoder.decode(value);
+          const lines = text.split('\n');
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
+              if (data === '[DONE]') {
+                return;
+              }
+              try {
+                const parsed = JSON.parse(data);
+                yield parsed;
+              } catch (e) {
+                // Skip invalid JSON
+              }
+            }
+          }
+        }
+      }
+    };
   }
 }
