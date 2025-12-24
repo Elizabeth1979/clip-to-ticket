@@ -1,0 +1,14 @@
+/* ClipToTicket Styles */
+
+/* This file is intentionally minimal since we use TailwindCSS */
+/* Custom scrollbar styles are defined inline in App.tsx */
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
