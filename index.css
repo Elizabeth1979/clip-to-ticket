@@ -1,8 +1,8 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* ClipToTicket Styles */
 
-/* Custom styles */
+/* This file is intentionally minimal since we use TailwindCSS */
+/* Custom scrollbar styles are defined inline in App.tsx */
+
 body {
   margin: 0;
   padding: 0;
