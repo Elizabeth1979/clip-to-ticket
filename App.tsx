@@ -39,10 +39,10 @@ const App: React.FC = () => {
   const [isTranscriptVisible, setIsTranscriptVisible] = useState(true);
   const [currentTime, setCurrentTime] = useState(0);
   const [autoScroll, setAutoScroll] = useState(true);
-  
+
   const [isAnalystOpen, setIsAnalystOpen] = useState(false);
   const [analystChat, setAnalystChat] = useState<Chat | null>(null);
-  
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const previewVideoRef = useRef<HTMLVideoElement>(null);
   const transcriptContainerRef = useRef<HTMLDivElement>(null);
@@ -133,6 +133,30 @@ const App: React.FC = () => {
       setAnalystChat(null);
     } else if (selected) {
       setError("Please select a valid video recording (MP4, WebM, or MOV) before starting the analysis.");
+    }
+  };
+
+  const loadExampleVideo = async () => {
+    try {
+      const response = await fetch('/examples/Ed-WixUser-edited.mp4');
+      if (!response.ok) {
+        setError("Example video not found. Please place 'Ed-WixUser-edited.mp4' in the public/examples folder.");
+        return;
+      }
+      const blob = await response.blob();
+      const exampleFile = new File([blob], 'Ed-WixUser-edited.mp4', { type: 'video/mp4' });
+
+      if (videoUrl) URL.revokeObjectURL(videoUrl);
+      setFile(exampleFile);
+      setVideoUrl(URL.createObjectURL(exampleFile));
+      setError(null);
+      setResult(null);
+      setEditedTranscript("");
+      setProgress(0);
+      setCurrentTime(0);
+      setAnalystChat(null);
+    } catch (err) {
+      setError("Failed to load example video. Ensure 'sample-audit.mp4' exists in public/examples/.");
     }
   };
 
@@ -228,9 +252,9 @@ const App: React.FC = () => {
     };
     result.issues.forEach((issue) => {
       const key = issue.severity === Severity.CRITICAL ? 'Critical - Blockers' :
-                  issue.severity === Severity.SERIOUS ? 'Serious - Major' :
-                  issue.severity === Severity.MODERATE ? 'Moderate - Moderate' :
-                  'Minor - Minor';
+        issue.severity === Severity.SERIOUS ? 'Serious - Major' :
+          issue.severity === Severity.MODERATE ? 'Moderate - Moderate' :
+            'Minor - Minor';
       grouped[key].push(issue);
     });
     return grouped;
@@ -274,16 +298,32 @@ const App: React.FC = () => {
             <section className="bg-white rounded-[2rem] shadow-2xl shadow-slate-200/50 border border-slate-200 overflow-hidden">
               <div className={`p-10 transition-all ${file ? 'bg-white' : 'hover:bg-slate-50 cursor-pointer'}`}>
                 {!file && (
-                  <label className="flex flex-col items-center justify-center min-h-[400px] cursor-pointer">
-                    <input type="file" accept="video/mp4,video/webm,video/quicktime,video/x-matroska" onChange={handleFileChange} className="hidden" />
-                    <div className="w-20 h-20 bg-indigo-50 rounded-[1.5rem] flex items-center justify-center mb-6 text-indigo-600">
-                      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+                  <div className="flex flex-col items-center justify-center min-h-[400px]">
+                    <label className="flex flex-col items-center justify-center cursor-pointer">
+                      <input type="file" accept="video/mp4,video/webm,video/quicktime,video/x-matroska" onChange={handleFileChange} className="hidden" />
+                      <div className="w-20 h-20 bg-indigo-50 rounded-[1.5rem] flex items-center justify-center mb-6 text-indigo-600">
+                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+                      </div>
+                      <span className="text-xl font-bold text-slate-900 mb-2">Drop media to begin</span>
+                      <span className="text-slate-500 font-medium">MP4, WebM, or MOV supported</span>
+                    </label>
+
+                    <div className="flex items-center gap-4 mt-8 w-full max-w-md">
+                      <div className="h-px flex-1 bg-slate-200"></div>
+                      <span className="text-xs font-black uppercase tracking-widest text-slate-400">Or</span>
+                      <div className="h-px flex-1 bg-slate-200"></div>
                     </div>
-                    <span className="text-xl font-bold text-slate-900 mb-2">Drop media to begin</span>
-                    <span className="text-slate-500 font-medium">MP4, WebM, or MOV supported</span>
-                  </label>
+
+                    <button
+                      onClick={loadExampleVideo}
+                      className="mt-6 px-6 py-3 bg-white border-2 border-slate-200 rounded-xl text-sm font-bold text-slate-700 hover:border-indigo-600 hover:text-indigo-600 transition-all shadow-sm hover:shadow-md active:scale-[0.98] flex items-center gap-2"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                      Load Example Video
+                    </button>
+                  </div>
                 )}
-                
+
                 {file && (
                   <div className="flex flex-col items-center">
                     <div className="w-full max-w-2xl aspect-video rounded-2xl overflow-hidden bg-slate-900 mb-10 shadow-2xl relative border border-slate-800">
@@ -329,7 +369,7 @@ const App: React.FC = () => {
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm">
               <div className="flex items-center gap-6">
                 <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 border border-emerald-100">
-                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" /></svg>
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" /></svg>
                 </div>
                 <div>
                   <h2 className="text-lg font-bold text-slate-900">Analysis Complete</h2>
@@ -343,7 +383,7 @@ const App: React.FC = () => {
                 </div>
               </div>
               <div className="flex items-center gap-4">
-                <button 
+                <button
                   onClick={() => setIsTranscriptVisible(!isTranscriptVisible)}
                   className="px-4 py-2.5 bg-white text-slate-700 border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest hover:border-slate-900 transition-all shadow-sm"
                 >
@@ -360,15 +400,15 @@ const App: React.FC = () => {
                 <div className="w-full h-full relative bg-black flex items-center justify-center">
                   {videoUrl && <video ref={videoRef} src={videoUrl} onTimeUpdate={handleTimeUpdate} controls className="w-full h-full object-contain" />}
                 </div>
-                
+
                 {/* Live Caption Overlay */}
                 {activeLineIndex !== -1 && (
                   <div className="absolute bottom-20 left-1/2 -translate-x-1/2 w-full max-w-2xl px-8 pointer-events-none">
                     <div className="bg-black/80 backdrop-blur-md px-6 py-4 rounded-xl border border-white/10 shadow-2xl text-center">
-                       <p className="text-white text-lg font-bold leading-relaxed">
-                         <span className="text-indigo-400 font-black uppercase text-xs tracking-widest mr-2">{parsedLines[activeLineIndex].speaker}:</span>
-                         {parsedLines[activeLineIndex].message}
-                       </p>
+                      <p className="text-white text-lg font-bold leading-relaxed">
+                        <span className="text-indigo-400 font-black uppercase text-xs tracking-widest mr-2">{parsedLines[activeLineIndex].speaker}:</span>
+                        {parsedLines[activeLineIndex].message}
+                      </p>
                     </div>
                   </div>
                 )}
@@ -380,7 +420,7 @@ const App: React.FC = () => {
                   <div className="px-8 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                     <div className="flex flex-col">
                       <span className="text-[10px] font-black uppercase tracking-widest text-slate-900">Narrative Analysis</span>
-                      <button 
+                      <button
                         onClick={() => setAutoScroll(!autoScroll)}
                         className={`text-[9px] font-bold uppercase tracking-wider mt-0.5 flex items-center gap-1.5 transition-colors ${autoScroll ? 'text-indigo-600' : 'text-slate-400'}`}
                       >
@@ -389,8 +429,8 @@ const App: React.FC = () => {
                       </button>
                     </div>
                     <div className="flex items-center gap-2">
-                       <button onClick={copyTranscript} className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${copyFeedback ? 'bg-emerald-600 text-white' : 'bg-white text-slate-700 border border-slate-200 hover:border-indigo-600'}`}>{copyFeedback ? 'Copied' : 'Copy'}</button>
-                       <button onClick={() => setIsEditingSpeakers(!isEditingSpeakers)} className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${isEditingSpeakers ? 'bg-indigo-600 text-white' : 'bg-white text-slate-700 border border-slate-200 hover:border-indigo-600'}`}>{isEditingSpeakers ? 'Exit' : 'Speakers'}</button>
+                      <button onClick={copyTranscript} className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${copyFeedback ? 'bg-emerald-600 text-white' : 'bg-white text-slate-700 border border-slate-200 hover:border-indigo-600'}`}>{copyFeedback ? 'Copied' : 'Copy'}</button>
+                      <button onClick={() => setIsEditingSpeakers(!isEditingSpeakers)} className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${isEditingSpeakers ? 'bg-indigo-600 text-white' : 'bg-white text-slate-700 border border-slate-200 hover:border-indigo-600'}`}>{isEditingSpeakers ? 'Exit' : 'Speakers'}</button>
                     </div>
                   </div>
 
@@ -400,11 +440,11 @@ const App: React.FC = () => {
                       <div className="space-y-2">
                         {speakers.map((s) => (
                           <div key={s} className="flex items-center gap-2">
-                            <input 
-                              type="text" 
-                              placeholder={s} 
-                              className="flex-1 text-[11px] px-3 py-2 bg-white border border-slate-200 rounded-lg outline-none font-bold" 
-                              onKeyDown={(e) => { if (e.key === 'Enter') handleRenameSpeaker(s, e.currentTarget.value); }} 
+                            <input
+                              type="text"
+                              placeholder={s}
+                              className="flex-1 text-[11px] px-3 py-2 bg-white border border-slate-200 rounded-lg outline-none font-bold"
+                              onKeyDown={(e) => { if (e.key === 'Enter') handleRenameSpeaker(s, e.currentTarget.value); }}
                             />
                           </div>
                         ))}
@@ -417,14 +457,13 @@ const App: React.FC = () => {
                       {parsedLines.map((line, i) => {
                         const isActive = i === activeLineIndex;
                         return (
-                          <div 
-                            key={i} 
+                          <div
+                            key={i}
                             ref={isActive ? activeLineRef : null}
-                            className={`group flex flex-col gap-2 p-4 rounded-2xl border transition-all duration-300 cursor-pointer ${
-                              isActive 
-                                ? 'bg-indigo-50 border-indigo-200 shadow-sm scale-[1.02] z-10' 
-                                : 'bg-white border-transparent hover:bg-slate-50'
-                            }`}
+                            className={`group flex flex-col gap-2 p-4 rounded-2xl border transition-all duration-300 cursor-pointer ${isActive
+                              ? 'bg-indigo-50 border-indigo-200 shadow-sm scale-[1.02] z-10'
+                              : 'bg-white border-transparent hover:bg-slate-50'
+                              }`}
                             onClick={() => seekTo(line.timestamp)}
                           >
                             <div className="flex items-center justify-between mb-0.5">
@@ -486,21 +525,21 @@ const App: React.FC = () => {
       {/* Floating AI Assistant Trigger & Component */}
       {result && (
         <>
-          <AIAnalyst 
-            isOpen={isAnalystOpen} 
-            onClose={() => setIsAnalystOpen(false)} 
+          <AIAnalyst
+            isOpen={isAnalystOpen}
+            onClose={() => setIsAnalystOpen(false)}
             chat={analystChat}
           />
-          <button 
+          <button
             onClick={() => setIsAnalystOpen(!isAnalystOpen)}
             className={`fixed bottom-8 right-8 z-[110] w-14 h-14 rounded-2xl flex items-center justify-center transition-all shadow-2xl active:scale-95 group ${isAnalystOpen ? 'bg-slate-900 text-white' : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-200'}`}
             aria-label="Toggle Assistant"
           >
             {isAnalystOpen ? (
-               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
             ) : (
               <div className="relative">
-                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L9.19 8.63L2 9.24L7.46 13.97L5.82 21L12 17.27L18.18 21L16.54 13.97L22 9.24L14.81 8.63L12 2Z"/></svg>
+                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L9.19 8.63L2 9.24L7.46 13.97L5.82 21L12 17.27L18.18 21L16.54 13.97L22 9.24L14.81 8.63L12 2Z" /></svg>
                 <span className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-400 border-2 border-indigo-600 rounded-full"></span>
               </div>
             )}
