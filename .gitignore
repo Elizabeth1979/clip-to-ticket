@@ -29,3 +29,8 @@ server/node_modules
 server/dist
 .vercel
 .env*.local
+
+# Example videos (large files)
+public/examples/*.mp4
+public/examples/*.webm
+public/examples/*.mov
