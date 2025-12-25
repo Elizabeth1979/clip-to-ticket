@@ -1,6 +1,10 @@
 
+// LIGHTWEIGHT QUICK REFERENCES
+// For comprehensive WCAG 2.2 data and Axe-core rules with examples,
+// see /data/wcag22-full.json and /data/axe-rules-enhanced.json
+
 export const DEQUE_CHECKLIST_WCAG22 = `
-# Deque Web Accessibility Checklist (WCAG 2.2 AA)
+# Deque Web Accessibility Checklist (WCAG 2.2 AA) - Quick Reference
 Source: https://dequeuniversity.com/checklists/web/
 
 KEY CRITERIA:

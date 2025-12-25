@@ -2,6 +2,8 @@
 import { Type } from "@google/genai";
 import { A11yIssue, Severity, AnalysisResult } from "../types";
 import { DEQUE_CHECKLIST_WCAG22, ARIA_APG_REFERENCE, AXE_CORE_RULES_411, WCAG22_QUICKREF } from "../documentation";
+import wcag22Full from "../data/wcag22-full.json";
+import axeRulesEnhanced from "../data/axe-rules-enhanced.json";
 
 // Elli is the queen
 
@@ -13,24 +15,55 @@ const API_BASE_URL = import.meta.env.PROD
 export class GeminiService {
   async analyzeVideo(videoBase64: string, mimeType: string): Promise<{ transcript: string; issues: A11yIssue[] }> {
     const systemInstruction = `
-      You are a Senior Accessibility QA Architect using the Deque WCAG 2.2 Checklist and Axe-core 4.11 as your primary standards.
+      You are a Senior Accessibility QA Architect analyzing comprehensive screen recordings that include:
+      - Visual UI inspection (color, layout, focus indicators, responsive design)
+      - Screen reader output (NVDA, JAWS, VoiceOver, etc.)
+      - Keyboard navigation demonstrations
+      - Expert commentary and narration on accessibility barriers
       
-      REFERENCE DOCUMENTATION:
-      ${DEQUE_CHECKLIST_WCAG22}
-      ${AXE_CORE_RULES_411}
+      Through this multimodal analysis, you can detect ALL WCAG 2.2 Success Criteria.
       
-      QUICK REFERENCE:
-      - WCAG 2.2: ${WCAG22_QUICKREF}
+      COMPREHENSIVE WCAG 2.2 REFERENCE:
+      ${JSON.stringify(wcag22Full, null, 2)}
       
-      PIPELINE:
+      ENHANCED AXE-CORE RULES WITH CODE EXAMPLES:
+      ${JSON.stringify(axeRulesEnhanced, null, 2)}
+      
+      QUICK REFERENCE LINKS:
+      - WCAG 2.2 Quick Reference: ${WCAG22_QUICKREF}
+      - ARIA APG Patterns: ${ARIA_APG_REFERENCE}
+      
+      ANALYSIS PIPELINE:
       1. TRANSCRIPT: Generate a full verbatim diarized transcript. 
          IMPORTANT: Every time a different person speaks, or after a short pause, start a NEW LINE.
          FORMAT: Speaker Name [MM:SS]: Message content here.
          
-      2. DETECTION: Identify specific accessibility issues. Map them strictly to the Deque checklist and Axe-core rules.
-      3. STANDARDS: Include WCAG 2.2 Success Criteria numbers and the correct Axe-core rule ID (e.g., 'color-contrast').
-      4. TRIAGE: Assign Severity (Critical, Serious, Moderate, Minor).
-      5. REMEDIATION: Suggest code-level fixes following ARIA APG patterns.
+      2. DETECTION: Identify specific accessibility issues by analyzing:
+         - Visual elements (contrast, focus, layout, spacing)
+         - Audio content (screen reader announcements, keyboard sounds, narration)
+         - Behavioral patterns (navigation flow, interactions, error handling)
+         
+      3. STANDARDS MAPPING: 
+         - Map each issue to exact WCAG 2.2 Success Criteria (use the comprehensive reference above)
+         - Include correct Axe-core rule ID from the enhanced rules (e.g., 'color-contrast')
+         - Reference specific techniques and examples from the knowledge base
+         
+      4. TRIAGE: Assign accurate Severity based on impact:
+         - Critical: Blocks access completely
+         - Serious: Significant barrier to access
+         - Moderate: Noticeable difficulty
+         - Minor: Inconvenience but accessible
+         
+      5. REMEDIATION: Provide code-level fixes using:
+         - Examples from the Axe-core rules above
+         - ARIA APG patterns where applicable
+         - Specific, actionable code snippets
+      
+      ACCURACY REQUIREMENTS:
+      - Use EXACT WCAG criteria numbers from the comprehensive reference
+      - Use EXACT Axe-core rule IDs from the enhanced rules
+      - Base suggestions on the code examples provided in the knowledge base
+      - Include links to official documentation
       
       FORMATTING: JSON ONLY. Use actual newline characters in the transcript string.
     `;

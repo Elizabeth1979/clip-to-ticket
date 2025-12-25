@@ -1,0 +1,321 @@
+{
+    "color-contrast": {
+        "id": "color-contrast",
+        "description": "Ensures the contrast between foreground and background colors meets WCAG 2 AA contrast ratio thresholds",
+        "wcag_criteria": [
+            "1.4.3"
+        ],
+        "severity": "serious",
+        "examples": {
+            "bad": "<p style=\"color: #777; background: #fff;\">Low contrast text (2.8:1)</p>",
+            "good": "<p style=\"color: #595959; background: #fff;\">Sufficient contrast text (4.6:1)</p>"
+        },
+        "remediation": "Ensure text has a contrast ratio of at least 4.5:1 for normal text and 3:1 for large text (18pt+ or 14pt+ bold)",
+        "aria_apg_pattern": null,
+        "documentation_url": "https://dequeuniversity.com/rules/axe/4.11/color-contrast"
+    },
+    "image-alt": {
+        "id": "image-alt",
+        "description": "Ensures <img> elements have alternate text or a role of none or presentation",
+        "wcag_criteria": [
+            "1.1.1"
+        ],
+        "severity": "critical",
+        "examples": {
+            "bad": "<img src=\"logo.png\">",
+            "good": "<img src=\"logo.png\" alt=\"Company Logo\">"
+        },
+        "remediation": "Add descriptive alt text that conveys the purpose of the image. Use alt=\"\" for decorative images.",
+        "aria_apg_pattern": null,
+        "documentation_url": "https://dequeuniversity.com/rules/axe/4.11/image-alt"
+    },
+    "label": {
+        "id": "label",
+        "description": "Ensures every form element has a label",
+        "wcag_criteria": [
+            "1.3.1",
+            "3.3.2",
+            "4.1.2"
+        ],
+        "severity": "critical",
+        "examples": {
+            "bad": "<input type=\"text\" name=\"email\">",
+            "good": "<label for=\"email\">Email:</label><input type=\"text\" id=\"email\" name=\"email\">"
+        },
+        "remediation": "Associate labels with form controls using for/id attributes, aria-label, or aria-labelledby",
+        "aria_apg_pattern": null,
+        "documentation_url": "https://dequeuniversity.com/rules/axe/4.11/label"
+    },
+    "button-name": {
+        "id": "button-name",
+        "description": "Ensures buttons have discernible text",
+        "wcag_criteria": [
+            "4.1.2"
+        ],
+        "severity": "critical",
+        "examples": {
+            "bad": "<button><i class=\"icon-close\"></i></button>",
+            "good": "<button aria-label=\"Close\"><i class=\"icon-close\"></i></button>"
+        },
+        "remediation": "Provide text content, aria-label, or aria-labelledby to describe the button's purpose",
+        "aria_apg_pattern": "https://www.w3.org/WAI/ARIA/apg/patterns/button/",
+        "documentation_url": "https://dequeuniversity.com/rules/axe/4.11/button-name"
+    },
+    "link-name": {
+        "id": "link-name",
+        "description": "Ensures links have discernible text",
+        "wcag_criteria": [
+            "2.4.4",
+            "4.1.2"
+        ],
+        "severity": "serious",
+        "examples": {
+            "bad": "<a href=\"/contact\"><img src=\"icon.png\"></a>",
+            "good": "<a href=\"/contact\"><img src=\"icon.png\" alt=\"Contact Us\"></a>"
+        },
+        "remediation": "Provide link text, aria-label, or ensure child images have alt text",
+        "aria_apg_pattern": null,
+        "documentation_url": "https://dequeuniversity.com/rules/axe/4.11/link-name"
+    },
+    "aria-required-attr": {
+        "id": "aria-required-attr",
+        "description": "Ensures elements with ARIA roles have all required ARIA attributes",
+        "wcag_criteria": [
+            "4.1.2"
+        ],
+        "severity": "critical",
+        "examples": {
+            "bad": "<div role=\"checkbox\">Subscribe</div>",
+            "good": "<div role=\"checkbox\" aria-checked=\"false\" tabindex=\"0\">Subscribe</div>"
+        },
+        "remediation": "Add all required ARIA attributes for the specified role. Consult ARIA APG for role requirements.",
+        "aria_apg_pattern": "https://www.w3.org/WAI/ARIA/apg/",
+        "documentation_url": "https://dequeuniversity.com/rules/axe/4.11/aria-required-attr"
+    },
+    "aria-valid-attr-value": {
+        "id": "aria-valid-attr-value",
+        "description": "Ensures all ARIA attributes have valid values",
+        "wcag_criteria": [
+            "4.1.2"
+        ],
+        "severity": "critical",
+        "examples": {
+            "bad": "<button aria-pressed=\"yes\">Toggle</button>",
+            "good": "<button aria-pressed=\"true\">Toggle</button>"
+        },
+        "remediation": "Use valid ARIA attribute values (true/false for boolean, valid IDs for ID references, etc.)",
+        "aria_apg_pattern": null,
+        "documentation_url": "https://dequeuniversity.com/rules/axe/4.11/aria-valid-attr-value"
+    },
+    "heading-order": {
+        "id": "heading-order",
+        "description": "Ensures the order of headings is semantically correct",
+        "wcag_criteria": [
+            "1.3.1"
+        ],
+        "severity": "moderate",
+        "examples": {
+            "bad": "<h1>Page Title</h1><h3>Subsection</h3>",
+            "good": "<h1>Page Title</h1><h2>Section</h2><h3>Subsection</h3>"
+        },
+        "remediation": "Ensure heading levels increase by one and don't skip levels (h1 → h2 → h3, not h1 → h3)",
+        "aria_apg_pattern": null,
+        "documentation_url": "https://dequeuniversity.com/rules/axe/4.11/heading-order"
+    },
+    "html-has-lang": {
+        "id": "html-has-lang",
+        "description": "Ensures every HTML document has a lang attribute",
+        "wcag_criteria": [
+            "3.1.1"
+        ],
+        "severity": "serious",
+        "examples": {
+            "bad": "<html>",
+            "good": "<html lang=\"en\">"
+        },
+        "remediation": "Add a lang attribute to the <html> element with a valid language code",
+        "aria_apg_pattern": null,
+        "documentation_url": "https://dequeuniversity.com/rules/axe/4.11/html-has-lang"
+    },
+    "landmark-one-main": {
+        "id": "landmark-one-main",
+        "description": "Ensures the document has a main landmark",
+        "wcag_criteria": [
+            "1.3.1"
+        ],
+        "severity": "moderate",
+        "examples": {
+            "bad": "<div class=\"content\">...</div>",
+            "good": "<main>...</main>"
+        },
+        "remediation": "Add a <main> element or role=\"main\" to identify the primary content area",
+        "aria_apg_pattern": "https://www.w3.org/WAI/ARIA/apg/patterns/landmarks/",
+        "documentation_url": "https://dequeuniversity.com/rules/axe/4.11/landmark-one-main"
+    },
+    "list": {
+        "id": "list",
+        "description": "Ensures <ul> and <ol> lists contain only <li> elements",
+        "wcag_criteria": [
+            "1.3.1"
+        ],
+        "severity": "serious",
+        "examples": {
+            "bad": "<ul><div>Item</div></ul>",
+            "good": "<ul><li>Item</li></ul>"
+        },
+        "remediation": "Ensure list elements only contain <li> children or script-supporting elements",
+        "aria_apg_pattern": null,
+        "documentation_url": "https://dequeuniversity.com/rules/axe/4.11/list"
+    },
+    "listitem": {
+        "id": "listitem",
+        "description": "Ensures <li> elements are used semantically",
+        "wcag_criteria": [
+            "1.3.1"
+        ],
+        "severity": "serious",
+        "examples": {
+            "bad": "<li>Standalone item</li>",
+            "good": "<ul><li>List item</li></ul>"
+        },
+        "remediation": "Ensure <li> elements are contained within <ul>, <ol>, or role=\"list\" parents",
+        "aria_apg_pattern": null,
+        "documentation_url": "https://dequeuniversity.com/rules/axe/4.11/listitem"
+    },
+    "meta-viewport": {
+        "id": "meta-viewport",
+        "description": "Ensures <meta name=\"viewport\"> does not disable text scaling and zooming",
+        "wcag_criteria": [
+            "1.4.4"
+        ],
+        "severity": "critical",
+        "examples": {
+            "bad": "<meta name=\"viewport\" content=\"user-scalable=no\">",
+            "good": "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">"
+        },
+        "remediation": "Remove user-scalable=no and maximum-scale values less than 5",
+        "aria_apg_pattern": null,
+        "documentation_url": "https://dequeuniversity.com/rules/axe/4.11/meta-viewport"
+    },
+    "page-has-heading-one": {
+        "id": "page-has-heading-one",
+        "description": "Ensure that the page, or at least one of its frames contains a level-one heading",
+        "wcag_criteria": [
+            "1.3.1"
+        ],
+        "severity": "moderate",
+        "examples": {
+            "bad": "<h2>Welcome</h2>",
+            "good": "<h1>Welcome to Our Site</h1>"
+        },
+        "remediation": "Add an <h1> element to provide a main heading for the page",
+        "aria_apg_pattern": null,
+        "documentation_url": "https://dequeuniversity.com/rules/axe/4.11/page-has-heading-one"
+    },
+    "region": {
+        "id": "region",
+        "description": "Ensures all page content is contained by landmarks",
+        "wcag_criteria": [
+            "1.3.1"
+        ],
+        "severity": "moderate",
+        "examples": {
+            "bad": "<div>Content outside landmarks</div>",
+            "good": "<main><div>Content inside main landmark</div></main>"
+        },
+        "remediation": "Wrap content in semantic landmarks like <main>, <nav>, <aside>, or use ARIA roles",
+        "aria_apg_pattern": "https://www.w3.org/WAI/ARIA/apg/patterns/landmarks/",
+        "documentation_url": "https://dequeuniversity.com/rules/axe/4.11/region"
+    },
+    "skip-link": {
+        "id": "skip-link",
+        "description": "Ensures skip links are focusable and have a valid target",
+        "wcag_criteria": [
+            "2.4.1"
+        ],
+        "severity": "moderate",
+        "examples": {
+            "bad": "<a href=\"#main\" style=\"position:absolute;left:-9999px\">Skip to main</a>",
+            "good": "<a href=\"#main\" class=\"skip-link\">Skip to main content</a>"
+        },
+        "remediation": "Ensure skip links are keyboard accessible and point to valid targets",
+        "aria_apg_pattern": null,
+        "documentation_url": "https://dequeuniversity.com/rules/axe/4.11/skip-link"
+    },
+    "tabindex": {
+        "id": "tabindex",
+        "description": "Ensures tabindex attribute values are not greater than 0",
+        "wcag_criteria": [
+            "2.4.3"
+        ],
+        "severity": "serious",
+        "examples": {
+            "bad": "<button tabindex=\"5\">Click me</button>",
+            "good": "<button tabindex=\"0\">Click me</button>"
+        },
+        "remediation": "Use tabindex=\"0\" for focusable elements or tabindex=\"-1\" for programmatic focus only. Avoid positive values.",
+        "aria_apg_pattern": null,
+        "documentation_url": "https://dequeuniversity.com/rules/axe/4.11/tabindex"
+    },
+    "focus-order-semantics": {
+        "id": "focus-order-semantics",
+        "description": "Ensures elements in the focus order have a role appropriate for interactive content",
+        "wcag_criteria": [
+            "2.4.3"
+        ],
+        "severity": "minor",
+        "examples": {
+            "bad": "<div tabindex=\"0\">Click me</div>",
+            "good": "<button>Click me</button>"
+        },
+        "remediation": "Use semantic HTML elements or add appropriate ARIA roles to focusable elements",
+        "aria_apg_pattern": null,
+        "documentation_url": "https://dequeuniversity.com/rules/axe/4.11/focus-order-semantics"
+    },
+    "aria-hidden-focus": {
+        "id": "aria-hidden-focus",
+        "description": "Ensures aria-hidden elements do not contain focusable elements",
+        "wcag_criteria": [
+            "1.3.1",
+            "4.1.2"
+        ],
+        "severity": "serious",
+        "examples": {
+            "bad": "<div aria-hidden=\"true\"><button>Click</button></div>",
+            "good": "<div aria-hidden=\"true\"><button tabindex=\"-1\">Click</button></div>"
+        },
+        "remediation": "Remove focusable elements from aria-hidden containers or add tabindex=\"-1\" to prevent focus",
+        "aria_apg_pattern": null,
+        "documentation_url": "https://dequeuniversity.com/rules/axe/4.11/aria-hidden-focus"
+    },
+    "duplicate-id": {
+        "id": "duplicate-id",
+        "description": "Ensures every id attribute value is unique",
+        "wcag_criteria": [
+            "4.1.1"
+        ],
+        "severity": "minor",
+        "examples": {
+            "bad": "<div id=\"content\"></div><div id=\"content\"></div>",
+            "good": "<div id=\"content-1\"></div><div id=\"content-2\"></div>"
+        },
+        "remediation": "Ensure all id values are unique within the page",
+        "aria_apg_pattern": null,
+        "documentation_url": "https://dequeuniversity.com/rules/axe/4.11/duplicate-id"
+    },
+    "form-field-multiple-labels": {
+        "id": "form-field-multiple-labels",
+        "description": "Ensures form field does not have multiple label elements",
+        "wcag_criteria": [
+            "3.3.2"
+        ],
+        "severity": "moderate",
+        "examples": {
+            "bad": "<label for=\"email\">Email</label><label for=\"email\">Address</label><input id=\"email\">",
+            "good": "<label for=\"email\">Email Address</label><input id=\"email\">"
+        },
+        "remediation": "Use a single label per form field or use aria-labelledby to reference multiple elements",
+        "aria_apg_pattern": null,
+        "documentation_url": "https://dequeuniversity.com/rules/axag/4.11/form-field-multiple-labels"
+    }
+}

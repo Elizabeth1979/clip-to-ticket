@@ -16,14 +16,24 @@ An AI-powered accessibility QA tool that transforms narrated screen recordings i
 
 ## 🎯 Overview
 
-ClipToTicket revolutionizes accessibility testing by combining AI-powered video analysis with industry-standard compliance frameworks. Simply record your screen while narrating accessibility issues, and ClipToTicket generates a comprehensive audit report with:
+ClipToTicket revolutionizes accessibility testing by combining AI-powered video analysis with industry-standard compliance frameworks. Record your screen while testing with **screen readers, keyboard navigation, and expert narration**, and ClipToTicket generates a comprehensive audit report with:
 
 - **Verbatim transcripts** with speaker diarization and timestamps
-- **WCAG 2.2 compliance mapping** for each identified issue
-- **Axe-core rule references** for automated validation
+- **Complete WCAG 2.2 coverage** - detects ALL success criteria (A, AA, AAA) through multimodal analysis
+- **Axe-core rule references** with code examples for automated validation
 - **Severity classification** (Critical, Serious, Moderate, Minor)
 - **Actionable remediation code** following ARIA APG patterns
 - **Interactive AI analyst** for technical implementation guidance
+
+### What Makes ClipToTicket Unique?
+
+Unlike traditional automated tools that only scan static HTML, ClipToTicket analyzes **comprehensive accessibility testing** including:
+- 👁️ **Visual inspection** - color contrast, focus indicators, layout, responsive design
+- 🔊 **Screen reader output** - NVDA, JAWS, VoiceOver announcements and behavior
+- ⌨️ **Keyboard navigation** - tab order, focus management, keyboard traps
+- 💬 **Expert commentary** - your narration explaining barriers and context
+
+This multimodal approach enables detection of **all WCAG 2.2 Success Criteria**, not just what automated scanners can find.
 
 ---
 
@@ -96,11 +106,42 @@ ClipToTicket revolutionizes accessibility testing by combining AI-powered video 
 
 ## 📖 How to Use
 
-### 1. Record Your Audit
+### 1. Record Your Comprehensive Audit
+
+ClipToTicket analyzes **all aspects** of your accessibility testing. Here's how to create effective recordings:
+
+**Basic Setup:**
 - Use your preferred screen recording tool (QuickTime, OBS, Loom, etc.)
-- Navigate through the application you're testing
-- **Narrate accessibility issues as you find them**
-- Include timestamps, WCAG criteria, and descriptions
+- Enable audio recording to capture screen reader output and your narration
+- Recommended: Use a headset to clearly capture screen reader announcements
+
+**Testing Workflow Examples:**
+
+**Example 1: Screen Reader Testing**
+```
+1. Start screen reader (NVDA, JAWS, or VoiceOver)
+2. Begin recording
+3. Navigate through the application
+4. Narrate issues: "The screen reader announces 'button' without a label here"
+5. Demonstrate the problem with keyboard navigation
+```
+
+**Example 2: Keyboard Navigation Testing**
+```
+1. Begin recording
+2. Use only keyboard (Tab, Shift+Tab, Arrow keys, Enter)
+3. Narrate: "Focus indicator is invisible on this button"
+4. Show the visual issue
+5. Explain the WCAG criteria violated
+```
+
+**Example 3: Visual + Commentary**
+```
+1. Begin recording
+2. Zoom in on low contrast text
+3. Narrate: "This text has insufficient color contrast, likely violating 1.4.3"
+4. Show the element in context
+```
 
 ### 2. Upload & Analyze
 - Drag and drop your video into ClipToTicket
