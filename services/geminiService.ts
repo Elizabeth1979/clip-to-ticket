@@ -1,9 +1,9 @@
 
 import { Type } from "@google/genai";
 import { A11yIssue, Severity, AnalysisResult } from "../types";
-import { DEQUE_CHECKLIST_WCAG22, ARIA_APG_REFERENCE, AXE_CORE_RULES_411, WCAG22_QUICKREF } from "../documentation";
+import { ARIA_APG_REFERENCE, WCAG22_QUICKREF } from "../documentation";
 import wcag22Full from "../data/wcag22-full.json";
-import axeRulesEnhanced from "../data/axe-rules-enhanced.json";
+import { AxeRulesService } from "./axeRulesService";
 
 // Elli is the queen
 
@@ -26,8 +26,9 @@ export class GeminiService {
       COMPREHENSIVE WCAG 2.2 REFERENCE:
       ${JSON.stringify(wcag22Full, null, 2)}
       
-      ENHANCED AXE-CORE RULES WITH CODE EXAMPLES:
-      ${JSON.stringify(axeRulesEnhanced, null, 2)}
+      COMPLETE AXE-CORE RULES (${AxeRulesService.getRuleCount()} rules):
+      ${AxeRulesService.getFormattedRulesForAI()}
+      
       
       QUICK REFERENCE LINKS:
       - WCAG 2.2 Quick Reference: ${WCAG22_QUICKREF}
@@ -138,17 +139,15 @@ export class GeminiService {
          - **Key Action**: 1-3 bulleted steps.
          - **Documentation**: Provide direct URLs to WCAG, Deque, or ARIA APG.
       3. LINKS: Always share relevant documentation links (URLs) from:
-         - W3C WCAG (https://www.w3.org/WAI/WCAG22/quickref/)
-         - ARIA APG Patterns (https://www.w3.org/WAI/ARIA/apg/patterns/)
+         - W3C WCAG (${WCAG22_QUICKREF})
+         - ARIA APG Patterns (${ARIA_APG_REFERENCE})
          - Deque University Axe Rules (https://dequeuniversity.com/rules/axe/4.11/)
-      
-      CORE STANDARDS:
-      ${DEQUE_CHECKLIST_WCAG22}
-      ${AXE_CORE_RULES_411}
       
       CURRENT AUDIT DATA:
       - Issues: ${result.issues.length}
       - Findings: ${result.issues.map(i => i.issue_title).join(', ')}
+      
+      Note: You have access to comprehensive WCAG 2.2 data and all ${AxeRulesService.getRuleCount()} axe-core rules from the video analysis context.
       
       Do not repeat the audit findings in full. Focus on answering the user's specific technical question.
     `;
