@@ -2,7 +2,6 @@
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { GeminiService } from './services/geminiService';
 import { A11yIssue, GroupedReport, Severity, AnalysisResult, TranscriptLine } from './types';
-import { IssueCard } from './components/IssueCard';
 import { ExportSection } from './components/ExportSection';
 import { TableView } from './components/TableView';
 import { AIAnalyst } from './components/AIAnalyst';
@@ -12,7 +11,7 @@ import { Chat } from '@google/genai';
 
 // Elli is the queen
 
-type ViewMode = 'list' | 'table';
+
 
 const STATUS_MESSAGES = [
   "Initializing assistant...",
@@ -36,7 +35,7 @@ const App: React.FC = () => {
   const [progress, setProgress] = useState(0);
   const [statusMessage, setStatusMessage] = useState("");
   const [buttonLabel, setButtonLabel] = useState("Generate an accessibility report from media");
-  const [viewMode, setViewMode] = useState('table');
+
   const [copyFeedback, setCopyFeedback] = useState(false);
   const [isTranscriptVisible, setIsTranscriptVisible] = useState(true);
   const [currentTime, setCurrentTime] = useState(0);
@@ -467,13 +466,7 @@ const App: React.FC = () => {
                 </div>
                 <div>
                   <h2 className="text-lg font-bold text-slate-900">Analysis Complete</h2>
-                  <div className="flex items-center gap-4 mt-0.5">
-                    <p className="text-slate-500 text-xs font-medium">{result.issues.length} points of interest identified.</p>
-                    <div className="flex bg-slate-50 p-1 rounded-lg border border-slate-200">
-                      <button onClick={() => setViewMode('table')} className={`px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-md ${viewMode === 'table' ? 'bg-white shadow-sm text-indigo-700' : 'text-slate-500'}`}>Table</button>
-                      <button onClick={() => setViewMode('list')} className={`px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-md ${viewMode === 'list' ? 'bg-white shadow-sm text-indigo-700' : 'text-slate-500'}`}>List</button>
-                    </div>
-                  </div>
+                  <p className="text-slate-500 text-xs font-medium mt-0.5">{result.issues.length} points of interest identified.</p>
                 </div>
               </div>
               <div className="flex items-center gap-4">
@@ -727,28 +720,7 @@ const App: React.FC = () => {
                 />
                 <div className="h-px flex-1 bg-slate-200"></div>
               </div>
-              {viewMode === 'table' ? (
-                <TableView issues={result.issues} onSeek={seekTo} />
-              ) : (
-                <div className="space-y-12">
-                  {(Object.entries(groupedIssues) as [string, A11yIssue[]][]).map(([groupName, issues]) => (
-                    issues.length > 0 && (
-                      <div key={groupName} className="space-y-6">
-                        <div className="flex items-center gap-4">
-                          <h2 className={`text-[10px] font-black uppercase tracking-widest ${groupName.includes('Critical') ? 'text-red-500' : 'text-slate-500'}`}>{groupName}</h2>
-                          <div className="h-px flex-1 bg-slate-100"></div>
-                          <span className="text-[10px] font-black text-slate-300">{issues.length} Issues</span>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          {issues.map((issue, idx) => (
-                            <IssueCard key={idx} issue={issue} onSeek={() => seekTo(issue.timestamp)} />
-                          ))}
-                        </div>
-                      </div>
-                    )
-                  ))}
-                </div>
-              )}
+              <TableView issues={result.issues} onSeek={seekTo} />
             </div>
           </div>
         )}

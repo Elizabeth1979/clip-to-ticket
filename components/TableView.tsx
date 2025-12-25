@@ -8,7 +8,7 @@ interface TableViewProps {
   onSeek: (timestamp: string) => void;
 }
 
-type SortKey = 'timestamp' | 'issue_title' | 'severity' | 'wcag_reference' | 'axe_rule_id';
+type SortKey = 'timestamp' | 'issue_title' | 'severity' | 'wcag_reference' | 'axe_rule_id' | 'ease_of_fix';
 type SortDirection = 'asc' | 'desc';
 
 const severityOrder = { [Severity.CRITICAL]: 0, [Severity.SERIOUS]: 1, [Severity.MODERATE]: 2, [Severity.MINOR]: 3 };
@@ -21,6 +21,30 @@ const getSeverityBadge = (severity: Severity) => {
     case Severity.MINOR: return 'bg-slate-50 text-slate-600 border-slate-100';
     default: return 'bg-slate-50 text-slate-600 border-slate-100';
   }
+};
+
+const getEaseOfFix = (issue: A11yIssue): { label: string; color: string; order: number } => {
+  const isManual = !issue.axe_rule_id ||
+    issue.axe_rule_id.toLowerCase().includes('manual') ||
+    issue.axe_rule_id.toLowerCase().includes('none') ||
+    issue.axe_rule_id === 'no-axe-rule';
+
+  // Manual verification issues are typically harder
+  if (isManual) {
+    if (issue.severity === Severity.CRITICAL || issue.severity === Severity.SERIOUS) {
+      return { label: 'Hard', color: 'bg-red-50 text-red-600 border-red-100', order: 3 };
+    }
+    return { label: 'Medium', color: 'bg-amber-50 text-amber-600 border-amber-100', order: 2 };
+  }
+
+  // Automated issues with axe rules
+  if (issue.severity === Severity.CRITICAL) {
+    return { label: 'Medium', color: 'bg-amber-50 text-amber-600 border-amber-100', order: 2 };
+  }
+  if (issue.severity === Severity.MINOR || issue.severity === Severity.MODERATE) {
+    return { label: 'Easy', color: 'bg-emerald-50 text-emerald-600 border-emerald-100', order: 1 };
+  }
+  return { label: 'Medium', color: 'bg-amber-50 text-amber-600 border-amber-100', order: 2 };
 };
 
 const getWCAGLink = (reference: string) => {
@@ -44,6 +68,11 @@ export const TableView: React.FC<TableViewProps> = ({ issues, onSeek }) => {
       if (sortKey === 'severity') {
         valA = severityOrder[a.severity as Severity] ?? 99;
         valB = severityOrder[b.severity as Severity] ?? 99;
+      }
+
+      if (sortKey === 'ease_of_fix') {
+        valA = getEaseOfFix(a).order;
+        valB = getEaseOfFix(b).order;
       }
 
       if (valA < valB) return direction === 'asc' ? -1 : 1;
@@ -106,6 +135,12 @@ export const TableView: React.FC<TableViewProps> = ({ issues, onSeek }) => {
                 <div className="flex items-center gap-2">
                   Axe Rule {sortKey === 'axe_rule_id' && (direction === 'asc' ? '↑' : '↓')}
                   <InfoTooltip content="Axe-core rule ID for automated testing. 'Manual Verification' means this requires human review." position="top" />
+                </div>
+              </th>
+              <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer group whitespace-nowrap" onClick={() => handleSort('ease_of_fix')}>
+                <div className="flex items-center gap-2">
+                  Ease of Fix {sortKey === 'ease_of_fix' && (direction === 'asc' ? '↑' : '↓')}
+                  <InfoTooltip content="Estimated difficulty to resolve this issue. Based on severity and whether automated testing is available." position="top" />
                 </div>
               </th>
             </tr>
@@ -172,6 +207,11 @@ export const TableView: React.FC<TableViewProps> = ({ issues, onSeek }) => {
                         {issue.axe_rule_id}
                       </a>
                     )}
+                  </td>
+                  <td className="px-8 py-6">
+                    <span className={`text-[10px] font-black px-2.5 py-1 rounded-md border uppercase tracking-widest whitespace-nowrap ${getEaseOfFix(issue).color}`}>
+                      {getEaseOfFix(issue).label}
+                    </span>
                   </td>
                 </tr>
               );

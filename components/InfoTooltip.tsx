@@ -14,16 +14,47 @@ export const InfoTooltip: React.FC<InfoTooltipProps> = ({
 }) => {
     const [isVisible, setIsVisible] = useState(false);
     const [tooltipStyle, setTooltipStyle] = useState<React.CSSProperties>({});
+    const [actualPosition, setActualPosition] = useState(position);
     const buttonRef = useRef<HTMLButtonElement>(null);
+    const tooltipRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         if (isVisible && buttonRef.current) {
             const rect = buttonRef.current.getBoundingClientRect();
-            const tooltipOffset = 8; // spacing from button
+            const tooltipOffset = 8;
+            const padding = 16; // padding from viewport edges
+
+            // Estimate tooltip size (will be refined after render)
+            const estimatedTooltipWidth = 448; // max-w-md
+            const estimatedTooltipHeight = 100; // approximate
+
+            // Determine best position based on available space
+            let bestPosition = position;
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+
+            // Check if preferred position fits
+            const spaceAbove = rect.top;
+            const spaceBelow = viewportHeight - rect.bottom;
+            const spaceLeft = rect.left;
+            const spaceRight = viewportWidth - rect.right;
+
+            // Auto-adjust position if it would go off-screen
+            if (position === 'top' && spaceAbove < estimatedTooltipHeight + tooltipOffset + padding) {
+                bestPosition = spaceBelow > spaceAbove ? 'bottom' : 'top';
+            } else if (position === 'bottom' && spaceBelow < estimatedTooltipHeight + tooltipOffset + padding) {
+                bestPosition = spaceAbove > spaceBelow ? 'top' : 'bottom';
+            } else if (position === 'left' && spaceLeft < estimatedTooltipWidth + tooltipOffset + padding) {
+                bestPosition = spaceRight > spaceLeft ? 'right' : 'left';
+            } else if (position === 'right' && spaceRight < estimatedTooltipWidth + tooltipOffset + padding) {
+                bestPosition = spaceLeft > spaceRight ? 'left' : 'right';
+            }
+
+            setActualPosition(bestPosition);
 
             let style: React.CSSProperties = {};
 
-            switch (position) {
+            switch (bestPosition) {
                 case 'top':
                     style = {
                         left: rect.left + rect.width / 2,
@@ -55,6 +86,34 @@ export const InfoTooltip: React.FC<InfoTooltipProps> = ({
             }
 
             setTooltipStyle(style);
+
+            // Fine-tune position after tooltip renders
+            setTimeout(() => {
+                if (tooltipRef.current) {
+                    const tooltipRect = tooltipRef.current.getBoundingClientRect();
+                    let adjustedStyle = { ...style };
+
+                    // Adjust horizontal position if needed
+                    if (tooltipRect.right > viewportWidth - padding) {
+                        const overflow = tooltipRect.right - (viewportWidth - padding);
+                        adjustedStyle.left = (style.left as number) - overflow;
+                    } else if (tooltipRect.left < padding) {
+                        const overflow = padding - tooltipRect.left;
+                        adjustedStyle.left = (style.left as number) + overflow;
+                    }
+
+                    // Adjust vertical position if needed
+                    if (tooltipRect.bottom > viewportHeight - padding) {
+                        const overflow = tooltipRect.bottom - (viewportHeight - padding);
+                        adjustedStyle.top = (style.top as number) - overflow;
+                    } else if (tooltipRect.top < padding) {
+                        const overflow = padding - tooltipRect.top;
+                        adjustedStyle.top = (style.top as number) + overflow;
+                    }
+
+                    setTooltipStyle(adjustedStyle);
+                }
+            }, 0);
         }
     }, [isVisible, position]);
 
@@ -93,6 +152,7 @@ export const InfoTooltip: React.FC<InfoTooltipProps> = ({
                         onClick={() => setIsVisible(false)}
                     />
                     <div
+                        ref={tooltipRef}
                         role="tooltip"
                         className="fixed z-[9999] pointer-events-auto animate-in fade-in duration-200"
                         style={tooltipStyle}
