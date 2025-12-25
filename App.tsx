@@ -6,6 +6,8 @@ import { IssueCard } from './components/IssueCard';
 import { ExportSection } from './components/ExportSection';
 import { TableView } from './components/TableView';
 import { AIAnalyst } from './components/AIAnalyst';
+import { TransparencyPanel } from './components/TransparencyPanel';
+import { InfoTooltip } from './components/InfoTooltip';
 import { Chat } from '@google/genai';
 
 // Elli is the queen
@@ -42,6 +44,17 @@ const App: React.FC = () => {
 
   const [isAnalystOpen, setIsAnalystOpen] = useState(false);
   const [analystChat, setAnalystChat] = useState<Chat | null>(null);
+  const [isDeveloperMode, setIsDeveloperMode] = useState(false);
+  const [showCaptions, setShowCaptions] = useState(true);
+  const [captionTrackUrl, setCaptionTrackUrl] = useState<string | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showCaptionSettings, setShowCaptionSettings] = useState(false);
+
+  // Caption customization settings
+  const [captionFontSize, setCaptionFontSize] = useState(20);
+  const [captionTextColor, setCaptionTextColor] = useState('#FFFFFF');
+  const [captionBgColor, setCaptionBgColor] = useState('#000000');
+  const [captionBgOpacity, setCaptionBgOpacity] = useState(0.8);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const previewVideoRef = useRef<HTMLVideoElement>(null);
@@ -114,6 +127,75 @@ const App: React.FC = () => {
       });
     }
   }, [activeLineIndex, autoScroll]);
+
+  // Generate WebVTT captions for fullscreen support
+  useEffect(() => {
+    if (parsedLines.length === 0) {
+      setCaptionTrackUrl(null);
+      return;
+    }
+
+    const formatTime = (seconds: number): string => {
+      const h = Math.floor(seconds / 3600);
+      const m = Math.floor((seconds % 3600) / 60);
+      const s = Math.floor(seconds % 60);
+      const ms = Math.floor((seconds % 1) * 1000);
+      return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}.${String(ms).padStart(3, '0')}`;
+    };
+
+    let vttContent = 'WEBVTT\n\n';
+    parsedLines.forEach((line, index) => {
+      const startTime = line.seconds;
+      const endTime = index < parsedLines.length - 1 ? parsedLines[index + 1].seconds : startTime + 5;
+
+      vttContent += `${index + 1}\n`;
+      vttContent += `${formatTime(startTime)} --> ${formatTime(endTime)}\n`;
+      vttContent += `${line.speaker}: ${line.message}\n\n`;
+    });
+
+    const blob = new Blob([vttContent], { type: 'text/vtt' });
+    const url = URL.createObjectURL(blob);
+
+    if (captionTrackUrl) {
+      URL.revokeObjectURL(captionTrackUrl);
+    }
+
+    setCaptionTrackUrl(url);
+
+    return () => {
+      URL.revokeObjectURL(url);
+    };
+  }, [parsedLines]);
+
+  // Detect fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+    };
+  }, []);
+
+  // Control native caption visibility based on fullscreen and showCaptions state
+  useEffect(() => {
+    if (videoRef.current && videoRef.current.textTracks.length > 0) {
+      const track = videoRef.current.textTracks[0];
+      // Show native captions only in fullscreen mode when captions are enabled
+      track.mode = (isFullscreen && showCaptions) ? 'showing' : 'hidden';
+    }
+  }, [isFullscreen, showCaptions]);
+
+
 
   const handleTimeUpdate = (e: React.SyntheticEvent<HTMLVideoElement>) => {
     setCurrentTime(e.currentTarget.currentTime);
@@ -279,6 +361,18 @@ const App: React.FC = () => {
                 New Audit
               </button>
             )}
+            <button
+              onClick={() => setIsDeveloperMode(!isDeveloperMode)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isDeveloperMode
+                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200'
+                : 'bg-white text-slate-600 border border-slate-200 hover:border-indigo-600'
+                }`}
+            >
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+              </svg>
+              Developer Mode
+            </button>
             <span className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest px-3 py-1 bg-indigo-50/50 text-indigo-600 rounded-full border border-indigo-100 shadow-sm">
               <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
               AI Assistant • WCAG 2.2 & Axe-Core Verified
@@ -398,20 +492,147 @@ const App: React.FC = () => {
               {/* Video Panel */}
               <div className={`flex-grow bg-slate-900 rounded-[2rem] shadow-2xl overflow-hidden border border-slate-800 transition-all duration-500 relative ${isTranscriptVisible ? 'lg:w-2/3' : 'lg:w-full'}`}>
                 <div className="w-full h-full relative bg-black flex items-center justify-center">
-                  {videoUrl && <video ref={videoRef} src={videoUrl} onTimeUpdate={handleTimeUpdate} controls className="w-full h-full object-contain" />}
-                </div>
+                  {videoUrl && (
+                    <video ref={videoRef} src={videoUrl} onTimeUpdate={handleTimeUpdate} controls className="w-full h-full object-contain">
+                      {captionTrackUrl && (
+                        <track
+                          kind="captions"
+                          src={captionTrackUrl}
+                          srcLang="en"
+                          label="English"
+                        />
+                      )}
+                    </video>
+                  )}
 
-                {/* Live Caption Overlay */}
-                {activeLineIndex !== -1 && (
-                  <div className="absolute bottom-20 left-1/2 -translate-x-1/2 w-full max-w-2xl px-8 pointer-events-none">
-                    <div className="bg-black/80 backdrop-blur-md px-6 py-4 rounded-xl border border-white/10 shadow-2xl text-center">
-                      <p className="text-white text-lg font-bold leading-relaxed">
-                        <span className="text-indigo-400 font-black uppercase text-xs tracking-widest mr-2">{parsedLines[activeLineIndex].speaker}:</span>
-                        {parsedLines[activeLineIndex].message}
-                      </p>
+                  {/* Custom Caption Overlay - YouTube Style (only in normal mode) */}
+                  {!isFullscreen && showCaptions && activeLineIndex !== -1 && parsedLines[activeLineIndex] && (
+                    <div className="absolute bottom-16 left-1/2 -translate-x-1/2 pointer-events-none px-4 w-full flex justify-center">
+                      <div className="inline-block max-w-[90%]">
+                        <p className="font-semibold leading-tight text-center px-2 py-1 rounded"
+                          style={{
+                            fontSize: `${captionFontSize}px`,
+                            color: captionTextColor,
+                            backgroundColor: `${captionBgColor}${Math.round(captionBgOpacity * 255).toString(16).padStart(2, '0')}`,
+                            textShadow: '1px 1px 2px rgba(0, 0, 0, 0.9), -1px -1px 2px rgba(0, 0, 0, 0.9)',
+                            letterSpacing: '0.01em'
+                          }}>
+                          <span style={{ opacity: 0.8, fontSize: `${captionFontSize * 0.85}px` }}>{parsedLines[activeLineIndex].speaker}: </span>
+                          {parsedLines[activeLineIndex].message}
+                        </p>
+                      </div>
                     </div>
+                  )}
+
+                  {/* Caption Controls */}
+                  <div className="absolute top-4 right-4 flex gap-2">
+                    {/* Caption Settings Button */}
+                    <button
+                      onClick={() => setShowCaptionSettings(!showCaptionSettings)}
+                      className="w-10 h-10 bg-black/60 hover:bg-black/80 rounded-lg flex items-center justify-center transition-all backdrop-blur-sm border border-white/10"
+                      title="Caption settings"
+                    >
+                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    </button>
+
+                    {/* Caption Toggle Button */}
+                    <button
+                      onClick={() => setShowCaptions(!showCaptions)}
+                      className="w-10 h-10 bg-black/60 hover:bg-black/80 rounded-lg flex items-center justify-center transition-all backdrop-blur-sm border border-white/10"
+                      title={showCaptions ? "Hide captions" : "Show captions"}
+                    >
+                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        {showCaptions ? (
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                        ) : (
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                        )}
+                      </svg>
+                    </button>
                   </div>
-                )}
+
+                  {/* Caption Settings Panel */}
+                  {showCaptionSettings && (
+                    <div className="absolute top-16 right-4 w-80 bg-white rounded-xl shadow-2xl border border-slate-200 p-4 z-10">
+                      <h3 className="text-sm font-bold text-slate-900 mb-4">Caption Settings</h3>
+
+                      <div className="space-y-4">
+                        {/* Font Size */}
+                        <div>
+                          <label className="text-xs font-semibold text-slate-700 mb-2 block">
+                            Font Size: {captionFontSize}px
+                          </label>
+                          <input
+                            type="range"
+                            min="12"
+                            max="32"
+                            value={captionFontSize}
+                            onChange={(e) => setCaptionFontSize(Number(e.target.value))}
+                            className="w-full"
+                          />
+                        </div>
+
+                        {/* Text Color */}
+                        <div>
+                          <label className="text-xs font-semibold text-slate-700 mb-2 block">
+                            Text Color
+                          </label>
+                          <input
+                            type="color"
+                            value={captionTextColor}
+                            onChange={(e) => setCaptionTextColor(e.target.value)}
+                            className="w-full h-10 rounded border border-slate-300"
+                          />
+                        </div>
+
+                        {/* Background Color */}
+                        <div>
+                          <label className="text-xs font-semibold text-slate-700 mb-2 block">
+                            Background Color
+                          </label>
+                          <input
+                            type="color"
+                            value={captionBgColor}
+                            onChange={(e) => setCaptionBgColor(e.target.value)}
+                            className="w-full h-10 rounded border border-slate-300"
+                          />
+                        </div>
+
+                        {/* Background Opacity */}
+                        <div>
+                          <label className="text-xs font-semibold text-slate-700 mb-2 block">
+                            Background Opacity: {Math.round(captionBgOpacity * 100)}%
+                          </label>
+                          <input
+                            type="range"
+                            min="0"
+                            max="1"
+                            step="0.1"
+                            value={captionBgOpacity}
+                            onChange={(e) => setCaptionBgOpacity(Number(e.target.value))}
+                            className="w-full"
+                          />
+                        </div>
+
+                        {/* Reset Button */}
+                        <button
+                          onClick={() => {
+                            setCaptionFontSize(20);
+                            setCaptionTextColor('#FFFFFF');
+                            setCaptionBgColor('#000000');
+                            setCaptionBgOpacity(0.8);
+                          }}
+                          className="w-full py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-xs font-bold text-slate-700 transition-colors"
+                        >
+                          Reset to Defaults
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Transcript Panel (Scrollable) */}
@@ -489,10 +710,21 @@ const App: React.FC = () => {
               )}
             </div>
 
+            {/* Transparency Panel (Developer Mode) */}
+            {isDeveloperMode && result?.metadata && (
+              <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <TransparencyPanel metadata={result.metadata} issueCount={result.issues.length} />
+              </div>
+            )}
+
             {/* Bottom Section: Full Width Issues Table/List */}
             <div className="w-full animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">
               <div className="mb-6 flex items-center gap-4">
                 <h3 className="text-xs font-black uppercase tracking-[0.25em] text-slate-900">Detailed Findings</h3>
+                <InfoTooltip
+                  content="These accessibility barriers were detected by AI analysis of your video, including visual inspection, screen reader output, and expert narration."
+                  position="right"
+                />
                 <div className="h-px flex-1 bg-slate-200"></div>
               </div>
               {viewMode === 'table' ? (
@@ -555,7 +787,22 @@ const App: React.FC = () => {
           Professional Accessibility Analysis Pipeline • ClipToTicket v1.5.0
         </p>
       </footer>
-      <style>{`.custom-scrollbar::-webkit-scrollbar { width: 6px; } .custom-scrollbar::-webkit-scrollbar-track { background: transparent; } .custom-scrollbar::-webkit-scrollbar-thumb { background: #E2E8F0; border-radius: 10px; } .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #CBD5E1; }`}</style>
+      <style>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; } 
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; } 
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #E2E8F0; border-radius: 10px; } 
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #CBD5E1; }
+        
+        /* Native caption styling for fullscreen mode */
+        video::cue {
+          font-size: ${captionFontSize}px;
+          line-height: 1.3;
+          background-color: ${captionBgColor}${Math.round(captionBgOpacity * 255).toString(16).padStart(2, '0')};
+          color: ${captionTextColor};
+          font-weight: 600;
+          text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9), -1px -1px 2px rgba(0, 0, 0, 0.9);
+        }
+      `}</style>
     </div>
   );
 };

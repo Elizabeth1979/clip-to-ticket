@@ -1,6 +1,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { A11yIssue, Severity } from '../types';
+import { InfoTooltip } from './InfoTooltip';
 
 interface TableViewProps {
   issues: A11yIssue[];
@@ -68,33 +69,58 @@ export const TableView: React.FC<TableViewProps> = ({ issues, onSeek }) => {
           <thead>
             <tr className="bg-slate-50 border-b border-slate-100">
               <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer group whitespace-nowrap" onClick={() => handleSort('timestamp')}>
-                Time {sortKey === 'timestamp' && (direction === 'asc' ? '↑' : '↓')}
+                <div className="flex items-center gap-2">
+                  Time {sortKey === 'timestamp' && (direction === 'asc' ? '↑' : '↓')}
+                  <InfoTooltip content="Click timestamp to jump to this moment in the video" position="top" />
+                </div>
               </th>
               <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer group" onClick={() => handleSort('issue_title')}>
-                Issue & Context {sortKey === 'issue_title' && (direction === 'asc' ? '↑' : '↓')}
+                <div className="flex items-center gap-2">
+                  Issue & Context {sortKey === 'issue_title' && (direction === 'asc' ? '↑' : '↓')}
+                  <InfoTooltip content="Description of the accessibility barrier detected by AI analysis of your video" position="top" />
+                </div>
               </th>
               <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer group whitespace-nowrap" onClick={() => handleSort('severity')}>
-                Impact {sortKey === 'severity' && (direction === 'asc' ? '↑' : '↓')}
+                <div className="flex items-center gap-2">
+                  Impact {sortKey === 'severity' && (direction === 'asc' ? '↑' : '↓')}
+                  <InfoTooltip
+                    content={
+                      <div className="space-y-1">
+                        <div><strong>Critical:</strong> Blocks access completely</div>
+                        <div><strong>Serious:</strong> Major barrier to access</div>
+                        <div><strong>Moderate:</strong> Noticeable difficulty</div>
+                        <div><strong>Minor:</strong> Inconvenience but accessible</div>
+                      </div>
+                    }
+                    position="top"
+                  />
+                </div>
               </th>
               <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer group" onClick={() => handleSort('wcag_reference')}>
-                Standards {sortKey === 'wcag_reference' && (direction === 'asc' ? '↑' : '↓')}
+                <div className="flex items-center gap-2">
+                  Standards {sortKey === 'wcag_reference' && (direction === 'asc' ? '↑' : '↓')}
+                  <InfoTooltip content="WCAG 2.2 Success Criteria violated. Click to view official documentation." position="top" />
+                </div>
               </th>
               <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer group" onClick={() => handleSort('axe_rule_id')}>
-                Axe Rule {sortKey === 'axe_rule_id' && (direction === 'asc' ? '↑' : '↓')}
+                <div className="flex items-center gap-2">
+                  Axe Rule {sortKey === 'axe_rule_id' && (direction === 'asc' ? '↑' : '↓')}
+                  <InfoTooltip content="Axe-core rule ID for automated testing. 'Manual Verification' means this requires human review." position="top" />
+                </div>
               </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
             {sortedIssues.map((issue, idx) => {
-              const isManual = !issue.axe_rule_id || 
-                               issue.axe_rule_id.toLowerCase().includes('manual') || 
-                               issue.axe_rule_id.toLowerCase().includes('none') ||
-                               issue.axe_rule_id === 'no-axe-rule';
+              const isManual = !issue.axe_rule_id ||
+                issue.axe_rule_id.toLowerCase().includes('manual') ||
+                issue.axe_rule_id.toLowerCase().includes('none') ||
+                issue.axe_rule_id === 'no-axe-rule';
 
               return (
                 <tr key={idx} className="hover:bg-slate-50/50 transition-colors align-top">
                   <td className="px-8 py-6">
-                    <button 
+                    <button
                       onClick={() => onSeek(issue.timestamp)}
                       className="text-xs font-black text-slate-900 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 hover:border-indigo-600 transition-colors whitespace-nowrap"
                     >
@@ -117,7 +143,7 @@ export const TableView: React.FC<TableViewProps> = ({ issues, onSeek }) => {
                     </span>
                   </td>
                   <td className="px-8 py-6 min-w-[200px]">
-                    <a 
+                    <a
                       href={getWCAGLink(issue.wcag_reference)}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -137,7 +163,7 @@ export const TableView: React.FC<TableViewProps> = ({ issues, onSeek }) => {
                         Manual Verification
                       </span>
                     ) : (
-                      <a 
+                      <a
                         href={`https://dequeuniversity.com/rules/axe/4.1/${issue.axe_rule_id}`}
                         target="_blank"
                         rel="noopener noreferrer"

@@ -32,7 +32,34 @@ export interface TranscriptLine {
   isNarrator?: boolean;
 }
 
+export interface CostBreakdown {
+  inputTokens: number;
+  outputTokens: number;
+  videoSeconds?: number;
+  inputCost: number;
+  outputCost: number;
+  videoCost: number;
+  totalCost: number;
+}
+
+export interface ProcessingStage {
+  name: string;
+  startTime: number;
+  endTime?: number;
+  status: 'pending' | 'running' | 'complete' | 'error';
+}
+
+export interface AnalysisMetadata {
+  systemPrompt: string;
+  model: string;
+  processingTimeMs: number;
+  costBreakdown: CostBreakdown;
+  stages: ProcessingStage[];
+  timestamp: string;
+}
+
 export interface AnalysisResult {
   transcript: string;
   issues: A11yIssue[];
+  metadata?: AnalysisMetadata;
 }

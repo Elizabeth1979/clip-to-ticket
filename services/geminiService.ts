@@ -120,7 +120,8 @@ export class GeminiService {
 
       return {
         transcript: parsedData.transcript || "No transcript generated.",
-        issues: parsedData.issues || []
+        issues: parsedData.issues || [],
+        metadata: data.metadata // Include metadata from backend
       };
     } catch (err: any) {
       console.error("Failed to analyze video:", err);
