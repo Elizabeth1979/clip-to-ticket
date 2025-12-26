@@ -35,11 +35,11 @@ export const ExportSection: React.FC<ExportSectionProps> = ({ issues, grouped })
       i.generated_alt_text || '',
       i.status
     ]);
-    
+
     const csvContent = [headers, ...rows]
       .map(row => row.map(cell => `"${(cell || '').replace(/"/g, '""')}"`).join(','))
       .join('\n');
-    
+
     downloadFile(csvContent, 'a11y_lens_jira.csv', 'text/csv');
   };
 
@@ -64,21 +64,21 @@ export const ExportSection: React.FC<ExportSectionProps> = ({ issues, grouped })
 
   return (
     <div className="flex flex-wrap gap-2">
-      <button 
+      <button
         onClick={exportJSON}
-        className="px-4 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-800 transition-all flex items-center gap-2 shadow-sm"
+        className="px-4 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-black tracking-widest hover:bg-slate-800 transition-all flex items-center gap-2 shadow-sm"
       >
         JSON
       </button>
-      <button 
+      <button
         onClick={exportCSV}
-        className="px-4 py-2.5 bg-white text-slate-900 border border-slate-200 rounded-xl text-xs font-black uppercase tracking-widest hover:border-slate-900 transition-all flex items-center gap-2 shadow-sm"
+        className="px-4 py-2.5 bg-white text-slate-900 border border-slate-200 rounded-xl text-xs font-black tracking-widest hover:border-slate-900 transition-all flex items-center gap-2 shadow-sm"
       >
         Jira CSV
       </button>
-      <button 
+      <button
         onClick={exportMarkdown}
-        className="px-4 py-2.5 bg-white text-slate-900 border border-slate-200 rounded-xl text-xs font-black uppercase tracking-widest hover:border-slate-900 transition-all flex items-center gap-2 shadow-sm"
+        className="px-4 py-2.5 bg-white text-slate-900 border border-slate-200 rounded-xl text-xs font-black tracking-widest hover:border-slate-900 transition-all flex items-center gap-2 shadow-sm"
       >
         Markdown
       </button>

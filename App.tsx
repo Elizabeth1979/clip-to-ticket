@@ -213,7 +213,7 @@ const App: React.FC = () => {
       setCurrentTime(0);
       setAnalystChat(null);
     } else if (selected) {
-      setError("Please select a valid video recording (MP4, WebM, or MOV) before starting the analysis.");
+      setError("Invalid File Format: The selected file is not a supported video format. Please choose a video file with one of these extensions: MP4, WebM, MOV, or MKV.");
     }
   };
 
@@ -221,7 +221,7 @@ const App: React.FC = () => {
     try {
       const response = await fetch('/examples/Ed-WixUser-edited.mp4');
       if (!response.ok) {
-        setError("Example video not found. Please place 'Ed-WixUser-edited.mp4' in the public/examples folder.");
+        setError("Example Video Not Found: Unable to locate 'Ed-WixUser-edited.mp4'. Expected location: /public/examples/Ed-WixUser-edited.mp4. Please verify the file exists in your project's public/examples directory.");
         return;
       }
       const blob = await response.blob();
@@ -237,7 +237,7 @@ const App: React.FC = () => {
       setCurrentTime(0);
       setAnalystChat(null);
     } catch (err) {
-      setError("Failed to load example video. Ensure 'sample-audit.mp4' exists in public/examples/.");
+      setError("Failed to Load Example Video: An error occurred while loading 'Ed-WixUser-edited.mp4' from /public/examples/. This could be due to: (1) File not found in the expected location, (2) Network error, or (3) File permissions issue. Please check the browser console for more details.");
     }
   };
 
@@ -255,7 +255,7 @@ const App: React.FC = () => {
 
   const processVideo = async () => {
     if (!file) {
-      setError("Media Required: Please select a video recording (MP4, WebM, or MOV) before starting the analysis.");
+      setError("No Video Selected: Please upload a video file before starting the analysis. Click the upload area above or drag and drop a video file (MP4, WebM, MOV, or MKV format).");
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
@@ -286,7 +286,7 @@ const App: React.FC = () => {
       setResult(analysis);
     } catch (err: any) {
       clearInterval(interval);
-      setError(err.message || "An error occurred during analysis.");
+      setError(err.message || "Video Analysis Failed: An unexpected error occurred while processing your video. This could be due to: (1) Network connectivity issues, (2) Backend server unavailable, (3) Video file corruption, or (4) API rate limits. Please try again or check the browser console for technical details.");
     } finally {
       setIsProcessing(false);
       setButtonLabel("Generate an accessibility report from media");
@@ -351,18 +351,18 @@ const App: React.FC = () => {
             </div>
             <div className="flex flex-col">
               <h1 className="text-xl font-black tracking-tight text-slate-900 leading-none">ClipToTicket</h1>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] mt-1">Narrate barriers. Ship tickets.</p>
+              <p className="text-[10px] font-bold text-slate-400 tracking-[0.15em] mt-1">Narrate barriers. Ship tickets.</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
             {result && (
-              <button onClick={() => { setResult(null); setFile(null); setVideoUrl(null); setEditedTranscript(""); setCurrentTime(0); }} className="text-xs font-black uppercase tracking-widest text-slate-500 hover:text-slate-900 px-4 py-2 transition-colors">
+              <button onClick={() => { setResult(null); setFile(null); setVideoUrl(null); setEditedTranscript(""); setCurrentTime(0); }} className="text-xs font-black tracking-widest text-slate-500 hover:text-slate-900 px-4 py-2 transition-colors">
                 New Audit
               </button>
             )}
             <button
               onClick={() => setIsDeveloperMode(!isDeveloperMode)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isDeveloperMode
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black tracking-widest transition-all ${isDeveloperMode
                 ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200'
                 : 'bg-white text-slate-600 border border-slate-200 hover:border-indigo-600'
                 }`}
@@ -372,7 +372,7 @@ const App: React.FC = () => {
               </svg>
               Developer Mode
             </button>
-            <span className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest px-3 py-1 bg-indigo-50/50 text-indigo-600 rounded-full border border-indigo-100 shadow-sm">
+            <span className="flex items-center gap-2 text-[10px] font-black tracking-widest px-3 py-1 bg-indigo-50/50 text-indigo-600 rounded-full border border-indigo-100 shadow-sm">
               <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
               AI Assistant • WCAG 2.2 & Axe-Core Verified
             </span>
@@ -403,7 +403,7 @@ const App: React.FC = () => {
 
                     <div className="flex items-center gap-4 mt-8 w-full max-w-md">
                       <div className="h-px flex-1 bg-slate-200"></div>
-                      <span className="text-xs font-black uppercase tracking-widest text-slate-400">Or</span>
+                      <span className="text-xs font-black tracking-widest text-slate-400">Or</span>
                       <div className="h-px flex-1 bg-slate-200"></div>
                     </div>
 
@@ -424,7 +424,7 @@ const App: React.FC = () => {
                     </div>
                     <div className="flex items-center gap-4 mb-10 bg-slate-50 px-6 py-3 rounded-full border border-slate-100">
                       <span className="text-sm font-bold text-slate-700 max-w-sm truncate">{file.name}</span>
-                      <button onClick={() => setFile(null)} className="text-xs font-black text-red-500 uppercase tracking-widest">Remove</button>
+                      <button onClick={() => setFile(null)} className="text-xs font-black text-red-500 tracking-widest">Remove</button>
                     </div>
                     <div className="w-full max-w-lg">
                       <button onClick={processVideo} disabled={isProcessing} className={`w-full py-5 rounded-2xl font-bold text-lg transition-all active:scale-[0.98] shadow-xl ${isProcessing ? 'bg-slate-100 text-slate-400' : 'bg-slate-900 text-white hover:bg-indigo-700 shadow-indigo-200'}`}>
@@ -438,7 +438,7 @@ const App: React.FC = () => {
               {isProcessing && (
                 <div className="p-10 bg-slate-50 border-t border-slate-100">
                   <div className="flex justify-between items-center mb-4">
-                    <span className="text-sm font-bold text-slate-900 uppercase tracking-widest">{statusMessage}</span>
+                    <span className="text-sm font-bold text-slate-900 tracking-widest">{statusMessage}</span>
                     <span className="text-sm font-black text-indigo-700">{progress}%</span>
                   </div>
                   <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
@@ -472,7 +472,7 @@ const App: React.FC = () => {
               <div className="flex items-center gap-4">
                 <button
                   onClick={() => setIsTranscriptVisible(!isTranscriptVisible)}
-                  className="px-4 py-2.5 bg-white text-slate-700 border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest hover:border-slate-900 transition-all shadow-sm"
+                  className="px-4 py-2.5 bg-white text-slate-700 border border-slate-200 rounded-xl text-[10px] font-black tracking-widest hover:border-slate-900 transition-all shadow-sm"
                 >
                   {isTranscriptVisible ? 'Theater Mode' : 'Show Transcript'}
                 </button>
@@ -633,24 +633,24 @@ const App: React.FC = () => {
                 <div className="lg:w-[450px] w-full flex-shrink-0 bg-white rounded-[2rem] shadow-sm border border-slate-200 overflow-hidden flex flex-col animate-in slide-in-from-right-8 duration-500">
                   <div className="px-8 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                     <div className="flex flex-col">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-900">Narrative Analysis</span>
+                      <span className="text-[10px] font-black tracking-widest text-slate-900">Narrative Analysis</span>
                       <button
                         onClick={() => setAutoScroll(!autoScroll)}
-                        className={`text-[9px] font-bold uppercase tracking-wider mt-0.5 flex items-center gap-1.5 transition-colors ${autoScroll ? 'text-indigo-600' : 'text-slate-400'}`}
+                        className={`text-[9px] font-bold tracking-wider mt-0.5 flex items-center gap-1.5 transition-colors ${autoScroll ? 'text-indigo-600' : 'text-slate-400'}`}
                       >
                         <div className={`w-1.5 h-1.5 rounded-full ${autoScroll ? 'bg-indigo-600 animate-pulse' : 'bg-slate-300'}`}></div>
                         Live Follow {autoScroll ? 'ON' : 'OFF'}
                       </button>
                     </div>
                     <div className="flex items-center gap-2">
-                      <button onClick={copyTranscript} className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${copyFeedback ? 'bg-emerald-600 text-white' : 'bg-white text-slate-700 border border-slate-200 hover:border-indigo-600'}`}>{copyFeedback ? 'Copied' : 'Copy'}</button>
-                      <button onClick={() => setIsEditingSpeakers(!isEditingSpeakers)} className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${isEditingSpeakers ? 'bg-indigo-600 text-white' : 'bg-white text-slate-700 border border-slate-200 hover:border-indigo-600'}`}>{isEditingSpeakers ? 'Exit' : 'Speakers'}</button>
+                      <button onClick={copyTranscript} className={`px-3 py-1.5 rounded-lg text-[10px] font-black tracking-widest transition-all ${copyFeedback ? 'bg-emerald-600 text-white' : 'bg-white text-slate-700 border border-slate-200 hover:border-indigo-600'}`}>{copyFeedback ? 'Copied' : 'Copy'}</button>
+                      <button onClick={() => setIsEditingSpeakers(!isEditingSpeakers)} className={`px-3 py-1.5 rounded-lg text-[10px] font-black tracking-widest transition-all ${isEditingSpeakers ? 'bg-indigo-600 text-white' : 'bg-white text-slate-700 border border-slate-200 hover:border-indigo-600'}`}>{isEditingSpeakers ? 'Exit' : 'Speakers'}</button>
                     </div>
                   </div>
 
                   {isEditingSpeakers && (
                     <div className="p-6 bg-slate-50 border-b border-slate-100 space-y-4 max-h-[200px] overflow-y-auto custom-scrollbar">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Speaker Dictionary</p>
+                      <p className="text-[10px] font-black tracking-widest text-slate-400">Speaker Dictionary</p>
                       <div className="space-y-2">
                         {speakers.map((s) => (
                           <div key={s} className="flex items-center gap-2">
@@ -681,11 +681,11 @@ const App: React.FC = () => {
                             onClick={() => seekTo(line.timestamp)}
                           >
                             <div className="flex items-center justify-between mb-0.5">
-                              <span className={`text-[10px] font-black uppercase tracking-widest transition-colors ${isActive ? 'text-indigo-700' : 'text-slate-400'}`}>
+                              <span className={`text-[10px] font-black tracking-widest transition-colors ${isActive ? 'text-indigo-700' : 'text-slate-400'}`}>
                                 {line.speaker}
                               </span>
                               <div className="flex items-center gap-2">
-                                {isActive && <span className="text-[9px] font-black text-indigo-500 uppercase tracking-widest animate-pulse">Now Playing</span>}
+                                {isActive && <span className="text-[9px] font-black text-indigo-500 tracking-widest animate-pulse">Now Playing</span>}
                                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md transition-all ${isActive ? 'bg-indigo-600 text-white' : 'text-slate-400 group-hover:text-indigo-600'}`}>
                                   [{line.timestamp}]
                                 </span>
@@ -713,7 +713,7 @@ const App: React.FC = () => {
             {/* Bottom Section: Full Width Issues Table/List */}
             <div className="w-full animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">
               <div className="mb-6 flex items-center gap-4">
-                <h3 className="text-xs font-black uppercase tracking-[0.25em] text-slate-900">Detailed Findings</h3>
+                <h3 className="text-xs font-black tracking-[0.25em] text-slate-900">Detailed Findings</h3>
                 <InfoTooltip
                   content="These accessibility barriers were detected by AI analysis of your video, including visual inspection, screen reader output, and expert narration."
                   position="right"
@@ -747,7 +747,7 @@ const App: React.FC = () => {
                 <span className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-400 border-2 border-indigo-600 rounded-full"></span>
               </div>
             )}
-            <div className="absolute right-full mr-4 px-3 py-2 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap shadow-xl">
+            <div className="absolute right-full mr-4 px-3 py-2 bg-slate-900 text-white text-[10px] font-black tracking-widest rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap shadow-xl">
               Open Assistant
             </div>
           </button>
@@ -755,7 +755,7 @@ const App: React.FC = () => {
       )}
 
       <footer className="max-w-[1600px] mx-auto p-8 border-t border-slate-100">
-        <p className="text-center text-slate-300 text-[10px] font-black uppercase tracking-widest">
+        <p className="text-center text-slate-300 text-[10px] font-black tracking-widest">
           Professional Accessibility Analysis Pipeline • ClipToTicket v1.5.0
         </p>
       </footer>

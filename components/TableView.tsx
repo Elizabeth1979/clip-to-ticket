@@ -97,19 +97,19 @@ export const TableView: React.FC<TableViewProps> = ({ issues, onSeek }) => {
         <table className="w-full text-left border-collapse table-auto">
           <thead>
             <tr className="bg-slate-50 border-b border-slate-100">
-              <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer group whitespace-nowrap" onClick={() => handleSort('timestamp')}>
+              <th className="px-8 py-5 text-[10px] font-black text-slate-400 tracking-widest cursor-pointer group whitespace-nowrap" onClick={() => handleSort('timestamp')}>
                 <div className="flex items-center gap-2">
                   Time {sortKey === 'timestamp' && (direction === 'asc' ? '↑' : '↓')}
                   <InfoTooltip content="Click timestamp to jump to this moment in the video" position="top" />
                 </div>
               </th>
-              <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer group" onClick={() => handleSort('issue_title')}>
+              <th className="px-8 py-5 text-[10px] font-black text-slate-400 tracking-widest cursor-pointer group" onClick={() => handleSort('issue_title')}>
                 <div className="flex items-center gap-2">
                   Issue & Context {sortKey === 'issue_title' && (direction === 'asc' ? '↑' : '↓')}
                   <InfoTooltip content="Description of the accessibility barrier detected by AI analysis of your video" position="top" />
                 </div>
               </th>
-              <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer group whitespace-nowrap" onClick={() => handleSort('severity')}>
+              <th className="px-8 py-5 text-[10px] font-black text-slate-400 tracking-widest cursor-pointer group whitespace-nowrap" onClick={() => handleSort('severity')}>
                 <div className="flex items-center gap-2">
                   Impact {sortKey === 'severity' && (direction === 'asc' ? '↑' : '↓')}
                   <InfoTooltip
@@ -125,19 +125,19 @@ export const TableView: React.FC<TableViewProps> = ({ issues, onSeek }) => {
                   />
                 </div>
               </th>
-              <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer group" onClick={() => handleSort('wcag_reference')}>
+              <th className="px-8 py-5 text-[10px] font-black text-slate-400 tracking-widest cursor-pointer group" onClick={() => handleSort('wcag_reference')}>
                 <div className="flex items-center gap-2">
                   Standards {sortKey === 'wcag_reference' && (direction === 'asc' ? '↑' : '↓')}
                   <InfoTooltip content="WCAG 2.2 Success Criteria violated. Click to view official documentation." position="top" />
                 </div>
               </th>
-              <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer group" onClick={() => handleSort('axe_rule_id')}>
+              <th className="px-8 py-5 text-[10px] font-black text-slate-400 tracking-widest cursor-pointer group" onClick={() => handleSort('axe_rule_id')}>
                 <div className="flex items-center gap-2">
                   Axe Rule {sortKey === 'axe_rule_id' && (direction === 'asc' ? '↑' : '↓')}
                   <InfoTooltip content="Axe-core rule ID for automated testing. 'Manual Verification' means this requires human review." position="top" />
                 </div>
               </th>
-              <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer group whitespace-nowrap" onClick={() => handleSort('ease_of_fix')}>
+              <th className="px-8 py-5 text-[10px] font-black text-slate-400 tracking-widest cursor-pointer group whitespace-nowrap" onClick={() => handleSort('ease_of_fix')}>
                 <div className="flex items-center gap-2">
                   Ease of Fix {sortKey === 'ease_of_fix' && (direction === 'asc' ? '↑' : '↓')}
                   <InfoTooltip content="Estimated difficulty to resolve this issue. Based on severity and whether automated testing is available." position="top" />
@@ -167,13 +167,13 @@ export const TableView: React.FC<TableViewProps> = ({ issues, onSeek }) => {
                       <p className="text-sm font-bold text-slate-900 leading-snug">{issue.issue_title}</p>
                       <p className="text-xs text-slate-600 leading-relaxed font-medium">{issue.issue_description}</p>
                       <div className="pt-2 border-t border-slate-50 mt-2">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Fix Path:</span>
+                        <span className="text-[10px] font-black tracking-widest text-slate-400">Fix Path:</span>
                         <p className="text-xs text-slate-900 font-bold mt-1">{issue.suggested_fix}</p>
                       </div>
                     </div>
                   </td>
                   <td className="px-8 py-6">
-                    <span className={`text-[10px] font-black px-2.5 py-1 rounded-md border uppercase tracking-widest whitespace-nowrap ${getSeverityBadge(issue.severity)}`}>
+                    <span className={`text-[10px] font-black px-2.5 py-1 rounded-md border tracking-widest whitespace-nowrap ${getSeverityBadge(issue.severity)}`}>
                       {issue.severity}
                     </span>
                   </td>
@@ -184,7 +184,7 @@ export const TableView: React.FC<TableViewProps> = ({ issues, onSeek }) => {
                       rel="noopener noreferrer"
                       className="group/link flex flex-col gap-1 hover:no-underline"
                     >
-                      <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest group-hover/link:underline">
+                      <span className="text-[10px] font-black text-indigo-600 tracking-widest group-hover/link:underline">
                         {issue.wcag_reference.split(' ')[0]}
                       </span>
                       <span className="text-[10px] font-bold text-slate-400 group-hover/link:text-slate-900 transition-colors">
@@ -194,7 +194,7 @@ export const TableView: React.FC<TableViewProps> = ({ issues, onSeek }) => {
                   </td>
                   <td className="px-8 py-6">
                     {isManual ? (
-                      <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest italic">
+                      <span className="text-[10px] font-black text-slate-300 tracking-widest italic">
                         Manual Verification
                       </span>
                     ) : (
@@ -202,14 +202,14 @@ export const TableView: React.FC<TableViewProps> = ({ issues, onSeek }) => {
                         href={`https://dequeuniversity.com/rules/axe/4.1/${issue.axe_rule_id}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-[10px] font-black text-indigo-600 uppercase tracking-widest hover:underline whitespace-nowrap"
+                        className="text-[10px] font-black text-indigo-600 tracking-widest hover:underline whitespace-nowrap"
                       >
                         {issue.axe_rule_id}
                       </a>
                     )}
                   </td>
                   <td className="px-8 py-6">
-                    <span className={`text-[10px] font-black px-2.5 py-1 rounded-md border uppercase tracking-widest whitespace-nowrap ${getEaseOfFix(issue).color}`}>
+                    <span className={`text-[10px] font-black px-2.5 py-1 rounded-md border tracking-widest whitespace-nowrap ${getEaseOfFix(issue).color}`}>
                       {getEaseOfFix(issue).label}
                     </span>
                   </td>
@@ -221,7 +221,7 @@ export const TableView: React.FC<TableViewProps> = ({ issues, onSeek }) => {
       </div>
       {sortedIssues.length === 0 && (
         <div className="p-20 text-center">
-          <p className="text-slate-400 text-sm font-black uppercase tracking-[0.2em]">No audit data present</p>
+          <p className="text-slate-400 text-sm font-black tracking-[0.2em]">No audit data present</p>
           <p className="text-slate-300 text-xs mt-2 font-medium italic">Upload and process a recording to generate insights</p>
         </div>
       )}

@@ -41,9 +41,9 @@ export const AIAnalyst: React.FC<AIAnalystProps> = ({ isOpen, onClose, chat }) =
     try {
       const responseStream = await chat.sendMessageStream({ message: userMessage });
       let fullText = '';
-      
+
       setMessages(prev => [...prev, { role: 'model', text: '' }]);
-      
+
       for await (const chunk of responseStream) {
         const c = chunk as GenerateContentResponse;
         fullText += c.text;
@@ -72,8 +72,8 @@ export const AIAnalyst: React.FC<AIAnalystProps> = ({ isOpen, onClose, chat }) =
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
             </div>
             <div>
-              <h3 className="text-sm font-black uppercase tracking-widest text-slate-900">Expert Analyst</h3>
-              <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest flex items-center gap-1.5">
+              <h3 className="text-sm font-black tracking-widest text-slate-900">Expert Analyst</h3>
+              <p className="text-[10px] font-bold text-emerald-600 tracking-widest flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
                 Context Active
               </p>
@@ -86,28 +86,27 @@ export const AIAnalyst: React.FC<AIAnalystProps> = ({ isOpen, onClose, chat }) =
 
         {/* Standards Indicators */}
         <div className="px-6 py-2.5 bg-slate-50 border-b border-slate-100 flex items-center gap-4 overflow-x-auto no-scrollbar">
-           <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">Sources:</span>
-           <div className="flex gap-3">
-              <span className="text-[8px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100 uppercase tracking-widest whitespace-nowrap">WCAG 2.2</span>
-              <span className="text-[8px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100 uppercase tracking-widest whitespace-nowrap">Axe-core</span>
-              <span className="text-[8px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100 uppercase tracking-widest whitespace-nowrap">ARIA APG</span>
-           </div>
+          <span className="text-[8px] font-black text-slate-400 tracking-widest whitespace-nowrap">Sources:</span>
+          <div className="flex gap-3">
+            <span className="text-[8px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100 tracking-widest whitespace-nowrap">WCAG 2.2</span>
+            <span className="text-[8px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100 tracking-widest whitespace-nowrap">Axe-core</span>
+            <span className="text-[8px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100 tracking-widest whitespace-nowrap">ARIA APG</span>
+          </div>
         </div>
 
         <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar bg-white min-h-[350px] max-h-[450px]">
           {messages.map((m, i) => (
             <div key={i} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}>
-              <div className={`max-w-[95%] px-5 py-4 rounded-2xl text-[14px] leading-[1.6] whitespace-pre-wrap transition-all ${
-                m.role === 'user' 
-                  ? 'bg-slate-900 text-white rounded-tr-none font-medium' 
+              <div className={`max-w-[95%] px-5 py-4 rounded-2xl text-[14px] leading-[1.6] whitespace-pre-wrap transition-all ${m.role === 'user'
+                  ? 'bg-slate-900 text-white rounded-tr-none font-medium'
                   : 'bg-white text-slate-800 rounded-tl-none border border-slate-100 shadow-sm'
-              }`}>
+                }`}>
                 {/* Simple style improvements for text density */}
                 <div className="assistant-message-content">
                   {m.text || (isTyping && i === messages.length - 1 ? 'Thinking...' : '')}
                 </div>
               </div>
-              <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 mt-2 px-1">
+              <span className="text-[9px] font-black tracking-widest text-slate-400 mt-2 px-1">
                 {m.role === 'user' ? 'Engineering' : 'AI Architect'}
               </span>
             </div>
@@ -133,7 +132,7 @@ export const AIAnalyst: React.FC<AIAnalystProps> = ({ isOpen, onClose, chat }) =
               rows={2}
               className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-[14px] font-medium focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all resize-none pr-14 custom-scrollbar"
             />
-            <button 
+            <button
               onClick={handleSend}
               disabled={isTyping || !inputValue.trim()}
               className="absolute right-3 bottom-3 p-2.5 bg-indigo-600 text-white rounded-xl shadow-lg shadow-indigo-100 hover:bg-indigo-700 disabled:bg-slate-200 disabled:shadow-none transition-all active:scale-95 flex items-center justify-center"
