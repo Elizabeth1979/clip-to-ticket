@@ -20,17 +20,17 @@ export const CostDisplay: React.FC<CostDisplayProps> = ({
                 <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <h3 className="text-sm font-black tracking-widest text-slate-900">
+                <h3 className="text-sm tracking-widest text-slate-900">
                     {isProcessing ? 'Estimated Cost' : 'Analysis Cost'}
                 </h3>
             </div>
 
             <div className="mb-6">
-                <div className="text-4xl font-black text-slate-900 mb-1">
+                <div className="text-4xl text-slate-900 mb-1">
                     {CostEstimator.formatCost(costBreakdown.totalCost)}
                 </div>
                 {issueCount > 0 && (
-                    <div className="text-xs text-slate-500 font-medium">
+                    <div className="text-xs text-slate-500">
                         {CostEstimator.getCostPerIssue(costBreakdown.totalCost, issueCount)} per issue
                     </div>
                 )}
@@ -38,8 +38,8 @@ export const CostDisplay: React.FC<CostDisplayProps> = ({
 
             <div className="space-y-3">
                 <div className="flex justify-between items-center text-xs">
-                    <span className="text-slate-600 font-medium">Input Tokens:</span>
-                    <span className="font-black text-slate-900">
+                    <span className="text-slate-600">Input Tokens:</span>
+                    <span className="text-slate-900">
                         {CostEstimator.formatTokens(costBreakdown.inputTokens)}
                         <span className="text-slate-400 ml-2">
                             {CostEstimator.formatCost(costBreakdown.inputCost)}
@@ -48,8 +48,8 @@ export const CostDisplay: React.FC<CostDisplayProps> = ({
                 </div>
 
                 <div className="flex justify-between items-center text-xs">
-                    <span className="text-slate-600 font-medium">Output Tokens:</span>
-                    <span className="font-black text-slate-900">
+                    <span className="text-slate-600">Output Tokens:</span>
+                    <span className="text-slate-900">
                         {CostEstimator.formatTokens(costBreakdown.outputTokens)}
                         <span className="text-slate-400 ml-2">
                             {CostEstimator.formatCost(costBreakdown.outputCost)}
@@ -59,8 +59,8 @@ export const CostDisplay: React.FC<CostDisplayProps> = ({
 
                 {costBreakdown.videoSeconds && costBreakdown.videoSeconds > 0 && (
                     <div className="flex justify-between items-center text-xs">
-                        <span className="text-slate-600 font-medium">Video Processing:</span>
-                        <span className="font-black text-slate-900">
+                        <span className="text-slate-600">Video Processing:</span>
+                        <span className="text-slate-900">
                             {costBreakdown.videoSeconds}s
                             <span className="text-slate-400 ml-2">
                                 {CostEstimator.formatCost(costBreakdown.videoCost)}
@@ -71,8 +71,8 @@ export const CostDisplay: React.FC<CostDisplayProps> = ({
 
                 <div className="pt-3 border-t border-slate-200">
                     <div className="flex justify-between items-center text-xs">
-                        <span className="text-slate-900 font-black tracking-widest">Total:</span>
-                        <span className="text-lg font-black text-emerald-600">
+                        <span className="text-slate-900 tracking-widest">Total:</span>
+                        <span className="text-lg text-emerald-600">
                             {CostEstimator.formatCost(costBreakdown.totalCost)}
                         </span>
                     </div>

@@ -66,19 +66,19 @@ export const ExportSection: React.FC<ExportSectionProps> = ({ issues, grouped })
     <div className="flex flex-wrap gap-2">
       <button
         onClick={exportJSON}
-        className="px-4 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-black tracking-widest hover:bg-slate-800 transition-all flex items-center gap-2 shadow-sm"
+        className="px-4 py-2.5 bg-slate-900 text-white rounded-xl text-sm tracking-widest hover:bg-slate-800 transition-all flex items-center gap-2 shadow-sm"
       >
         JSON
       </button>
       <button
         onClick={exportCSV}
-        className="px-4 py-2.5 bg-white text-slate-900 border border-slate-200 rounded-xl text-xs font-black tracking-widest hover:border-slate-900 transition-all flex items-center gap-2 shadow-sm"
+        className="px-4 py-2.5 bg-white text-slate-900 border border-slate-200 rounded-xl text-sm tracking-widest hover:border-slate-900 transition-all flex items-center gap-2 shadow-sm"
       >
         Jira CSV
       </button>
       <button
         onClick={exportMarkdown}
-        className="px-4 py-2.5 bg-white text-slate-900 border border-slate-200 rounded-xl text-xs font-black tracking-widest hover:border-slate-900 transition-all flex items-center gap-2 shadow-sm"
+        className="px-4 py-2.5 bg-white text-slate-900 border border-slate-200 rounded-xl text-sm tracking-widest hover:border-slate-900 transition-all flex items-center gap-2 shadow-sm"
       >
         Markdown
       </button>

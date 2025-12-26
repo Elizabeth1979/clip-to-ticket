@@ -10,11 +10,11 @@ interface IssueCardProps {
 
 const getSeverityStyles = (severity: Severity) => {
   switch (severity) {
-    case Severity.CRITICAL: return 'bg-red-50 text-red-700 border-red-100 font-bold';
-    case Severity.SERIOUS: return 'bg-orange-50 text-orange-700 border-orange-100 font-bold';
-    case Severity.MODERATE: return 'bg-indigo-50 text-indigo-700 border-indigo-100 font-bold';
-    case Severity.MINOR: return 'bg-slate-50 text-slate-700 border-slate-100 font-bold';
-    default: return 'bg-slate-50 text-slate-700 border-slate-100 font-bold';
+    case Severity.CRITICAL: return 'bg-red-50 text-red-700 border-red-100';
+    case Severity.SERIOUS: return 'bg-orange-50 text-orange-700 border-orange-100';
+    case Severity.MODERATE: return 'bg-indigo-50 text-indigo-700 border-indigo-100';
+    case Severity.MINOR: return 'bg-slate-50 text-slate-700 border-slate-100';
+    default: return 'bg-slate-50 text-slate-700 border-slate-100';
   }
 };
 
@@ -52,7 +52,7 @@ export const IssueCard: React.FC<IssueCardProps> = ({ issue, onSeek }) => {
           <div className="flex items-center gap-3 mb-3">
             <button
               onClick={onSeek}
-              className="text-[10px] font-black tracking-widest text-slate-400 hover:text-indigo-600 flex items-center gap-1.5 transition-colors"
+              className="text-[10px] tracking-widest text-slate-400 hover:text-indigo-600 flex items-center gap-1.5 transition-colors"
             >
               <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
               {issue.timestamp}
@@ -65,13 +65,13 @@ export const IssueCard: React.FC<IssueCardProps> = ({ issue, onSeek }) => {
               <InfoTooltip content={getSeverityExplanation(issue.severity)} position="top" />
             </div>
           </div>
-          <h3 className="font-bold text-slate-900 text-lg leading-snug">
+          <h3 className="text-slate-900 text-lg leading-snug">
             {issue.issue_title}
           </h3>
         </div>
         <div className="text-right flex items-center gap-1.5">
           {isManual ? (
-            <span className="text-[10px] font-black tracking-widest text-slate-400 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
+            <span className="text-[10px] tracking-widest text-slate-400 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
               Manual Audit
             </span>
           ) : (
@@ -79,7 +79,7 @@ export const IssueCard: React.FC<IssueCardProps> = ({ issue, onSeek }) => {
               href={axeLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[10px] font-black tracking-widest text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100 hover:bg-indigo-100 transition-colors"
+              className="text-[10px] tracking-widest text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100 hover:bg-indigo-100 transition-colors underline"
             >
               {issue.axe_rule_id}
             </a>
@@ -89,13 +89,13 @@ export const IssueCard: React.FC<IssueCardProps> = ({ issue, onSeek }) => {
 
       <div className="p-6 space-y-6">
         <div className="space-y-3">
-          <p className="text-sm text-slate-600 leading-relaxed font-medium">{issue.issue_description}</p>
+          <p className="text-sm text-slate-600 leading-relaxed">{issue.issue_description}</p>
           <div className="pt-2">
             <a
               href={wcagLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-slate-900 transition-colors"
+              className="inline-flex items-center gap-2 text-xs text-slate-400 hover:text-slate-900 transition-colors underline"
             >
               <span className="tracking-widest text-[10px] text-slate-300">Reference:</span> {issue.wcag_reference}
               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
@@ -106,25 +106,25 @@ export const IssueCard: React.FC<IssueCardProps> = ({ issue, onSeek }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {issue.generated_alt_text && (
             <div className="p-4 bg-emerald-50/50 rounded-xl border border-emerald-100 flex flex-col justify-center">
-              <h4 className="text-[10px] font-black text-emerald-600 tracking-widest mb-1.5">Proposed Alt Text</h4>
-              <p className="text-sm text-emerald-900 font-bold italic">"{issue.generated_alt_text}"</p>
+              <h4 className="text-[10px] text-emerald-600 tracking-widest mb-1.5">Proposed Alt Text</h4>
+              <p className="text-sm text-emerald-900 italic">"{issue.generated_alt_text}"</p>
             </div>
           )}
 
           <div className={`p-4 bg-slate-50 rounded-xl border border-slate-100 flex flex-col justify-center ${!issue.generated_alt_text ? 'md:col-span-2' : ''}`}>
-            <h4 className="text-[10px] font-black text-slate-500 tracking-widest mb-1.5">Actionable Fix</h4>
-            <p className="text-sm text-slate-900 font-bold">{issue.suggested_fix}</p>
+            <h4 className="text-[10px] text-slate-500 tracking-widest mb-1.5">Actionable Fix</h4>
+            <p className="text-sm text-slate-900">{issue.suggested_fix}</p>
           </div>
         </div>
       </div>
 
       <div className="px-6 py-4 bg-slate-50/30 border-t border-slate-50 flex justify-between items-center">
-        <p className="text-[10px] text-slate-400 font-bold tracking-widest">
+        <p className="text-[10px] text-slate-400 tracking-widest">
           {issue.disclaimer}
         </p>
         <div className="flex items-center gap-2">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-          <span className="text-[10px] font-black text-slate-500 tracking-widest">
+          <span className="text-[10px] text-slate-500 tracking-widest">
             {issue.status}
           </span>
         </div>

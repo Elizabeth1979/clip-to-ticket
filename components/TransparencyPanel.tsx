@@ -112,10 +112,10 @@ export const TransparencyPanel: React.FC<TransparencyPanelProps> = ({ metadata, 
                         </svg>
                     </div>
                     <div className="text-left">
-                        <h3 className="text-sm font-black tracking-widest text-slate-900">
+                        <h3 className="text-sm tracking-widest text-slate-900">
                             Developer Transparency
                         </h3>
-                        <p className="text-xs text-slate-500 font-medium">
+                        <p className="text-sm text-slate-500">
                             View AI prompts and cost breakdown
                         </p>
                     </div>
@@ -136,7 +136,7 @@ export const TransparencyPanel: React.FC<TransparencyPanelProps> = ({ metadata, 
                     <div className="flex border-b border-slate-100 px-8 pt-4">
                         <button
                             onClick={() => setActiveTab('cost')}
-                            className={`px-4 py-2 text-xs font-black tracking-widest transition-colors border-b-2 ${activeTab === 'cost'
+                            className={`px-4 py-2 text-sm tracking-widest transition-colors border-b-2 ${activeTab === 'cost'
                                 ? 'border-indigo-600 text-indigo-600'
                                 : 'border-transparent text-slate-400 hover:text-slate-600'
                                 }`}
@@ -145,7 +145,7 @@ export const TransparencyPanel: React.FC<TransparencyPanelProps> = ({ metadata, 
                         </button>
                         <button
                             onClick={() => setActiveTab('prompt')}
-                            className={`px-4 py-2 text-xs font-black tracking-widest transition-colors border-b-2 ${activeTab === 'prompt'
+                            className={`px-4 py-2 text-sm tracking-widest transition-colors border-b-2 ${activeTab === 'prompt'
                                 ? 'border-indigo-600 text-indigo-600'
                                 : 'border-transparent text-slate-400 hover:text-slate-600'
                                 }`}
@@ -164,7 +164,7 @@ export const TransparencyPanel: React.FC<TransparencyPanelProps> = ({ metadata, 
                                         <svg className="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                             <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                                         </svg>
-                                        <p className="text-xs text-slate-600 leading-relaxed">
+                                        <p className="text-sm text-slate-600 leading-relaxed">
                                             Costs are calculated based on Gemini API pricing. Video analysis uses <strong>Gemini 3 Flash</strong>
                                             ($0.075/1M input tokens, $0.30/1M output tokens). Chat uses <strong>Gemini 3 Pro</strong>
                                             ($1.25/1M input, $5.00/1M output).
@@ -178,11 +178,11 @@ export const TransparencyPanel: React.FC<TransparencyPanelProps> = ({ metadata, 
                             <div className="animate-in fade-in duration-300 space-y-6">
                                 {/* Instructions Section */}
                                 <div>
-                                    <h4 className="text-xs font-black tracking-widest text-slate-900 mb-3">
+                                    <h4 className="text-sm tracking-widest text-slate-900 mb-3">
                                         AI Instructions
                                     </h4>
                                     <div className="bg-slate-50 rounded-xl p-6">
-                                        <pre className="text-xs text-slate-700 leading-relaxed whitespace-pre-wrap font-sans">
+                                        <pre className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap font-sans">
                                             {parsedPrompt.instructions}
                                         </pre>
                                     </div>
@@ -191,11 +191,11 @@ export const TransparencyPanel: React.FC<TransparencyPanelProps> = ({ metadata, 
                                 {/* WCAG Reference Data */}
                                 {parsedPrompt.wcagData && (
                                     <div>
-                                        <h4 className="text-xs font-black tracking-widest text-slate-900 mb-3">
+                                        <h4 className="text-sm tracking-widest text-slate-900 mb-3">
                                             📖 WCAG 2.2 Reference Data
                                         </h4>
                                         <div className="bg-slate-900 rounded-xl p-6 overflow-x-auto max-h-96 overflow-y-auto custom-scrollbar">
-                                            <div className="text-xs font-mono">
+                                            <div className="text-sm font-mono">
                                                 <JsonViewer data={parsedPrompt.wcagData} />
                                             </div>
                                         </div>
@@ -205,11 +205,11 @@ export const TransparencyPanel: React.FC<TransparencyPanelProps> = ({ metadata, 
                                 {/* Axe Rules Data */}
                                 {parsedPrompt.axeRulesData && (
                                     <div>
-                                        <h4 className="text-xs font-black tracking-widest text-slate-900 mb-3">
+                                        <h4 className="text-sm tracking-widest text-slate-900 mb-3">
                                             🔧 Axe-core Testing Rules
                                         </h4>
                                         <div className="bg-slate-900 rounded-xl p-6 overflow-x-auto max-h-96 overflow-y-auto custom-scrollbar">
-                                            <div className="text-xs font-mono">
+                                            <div className="text-sm font-mono">
                                                 <JsonViewer data={parsedPrompt.axeRulesData} />
                                             </div>
                                         </div>
@@ -220,7 +220,7 @@ export const TransparencyPanel: React.FC<TransparencyPanelProps> = ({ metadata, 
                                 <div className="flex justify-end">
                                     <button
                                         onClick={() => navigator.clipboard.writeText(metadata.systemPrompt)}
-                                        className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-black tracking-widest rounded-lg transition-colors"
+                                        className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm tracking-widest rounded-lg transition-colors"
                                     >
                                         Copy Full Prompt
                                     </button>
@@ -232,7 +232,7 @@ export const TransparencyPanel: React.FC<TransparencyPanelProps> = ({ metadata, 
                                         <svg className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                             <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                                         </svg>
-                                        <p className="text-xs text-amber-900 leading-relaxed">
+                                        <p className="text-sm text-amber-900 leading-relaxed">
                                             This prompt contains comprehensive WCAG 2.2 and Axe-core rule data. Click on the arrows to expand/collapse JSON sections and explore the reference materials.
                                         </p>
                                     </div>

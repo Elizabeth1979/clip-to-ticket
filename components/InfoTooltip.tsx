@@ -157,7 +157,7 @@ export const InfoTooltip: React.FC<InfoTooltipProps> = ({
                         className="fixed z-[9999] pointer-events-auto animate-in fade-in duration-200"
                         style={tooltipStyle}
                     >
-                        <div className="relative bg-slate-900 text-white text-sm font-medium px-5 py-4 rounded-xl shadow-2xl max-w-md whitespace-normal leading-relaxed">
+                        <div className="relative bg-slate-900 text-white text-sm px-5 py-4 rounded-xl shadow-2xl max-w-md whitespace-normal leading-relaxed">
                             {content}
                             <div className={`absolute w-0 h-0 border-4 ${arrowClasses[position]}`} />
                         </div>

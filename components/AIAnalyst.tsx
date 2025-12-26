@@ -72,8 +72,8 @@ export const AIAnalyst: React.FC<AIAnalystProps> = ({ isOpen, onClose, chat }) =
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
             </div>
             <div>
-              <h3 className="text-sm font-black tracking-widest text-slate-900">Expert Analyst</h3>
-              <p className="text-[10px] font-bold text-emerald-600 tracking-widest flex items-center gap-1.5">
+              <h3 className="text-sm tracking-widest text-slate-900">Expert Analyst</h3>
+              <p className="text-[10px] text-emerald-600 tracking-widest flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
                 Context Active
               </p>
@@ -86,11 +86,11 @@ export const AIAnalyst: React.FC<AIAnalystProps> = ({ isOpen, onClose, chat }) =
 
         {/* Standards Indicators */}
         <div className="px-6 py-2.5 bg-slate-50 border-b border-slate-100 flex items-center gap-4 overflow-x-auto no-scrollbar">
-          <span className="text-[8px] font-black text-slate-400 tracking-widest whitespace-nowrap">Sources:</span>
+          <span className="text-[8px] text-slate-400 tracking-widest whitespace-nowrap">Sources:</span>
           <div className="flex gap-3">
-            <span className="text-[8px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100 tracking-widest whitespace-nowrap">WCAG 2.2</span>
-            <span className="text-[8px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100 tracking-widest whitespace-nowrap">Axe-core</span>
-            <span className="text-[8px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100 tracking-widest whitespace-nowrap">ARIA APG</span>
+            <span className="text-[8px] text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100 tracking-widest whitespace-nowrap">WCAG 2.2</span>
+            <span className="text-[8px] text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100 tracking-widest whitespace-nowrap">Axe-core</span>
+            <span className="text-[8px] text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100 tracking-widest whitespace-nowrap">ARIA APG</span>
           </div>
         </div>
 
@@ -98,15 +98,15 @@ export const AIAnalyst: React.FC<AIAnalystProps> = ({ isOpen, onClose, chat }) =
           {messages.map((m, i) => (
             <div key={i} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}>
               <div className={`max-w-[95%] px-5 py-4 rounded-2xl text-[14px] leading-[1.6] whitespace-pre-wrap transition-all ${m.role === 'user'
-                  ? 'bg-slate-900 text-white rounded-tr-none font-medium'
-                  : 'bg-white text-slate-800 rounded-tl-none border border-slate-100 shadow-sm'
+                ? 'bg-slate-900 text-white rounded-tr-none'
+                : 'bg-white text-slate-800 rounded-tl-none border border-slate-100 shadow-sm'
                 }`}>
                 {/* Simple style improvements for text density */}
                 <div className="assistant-message-content">
                   {m.text || (isTyping && i === messages.length - 1 ? 'Thinking...' : '')}
                 </div>
               </div>
-              <span className="text-[9px] font-black tracking-widest text-slate-400 mt-2 px-1">
+              <span className="text-[9px] tracking-widest text-slate-400 mt-2 px-1">
                 {m.role === 'user' ? 'Engineering' : 'AI Architect'}
               </span>
             </div>
@@ -130,7 +130,7 @@ export const AIAnalyst: React.FC<AIAnalystProps> = ({ isOpen, onClose, chat }) =
               onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
               placeholder="Ask for fix code or documentation..."
               rows={2}
-              className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-[14px] font-medium focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all resize-none pr-14 custom-scrollbar"
+              className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-[14px] focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all resize-none pr-14 custom-scrollbar"
             />
             <button
               onClick={handleSend}
@@ -146,7 +146,7 @@ export const AIAnalyst: React.FC<AIAnalystProps> = ({ isOpen, onClose, chat }) =
         .assistant-message-content p { margin-bottom: 0.75rem; }
         .assistant-message-content ul, .assistant-message-content ol { margin-bottom: 0.75rem; padding-left: 1.25rem; }
         .assistant-message-content li { margin-bottom: 0.25rem; }
-        .assistant-message-content strong { color: #0f172a; font-weight: 800; }
+        .assistant-message-content strong { color: #0f172a; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>

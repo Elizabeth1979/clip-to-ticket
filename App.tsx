@@ -350,19 +350,19 @@ const App: React.FC = () => {
               <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
             </div>
             <div className="flex flex-col">
-              <h1 className="text-xl font-black tracking-tight text-slate-900 leading-none">ClipToTicket</h1>
-              <p className="text-[10px] font-bold text-slate-400 tracking-[0.15em] mt-1">Narrate barriers. Ship tickets.</p>
+              <h1 className="text-xl tracking-tight text-slate-900 leading-none">ClipToTicket</h1>
+              <p className="text-sm text-slate-400 tracking-[0.15em] mt-1">Narrate barriers. Ship tickets.</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
             {result && (
-              <button onClick={() => { setResult(null); setFile(null); setVideoUrl(null); setEditedTranscript(""); setCurrentTime(0); }} className="text-xs font-black tracking-widest text-slate-500 hover:text-slate-900 px-4 py-2 transition-colors">
+              <button onClick={() => { setResult(null); setFile(null); setVideoUrl(null); setEditedTranscript(""); setCurrentTime(0); }} className="text-sm tracking-widest text-slate-500 hover:text-slate-900 px-4 py-2 transition-colors">
                 New Audit
               </button>
             )}
             <button
               onClick={() => setIsDeveloperMode(!isDeveloperMode)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black tracking-widest transition-all ${isDeveloperMode
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm tracking-widest transition-all ${isDeveloperMode
                 ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200'
                 : 'bg-white text-slate-600 border border-slate-200 hover:border-indigo-600'
                 }`}
@@ -372,7 +372,7 @@ const App: React.FC = () => {
               </svg>
               Developer Mode
             </button>
-            <span className="flex items-center gap-2 text-[10px] font-black tracking-widest px-3 py-1 bg-indigo-50/50 text-indigo-600 rounded-full border border-indigo-100 shadow-sm">
+            <span className="flex items-center gap-2 text-sm tracking-widest px-3 py-1 bg-indigo-50/50 text-indigo-600 rounded-full border border-indigo-100 shadow-sm">
               <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
               AI Assistant • WCAG 2.2 & Axe-Core Verified
             </span>
@@ -384,8 +384,8 @@ const App: React.FC = () => {
         {!result && (
           <div className="max-w-4xl mx-auto py-12">
             <div className="text-center mb-12">
-              <h2 className="text-4xl font-extrabold text-slate-900 tracking-tight mb-4">Transform video into actionable reports.</h2>
-              <p className="text-lg text-slate-500 font-medium">Upload your narrated screen recording to generate a WCAG-compliant audit.</p>
+              <h2 className="text-4xl text-slate-900 tracking-tight mb-4">Transform video into actionable reports.</h2>
+              <p className="text-lg text-slate-500">Upload your narrated screen recording to generate a WCAG-compliant audit.</p>
             </div>
 
             <section className="bg-white rounded-[2rem] shadow-2xl shadow-slate-200/50 border border-slate-200 overflow-hidden">
@@ -397,19 +397,19 @@ const App: React.FC = () => {
                       <div className="w-20 h-20 bg-indigo-50 rounded-[1.5rem] flex items-center justify-center mb-6 text-indigo-600">
                         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
                       </div>
-                      <span className="text-xl font-bold text-slate-900 mb-2">Drop media to begin</span>
-                      <span className="text-slate-500 font-medium">MP4, WebM, or MOV supported</span>
+                      <span className="text-xl text-slate-900 mb-2">Drop media to begin</span>
+                      <span className="text-slate-500">MP4, WebM, or MOV supported</span>
                     </label>
 
                     <div className="flex items-center gap-4 mt-8 w-full max-w-md">
                       <div className="h-px flex-1 bg-slate-200"></div>
-                      <span className="text-xs font-black tracking-widest text-slate-400">Or</span>
+                      <span className="text-sm tracking-widest text-slate-400">Or</span>
                       <div className="h-px flex-1 bg-slate-200"></div>
                     </div>
 
                     <button
                       onClick={loadExampleVideo}
-                      className="mt-6 px-6 py-3 bg-white border-2 border-slate-200 rounded-xl text-sm font-bold text-slate-700 hover:border-indigo-600 hover:text-indigo-600 transition-all shadow-sm hover:shadow-md active:scale-[0.98] flex items-center gap-2"
+                      className="mt-6 px-6 py-3 bg-white border-2 border-slate-200 rounded-xl text-sm text-slate-700 hover:border-indigo-600 hover:text-indigo-600 transition-all shadow-sm hover:shadow-md active:scale-[0.98] flex items-center gap-2"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                       Load Example Video
@@ -423,11 +423,11 @@ const App: React.FC = () => {
                       <video ref={previewVideoRef} src={videoUrl || ""} className="w-full h-full object-contain" controls />
                     </div>
                     <div className="flex items-center gap-4 mb-10 bg-slate-50 px-6 py-3 rounded-full border border-slate-100">
-                      <span className="text-sm font-bold text-slate-700 max-w-sm truncate">{file.name}</span>
-                      <button onClick={() => setFile(null)} className="text-xs font-black text-red-500 tracking-widest">Remove</button>
+                      <span className="text-sm text-slate-700 max-w-sm truncate">{file.name}</span>
+                      <button onClick={() => setFile(null)} className="text-sm text-red-500 tracking-widest">Remove</button>
                     </div>
                     <div className="w-full max-w-lg">
-                      <button onClick={processVideo} disabled={isProcessing} className={`w-full py-5 rounded-2xl font-bold text-lg transition-all active:scale-[0.98] shadow-xl ${isProcessing ? 'bg-slate-100 text-slate-400' : 'bg-slate-900 text-white hover:bg-indigo-700 shadow-indigo-200'}`}>
+                      <button onClick={processVideo} disabled={isProcessing} className={`w-full py-5 rounded-2xl text-lg transition-all active:scale-[0.98] shadow-xl ${isProcessing ? 'bg-slate-100 text-slate-400' : 'bg-slate-900 text-white hover:bg-indigo-700 shadow-indigo-200'}`}>
                         {isProcessing ? "Analyzing..." : "Analyze Narrated Recording"}
                       </button>
                     </div>
@@ -438,8 +438,8 @@ const App: React.FC = () => {
               {isProcessing && (
                 <div className="p-10 bg-slate-50 border-t border-slate-100">
                   <div className="flex justify-between items-center mb-4">
-                    <span className="text-sm font-bold text-slate-900 tracking-widest">{statusMessage}</span>
-                    <span className="text-sm font-black text-indigo-700">{progress}%</span>
+                    <span className="text-sm text-slate-900 tracking-widest">{statusMessage}</span>
+                    <span className="text-sm text-indigo-700">{progress}%</span>
                   </div>
                   <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
                     <div className="h-full bg-indigo-600 transition-all duration-700 ease-out rounded-full" style={{ width: `${progress}%` }} />
@@ -450,7 +450,7 @@ const App: React.FC = () => {
 
             {error && (
               <div className="mt-8 p-6 bg-white rounded-2xl border-l-4 border-amber-500 shadow-xl shadow-slate-200/50 animate-in slide-in-from-top-2">
-                <p className="text-slate-900 font-bold text-base">{error}</p>
+                <p className="text-slate-900 text-base">{error}</p>
               </div>
             )}
           </div>
@@ -465,14 +465,14 @@ const App: React.FC = () => {
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" /></svg>
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-slate-900">Analysis Complete</h2>
-                  <p className="text-slate-500 text-xs font-medium mt-0.5">{result.issues.length} points of interest identified.</p>
+                  <h2 className="text-lg text-slate-900">Analysis Complete</h2>
+                  <p className="text-slate-500 text-sm mt-0.5">{result.issues.length} points of interest identified.</p>
                 </div>
               </div>
               <div className="flex items-center gap-4">
                 <button
                   onClick={() => setIsTranscriptVisible(!isTranscriptVisible)}
-                  className="px-4 py-2.5 bg-white text-slate-700 border border-slate-200 rounded-xl text-[10px] font-black tracking-widest hover:border-slate-900 transition-all shadow-sm"
+                  className="px-4 py-2.5 bg-white text-slate-700 border border-slate-200 rounded-xl text-sm tracking-widest hover:border-slate-900 transition-all shadow-sm"
                 >
                   {isTranscriptVisible ? 'Theater Mode' : 'Show Transcript'}
                 </button>
@@ -502,7 +502,7 @@ const App: React.FC = () => {
                   {!isFullscreen && showCaptions && activeLineIndex !== -1 && parsedLines[activeLineIndex] && (
                     <div className="absolute bottom-16 left-1/2 -translate-x-1/2 pointer-events-none px-4 w-full flex justify-center">
                       <div className="inline-block max-w-[90%]">
-                        <p className="font-semibold leading-tight text-center px-2 py-1 rounded"
+                        <p className="leading-tight text-center px-2 py-1 rounded"
                           style={{
                             fontSize: `${captionFontSize}px`,
                             color: captionTextColor,
@@ -510,7 +510,7 @@ const App: React.FC = () => {
                             textShadow: '1px 1px 2px rgba(0, 0, 0, 0.9), -1px -1px 2px rgba(0, 0, 0, 0.9)',
                             letterSpacing: '0.01em'
                           }}>
-                          <span style={{ opacity: 0.8, fontSize: `${captionFontSize * 0.85}px` }}>{parsedLines[activeLineIndex].speaker}: </span>
+                          <span style={{ opacity: 0.8, fontSize: `${Math.max(14, captionFontSize * 0.85)}px` }}>{parsedLines[activeLineIndex].speaker}: </span>
                           {parsedLines[activeLineIndex].message}
                         </p>
                       </div>
@@ -550,17 +550,17 @@ const App: React.FC = () => {
                   {/* Caption Settings Panel */}
                   {showCaptionSettings && (
                     <div className="absolute top-16 right-4 w-80 bg-white rounded-xl shadow-2xl border border-slate-200 p-4 z-10">
-                      <h3 className="text-sm font-bold text-slate-900 mb-4">Caption Settings</h3>
+                      <h3 className="text-sm text-slate-900 mb-4">Caption Settings</h3>
 
                       <div className="space-y-4">
                         {/* Font Size */}
                         <div>
-                          <label className="text-xs font-semibold text-slate-700 mb-2 block">
+                          <label className="text-sm text-slate-700 mb-2 block">
                             Font Size: {captionFontSize}px
                           </label>
                           <input
                             type="range"
-                            min="12"
+                            min="14"
                             max="32"
                             value={captionFontSize}
                             onChange={(e) => setCaptionFontSize(Number(e.target.value))}
@@ -570,7 +570,7 @@ const App: React.FC = () => {
 
                         {/* Text Color */}
                         <div>
-                          <label className="text-xs font-semibold text-slate-700 mb-2 block">
+                          <label className="text-sm text-slate-700 mb-2 block">
                             Text Color
                           </label>
                           <input
@@ -583,7 +583,7 @@ const App: React.FC = () => {
 
                         {/* Background Color */}
                         <div>
-                          <label className="text-xs font-semibold text-slate-700 mb-2 block">
+                          <label className="text-sm text-slate-700 mb-2 block">
                             Background Color
                           </label>
                           <input
@@ -596,7 +596,7 @@ const App: React.FC = () => {
 
                         {/* Background Opacity */}
                         <div>
-                          <label className="text-xs font-semibold text-slate-700 mb-2 block">
+                          <label className="text-sm text-slate-700 mb-2 block">
                             Background Opacity: {Math.round(captionBgOpacity * 100)}%
                           </label>
                           <input
@@ -618,7 +618,7 @@ const App: React.FC = () => {
                             setCaptionBgColor('#000000');
                             setCaptionBgOpacity(0.8);
                           }}
-                          className="w-full py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-xs font-bold text-slate-700 transition-colors"
+                          className="w-full py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-sm text-slate-700 transition-colors"
                         >
                           Reset to Defaults
                         </button>
@@ -633,31 +633,31 @@ const App: React.FC = () => {
                 <div className="lg:w-[450px] w-full flex-shrink-0 bg-white rounded-[2rem] shadow-sm border border-slate-200 overflow-hidden flex flex-col animate-in slide-in-from-right-8 duration-500">
                   <div className="px-8 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                     <div className="flex flex-col">
-                      <span className="text-[10px] font-black tracking-widest text-slate-900">Narrative Analysis</span>
+                      <span className="text-sm tracking-widest text-slate-900">Narrative Analysis</span>
                       <button
                         onClick={() => setAutoScroll(!autoScroll)}
-                        className={`text-[9px] font-bold tracking-wider mt-0.5 flex items-center gap-1.5 transition-colors ${autoScroll ? 'text-indigo-600' : 'text-slate-400'}`}
+                        className={`text-sm tracking-wider mt-0.5 flex items-center gap-1.5 transition-colors ${autoScroll ? 'text-indigo-600' : 'text-slate-400'}`}
                       >
                         <div className={`w-1.5 h-1.5 rounded-full ${autoScroll ? 'bg-indigo-600 animate-pulse' : 'bg-slate-300'}`}></div>
                         Live Follow {autoScroll ? 'ON' : 'OFF'}
                       </button>
                     </div>
                     <div className="flex items-center gap-2">
-                      <button onClick={copyTranscript} className={`px-3 py-1.5 rounded-lg text-[10px] font-black tracking-widest transition-all ${copyFeedback ? 'bg-emerald-600 text-white' : 'bg-white text-slate-700 border border-slate-200 hover:border-indigo-600'}`}>{copyFeedback ? 'Copied' : 'Copy'}</button>
-                      <button onClick={() => setIsEditingSpeakers(!isEditingSpeakers)} className={`px-3 py-1.5 rounded-lg text-[10px] font-black tracking-widest transition-all ${isEditingSpeakers ? 'bg-indigo-600 text-white' : 'bg-white text-slate-700 border border-slate-200 hover:border-indigo-600'}`}>{isEditingSpeakers ? 'Exit' : 'Speakers'}</button>
+                      <button onClick={copyTranscript} className={`px-3 py-1.5 rounded-lg text-sm tracking-widest transition-all ${copyFeedback ? 'bg-emerald-600 text-white' : 'bg-white text-slate-700 border border-slate-200 hover:border-indigo-600'}`}>{copyFeedback ? 'Copied' : 'Copy'}</button>
+                      <button onClick={() => setIsEditingSpeakers(!isEditingSpeakers)} className={`px-3 py-1.5 rounded-lg text-sm tracking-widest transition-all ${isEditingSpeakers ? 'bg-indigo-600 text-white' : 'bg-white text-slate-700 border border-slate-200 hover:border-indigo-600'}`}>{isEditingSpeakers ? 'Exit' : 'Speakers'}</button>
                     </div>
                   </div>
 
                   {isEditingSpeakers && (
                     <div className="p-6 bg-slate-50 border-b border-slate-100 space-y-4 max-h-[200px] overflow-y-auto custom-scrollbar">
-                      <p className="text-[10px] font-black tracking-widest text-slate-400">Speaker Dictionary</p>
+                      <p className="text-sm tracking-widest text-slate-400">Speaker Dictionary</p>
                       <div className="space-y-2">
                         {speakers.map((s) => (
                           <div key={s} className="flex items-center gap-2">
                             <input
                               type="text"
                               placeholder={s}
-                              className="flex-1 text-[11px] px-3 py-2 bg-white border border-slate-200 rounded-lg outline-none font-bold"
+                              className="flex-1 text-sm px-3 py-2 bg-white border border-slate-200 rounded-lg outline-none"
                               onKeyDown={(e) => { if (e.key === 'Enter') handleRenameSpeaker(s, e.currentTarget.value); }}
                             />
                           </div>
@@ -681,17 +681,17 @@ const App: React.FC = () => {
                             onClick={() => seekTo(line.timestamp)}
                           >
                             <div className="flex items-center justify-between mb-0.5">
-                              <span className={`text-[10px] font-black tracking-widest transition-colors ${isActive ? 'text-indigo-700' : 'text-slate-400'}`}>
+                              <span className={`text-sm tracking-widest transition-colors ${isActive ? 'text-indigo-700' : 'text-slate-400'}`}>
                                 {line.speaker}
                               </span>
                               <div className="flex items-center gap-2">
-                                {isActive && <span className="text-[9px] font-black text-indigo-500 tracking-widest animate-pulse">Now Playing</span>}
-                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md transition-all ${isActive ? 'bg-indigo-600 text-white' : 'text-slate-400 group-hover:text-indigo-600'}`}>
+                                {isActive && <span className="text-sm text-indigo-500 tracking-widest animate-pulse">Now Playing</span>}
+                                <span className={`text-sm px-2 py-0.5 rounded-md transition-all ${isActive ? 'bg-indigo-600 text-white' : 'text-slate-400 group-hover:text-indigo-600'}`}>
                                   [{line.timestamp}]
                                 </span>
                               </div>
                             </div>
-                            <p className={`text-sm leading-relaxed font-medium transition-colors ${isActive ? 'text-indigo-900' : 'text-slate-700'}`}>
+                            <p className={`text-sm leading-relaxed transition-colors ${isActive ? 'text-indigo-900' : 'text-slate-700'}`}>
                               {line.message}
                             </p>
                           </div>
@@ -713,7 +713,7 @@ const App: React.FC = () => {
             {/* Bottom Section: Full Width Issues Table/List */}
             <div className="w-full animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">
               <div className="mb-6 flex items-center gap-4">
-                <h3 className="text-xs font-black tracking-[0.25em] text-slate-900">Detailed Findings</h3>
+                <h3 className="text-sm tracking-[0.25em] text-slate-900">Detailed Findings</h3>
                 <InfoTooltip
                   content="These accessibility barriers were detected by AI analysis of your video, including visual inspection, screen reader output, and expert narration."
                   position="right"
@@ -747,7 +747,7 @@ const App: React.FC = () => {
                 <span className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-400 border-2 border-indigo-600 rounded-full"></span>
               </div>
             )}
-            <div className="absolute right-full mr-4 px-3 py-2 bg-slate-900 text-white text-[10px] font-black tracking-widest rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap shadow-xl">
+            <div className="absolute right-full mr-4 px-3 py-2 bg-slate-900 text-white text-sm tracking-widest rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap shadow-xl">
               Open Assistant
             </div>
           </button>
@@ -755,7 +755,7 @@ const App: React.FC = () => {
       )}
 
       <footer className="max-w-[1600px] mx-auto p-8 border-t border-slate-100">
-        <p className="text-center text-slate-300 text-[10px] font-black tracking-widest">
+        <p className="text-center text-slate-300 text-sm tracking-widest">
           Professional Accessibility Analysis Pipeline • ClipToTicket v1.5.0
         </p>
       </footer>
@@ -771,7 +771,6 @@ const App: React.FC = () => {
           line-height: 1.3;
           background-color: ${captionBgColor}${Math.round(captionBgOpacity * 255).toString(16).padStart(2, '0')};
           color: ${captionTextColor};
-          font-weight: 600;
           text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9), -1px -1px 2px rgba(0, 0, 0, 0.9);
         }
       `}</style>
