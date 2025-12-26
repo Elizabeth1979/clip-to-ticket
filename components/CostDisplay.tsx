@@ -30,14 +30,14 @@ export const CostDisplay: React.FC<CostDisplayProps> = ({
                     {CostEstimator.formatCost(costBreakdown.totalCost)}
                 </div>
                 {issueCount > 0 && (
-                    <div className="text-xs text-slate-500">
+                    <div className="text-sm text-slate-500">
                         {CostEstimator.getCostPerIssue(costBreakdown.totalCost, issueCount)} per issue
                     </div>
                 )}
             </div>
 
             <div className="space-y-3">
-                <div className="flex justify-between items-center text-xs">
+                <div className="flex justify-between items-center text-sm">
                     <span className="text-slate-600">Input Tokens:</span>
                     <span className="text-slate-900">
                         {CostEstimator.formatTokens(costBreakdown.inputTokens)}
@@ -47,7 +47,7 @@ export const CostDisplay: React.FC<CostDisplayProps> = ({
                     </span>
                 </div>
 
-                <div className="flex justify-between items-center text-xs">
+                <div className="flex justify-between items-center text-sm">
                     <span className="text-slate-600">Output Tokens:</span>
                     <span className="text-slate-900">
                         {CostEstimator.formatTokens(costBreakdown.outputTokens)}
@@ -58,7 +58,7 @@ export const CostDisplay: React.FC<CostDisplayProps> = ({
                 </div>
 
                 {costBreakdown.videoSeconds && costBreakdown.videoSeconds > 0 && (
-                    <div className="flex justify-between items-center text-xs">
+                    <div className="flex justify-between items-center text-sm">
                         <span className="text-slate-600">Video Processing:</span>
                         <span className="text-slate-900">
                             {costBreakdown.videoSeconds}s
@@ -70,7 +70,7 @@ export const CostDisplay: React.FC<CostDisplayProps> = ({
                 )}
 
                 <div className="pt-3 border-t border-slate-200">
-                    <div className="flex justify-between items-center text-xs">
+                    <div className="flex justify-between items-center text-sm">
                         <span className="text-slate-900 tracking-widest">Total:</span>
                         <span className="text-lg text-emerald-600">
                             {CostEstimator.formatCost(costBreakdown.totalCost)}
@@ -80,7 +80,7 @@ export const CostDisplay: React.FC<CostDisplayProps> = ({
             </div>
 
             {isProcessing && (
-                <div className="mt-4 text-[10px] text-slate-400 italic text-center">
+                <div className="mt-4 text-sm text-slate-400 italic text-center">
                     Final cost may vary based on actual token usage
                 </div>
             )}

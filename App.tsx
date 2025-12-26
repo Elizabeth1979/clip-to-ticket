@@ -755,8 +755,8 @@ const App: React.FC = () => {
       )}
 
       <footer className="max-w-[1600px] mx-auto p-8 border-t border-slate-100">
-        <p className="text-center text-slate-300 text-sm tracking-widest">
-          Professional Accessibility Analysis Pipeline • ClipToTicket v1.5.0
+        <p className="text-center text-slate-600 text-sm tracking-widest">
+          made with ❤️ by e11i
         </p>
       </footer>
       <style>{`

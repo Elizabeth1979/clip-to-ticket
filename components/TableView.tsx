@@ -97,19 +97,19 @@ export const TableView: React.FC<TableViewProps> = ({ issues, onSeek }) => {
         <table className="w-full text-left border-collapse table-auto">
           <thead>
             <tr className="bg-slate-50 border-b border-slate-100">
-              <th className="px-8 py-5 text-[10px] text-slate-400 tracking-widest cursor-pointer group whitespace-nowrap" onClick={() => handleSort('timestamp')}>
+              <th className="px-8 py-5 text-sm text-slate-400 tracking-widest cursor-pointer group whitespace-nowrap" onClick={() => handleSort('timestamp')}>
                 <div className="flex items-center gap-2">
                   Time {sortKey === 'timestamp' && (direction === 'asc' ? '↑' : '↓')}
                   <InfoTooltip content="Click timestamp to jump to this moment in the video" position="top" />
                 </div>
               </th>
-              <th className="px-8 py-5 text-[10px] text-slate-400 tracking-widest cursor-pointer group" onClick={() => handleSort('issue_title')}>
+              <th className="px-8 py-5 text-sm text-slate-400 tracking-widest cursor-pointer group" onClick={() => handleSort('issue_title')}>
                 <div className="flex items-center gap-2">
                   Issue & Context {sortKey === 'issue_title' && (direction === 'asc' ? '↑' : '↓')}
                   <InfoTooltip content="Description of the accessibility barrier detected by AI analysis of your video" position="top" />
                 </div>
               </th>
-              <th className="px-8 py-5 text-[10px] text-slate-400 tracking-widest cursor-pointer group whitespace-nowrap" onClick={() => handleSort('severity')}>
+              <th className="px-8 py-5 text-sm text-slate-400 tracking-widest cursor-pointer group whitespace-nowrap" onClick={() => handleSort('severity')}>
                 <div className="flex items-center gap-2">
                   Impact {sortKey === 'severity' && (direction === 'asc' ? '↑' : '↓')}
                   <InfoTooltip
@@ -125,19 +125,19 @@ export const TableView: React.FC<TableViewProps> = ({ issues, onSeek }) => {
                   />
                 </div>
               </th>
-              <th className="px-8 py-5 text-[10px] text-slate-400 tracking-widest cursor-pointer group" onClick={() => handleSort('wcag_reference')}>
+              <th className="px-8 py-5 text-sm text-slate-400 tracking-widest cursor-pointer group" onClick={() => handleSort('wcag_reference')}>
                 <div className="flex items-center gap-2">
                   Standards {sortKey === 'wcag_reference' && (direction === 'asc' ? '↑' : '↓')}
                   <InfoTooltip content="WCAG 2.2 Success Criteria violated. Click to view official documentation." position="top" />
                 </div>
               </th>
-              <th className="px-8 py-5 text-[10px] text-slate-400 tracking-widest cursor-pointer group" onClick={() => handleSort('axe_rule_id')}>
+              <th className="px-8 py-5 text-sm text-slate-400 tracking-widest cursor-pointer group" onClick={() => handleSort('axe_rule_id')}>
                 <div className="flex items-center gap-2">
                   Axe Rule {sortKey === 'axe_rule_id' && (direction === 'asc' ? '↑' : '↓')}
                   <InfoTooltip content="Axe-core rule ID for automated testing. 'Manual Verification' means this requires human review." position="top" />
                 </div>
               </th>
-              <th className="px-8 py-5 text-[10px] text-slate-400 tracking-widest cursor-pointer group whitespace-nowrap" onClick={() => handleSort('ease_of_fix')}>
+              <th className="px-8 py-5 text-sm text-slate-400 tracking-widest cursor-pointer group whitespace-nowrap" onClick={() => handleSort('ease_of_fix')}>
                 <div className="flex items-center gap-2">
                   Ease of Fix {sortKey === 'ease_of_fix' && (direction === 'asc' ? '↑' : '↓')}
                   <InfoTooltip content="Estimated difficulty to resolve this issue. Based on severity and whether automated testing is available." position="top" />
@@ -157,7 +157,7 @@ export const TableView: React.FC<TableViewProps> = ({ issues, onSeek }) => {
                   <td className="px-8 py-6">
                     <button
                       onClick={() => onSeek(issue.timestamp)}
-                      className="text-xs text-slate-900 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 hover:border-indigo-600 transition-colors whitespace-nowrap"
+                      className="text-sm text-slate-900 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 hover:border-indigo-600 transition-colors whitespace-nowrap"
                     >
                       {issue.timestamp}
                     </button>
@@ -165,15 +165,15 @@ export const TableView: React.FC<TableViewProps> = ({ issues, onSeek }) => {
                   <td className="px-8 py-6 min-w-[350px]">
                     <div className="space-y-2">
                       <p className="text-sm text-slate-900 leading-snug">{issue.issue_title}</p>
-                      <p className="text-xs text-slate-600 leading-relaxed">{issue.issue_description}</p>
+                      <p className="text-sm text-slate-600 leading-relaxed">{issue.issue_description}</p>
                       <div className="pt-2 border-t border-slate-50 mt-2">
-                        <span className="text-[10px] tracking-widest text-slate-400">Fix Path:</span>
-                        <p className="text-xs text-slate-900 mt-1">{issue.suggested_fix}</p>
+                        <span className="text-sm tracking-widest text-slate-400">Fix Path:</span>
+                        <p className="text-sm text-slate-900 mt-1">{issue.suggested_fix}</p>
                       </div>
                     </div>
                   </td>
                   <td className="px-8 py-6">
-                    <span className={`text-[10px] px-2.5 py-1 rounded-md border tracking-widest whitespace-nowrap ${getSeverityBadge(issue.severity)}`}>
+                    <span className={`text-sm px-2.5 py-1 rounded-md border tracking-widest whitespace-nowrap ${getSeverityBadge(issue.severity)}`}>
                       {issue.severity}
                     </span>
                   </td>
@@ -184,17 +184,17 @@ export const TableView: React.FC<TableViewProps> = ({ issues, onSeek }) => {
                       rel="noopener noreferrer"
                       className="group/link flex flex-col gap-1 underline"
                     >
-                      <span className="text-[10px] text-indigo-600 tracking-widest">
+                      <span className="text-sm text-indigo-600 tracking-widest">
                         {issue.wcag_reference.split(' ')[0]}
                       </span>
-                      <span className="text-[10px] text-slate-400 group-hover/link:text-slate-900 transition-colors">
+                      <span className="text-sm text-slate-400 group-hover/link:text-slate-900 transition-colors">
                         {issue.wcag_reference.split(' ').slice(1).join(' ')}
                       </span>
                     </a>
                   </td>
                   <td className="px-8 py-6">
                     {isManual ? (
-                      <span className="text-[10px] text-slate-300 tracking-widest italic">
+                      <span className="text-sm text-slate-300 tracking-widest italic">
                         Manual Verification
                       </span>
                     ) : (
@@ -202,14 +202,14 @@ export const TableView: React.FC<TableViewProps> = ({ issues, onSeek }) => {
                         href={`https://dequeuniversity.com/rules/axe/4.1/${issue.axe_rule_id}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-[10px] text-indigo-600 tracking-widest underline whitespace-nowrap"
+                        className="text-sm text-indigo-600 tracking-widest underline whitespace-nowrap"
                       >
                         {issue.axe_rule_id}
                       </a>
                     )}
                   </td>
                   <td className="px-8 py-6">
-                    <span className={`text-[10px] px-2.5 py-1 rounded-md border tracking-widest whitespace-nowrap ${getEaseOfFix(issue).color}`}>
+                    <span className={`text-sm px-2.5 py-1 rounded-md border tracking-widest whitespace-nowrap ${getEaseOfFix(issue).color}`}>
                       {getEaseOfFix(issue).label}
                     </span>
                   </td>
@@ -222,7 +222,7 @@ export const TableView: React.FC<TableViewProps> = ({ issues, onSeek }) => {
       {sortedIssues.length === 0 && (
         <div className="p-20 text-center">
           <p className="text-slate-400 text-sm tracking-[0.2em]">No audit data present</p>
-          <p className="text-slate-300 text-xs mt-2 italic">Upload and process a recording to generate insights</p>
+          <p className="text-slate-300 text-sm mt-2 italic">Upload and process a recording to generate insights</p>
         </div>
       )}
     </div>
