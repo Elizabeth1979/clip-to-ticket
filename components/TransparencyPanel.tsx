@@ -3,6 +3,8 @@ import React, { useState, useMemo } from 'react';
 import { AnalysisMetadata } from '../types';
 import { CostDisplay } from './CostDisplay';
 import { JsonViewer } from './JsonViewer';
+import wcag22Full from '../data/wcag22-full.json';
+import { AxeRulesService } from '../services/axeRulesService';
 
 interface TransparencyPanelProps {
     metadata: AnalysisMetadata;
@@ -27,19 +29,30 @@ const parseSystemPrompt = (prompt: string) => {
 
         // Try to extract WCAG JSON
         try {
-            const wcagMatch = unescaped.match(/COMPREHENSIVE WCAG 2\.2 REFERENCE:\s*(\{[\s\S]*?\})\s*COMPLETE AXE-CORE RULES/);
+            const wcagMatch = unescaped.match(/COMPREHENSIVE WCAG 2\.2 REFERENCE:\s*([\s\S]*?)\s*COMPLETE AXE-CORE RULES/);
+            console.log('WCAG match found:', !!wcagMatch);
             if (wcagMatch && wcagMatch[1]) {
-                wcagData = JSON.parse(wcagMatch[1]);
+                const jsonStr = wcagMatch[1].trim();
+                console.log('Attempting to parse WCAG JSON, length:', jsonStr.length);
+                // The JSON string already has the data properly formatted by JSON.stringify
+                // We just need to parse it directly
+                wcagData = JSON.parse(jsonStr);
+                console.log('Successfully parsed WCAG data');
             }
         } catch (e) {
             console.error('Failed to parse WCAG data:', e);
+            console.log('Will try alternative approach...');
         }
 
         // Try to extract Axe Rules JSON
         try {
-            const axeMatch = unescaped.match(/COMPLETE AXE-CORE RULES[^:]*:\s*(\{[\s\S]*?\})\s*QUICK REFERENCE/);
+            const axeMatch = unescaped.match(/COMPLETE AXE-CORE RULES[^:]*:\s*([\s\S]*?)\s*QUICK REFERENCE/);
+            console.log('Axe match found:', !!axeMatch);
             if (axeMatch && axeMatch[1]) {
-                axeRulesData = JSON.parse(axeMatch[1]);
+                const jsonStr = axeMatch[1].trim();
+                console.log('Attempting to parse Axe JSON, length:', jsonStr.length);
+                axeRulesData = JSON.parse(jsonStr);
+                console.log('Successfully parsed Axe rules data');
             }
         } catch (e) {
             console.error('Failed to parse Axe rules data:', e);
@@ -74,8 +87,8 @@ const parseSystemPrompt = (prompt: string) => {
 
     return {
         instructions: formattedInstructions,
-        wcagData,
-        axeRulesData
+        wcagData: wcag22Full,  // Use the original imported data
+        axeRulesData: AxeRulesService.getAllRules()  // Get rules from the service
     };
 };
 

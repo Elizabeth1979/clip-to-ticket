@@ -13,7 +13,7 @@ const API_BASE_URL = import.meta.env.PROD
   : 'http://localhost:3001';
 
 export class GeminiService {
-  async analyzeVideo(videoBase64: string, mimeType: string): Promise<{ transcript: string; issues: A11yIssue[] }> {
+  async analyzeVideo(videoBase64: string, mimeType: string): Promise<AnalysisResult> {
     const systemInstruction = `
       You are a Senior Accessibility QA Architect analyzing comprehensive screen recordings that include:
       - Visual UI inspection (color, layout, focus indicators, responsive design)
@@ -112,7 +112,7 @@ export class GeminiService {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: response.statusText }));
-        throw new Error(errorData.error || `Analysis failed: ${response.statusText}`);
+        throw new Error(errorData.error || `Backend Analysis Request Failed: The server at ${API_BASE_URL} returned an error (${response.status} ${response.statusText}). This could indicate: (1) Backend service is down or restarting, (2) Invalid API request format, or (3) Server resource limits exceeded. Please wait a moment and try again.`);
       }
 
       const data = await response.json();
@@ -125,7 +125,7 @@ export class GeminiService {
       };
     } catch (err: any) {
       console.error("Failed to analyze video:", err);
-      throw new Error(err.message || "Analysis failed to produce a valid report.");
+      throw new Error(err.message || `Video Analysis Pipeline Error: Unable to complete the analysis process. Common causes include: (1) Backend server unreachable at ${API_BASE_URL}, (2) Network connectivity issues, (3) Video encoding not supported, or (4) Response parsing failure. Check your network connection and ensure the backend server is running.`);
     }
   }
 
@@ -176,7 +176,7 @@ class ProxyChat {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create chat session');
+        throw new Error(`Chat Session Creation Failed: Unable to establish a chat session with the backend at ${API_BASE_URL}. The server may be unavailable or experiencing high load. Please try again in a moment.`);
       }
 
       const data = await response.json();
@@ -191,13 +191,13 @@ class ProxyChat {
     });
 
     if (!response.ok) {
-      throw new Error('Failed to send message');
+      throw new Error(`Chat Message Send Failed: Unable to send your message to the AI assistant. The chat session (ID: ${this.sessionId}) may have expired or the backend connection was lost. Please refresh the page and start a new analysis.`);
     }
 
     // Parse SSE stream
     const reader = response.body?.getReader();
     if (!reader) {
-      throw new Error('No response body');
+      throw new Error('Chat Response Stream Error: The server response did not include a readable stream. This indicates a backend communication issue. Please try sending your message again.');
     }
 
     const decoder = new TextDecoder();
