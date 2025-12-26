@@ -2,6 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import { A11yIssue, Severity } from '../types';
 import { InfoTooltip } from './InfoTooltip';
+import { getWCAGLink, parseWCAGStandards } from '../utils/wcagUtils';
 
 interface TableViewProps {
   issues: A11yIssue[];
@@ -47,14 +48,6 @@ const getEaseOfFix = (issue: A11yIssue): { label: string; color: string; order: 
   return { label: 'Medium', color: 'bg-amber-50 text-amber-600 border-amber-100', order: 2 };
 };
 
-const getWCAGLink = (reference: string) => {
-  const match = reference.match(/\d+\.\d+\.\d+\s+(.*)/);
-  if (match && match[1]) {
-    const slug = match[1].toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-    return `https://www.w3.org/WAI/WCAG21/Understanding/${slug}.html`;
-  }
-  return `https://www.w3.org/WAI/WCAG21/Understanding/`;
-};
 
 export const TableView: React.FC<TableViewProps> = ({ issues, onSeek }) => {
   const [sortKey, setSortKey] = useState<SortKey>('severity');
@@ -178,19 +171,26 @@ export const TableView: React.FC<TableViewProps> = ({ issues, onSeek }) => {
                     </span>
                   </td>
                   <td className="px-8 py-6 min-w-[200px]">
-                    <a
-                      href={getWCAGLink(issue.wcag_reference)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="group/link flex flex-col gap-1 underline"
-                    >
-                      <span className="text-sm text-indigo-600 tracking-widest">
-                        {issue.wcag_reference.split(' ')[0]}
-                      </span>
-                      <span className="text-sm text-slate-400 group-hover/link:text-slate-900 transition-colors">
-                        {issue.wcag_reference.split(' ').slice(1).join(' ')}
-                      </span>
-                    </a>
+                    <div className="flex flex-col gap-2">
+                      {parseWCAGStandards(issue.wcag_reference).map((standard, stdIdx) => (
+                        <a
+                          key={stdIdx}
+                          href={getWCAGLink(standard.number)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="group/link flex flex-col gap-1 underline"
+                        >
+                          <span className="text-sm text-indigo-600 tracking-widest">
+                            {standard.number}
+                          </span>
+                          {stdIdx === 0 && standard.name && (
+                            <span className="text-sm text-slate-400 group-hover/link:text-slate-900 transition-colors">
+                              {standard.name}
+                            </span>
+                          )}
+                        </a>
+                      ))}
+                    </div>
                   </td>
                   <td className="px-8 py-6">
                     {isManual ? (
