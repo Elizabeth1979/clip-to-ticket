@@ -471,6 +471,20 @@ const App: React.FC = () => {
                 </div>
               </div>
               <div className="flex items-center gap-4">
+                {isDeveloperMode && (
+                  <button
+                    onClick={() => {
+                      const element = document.getElementById('product-transparency');
+                      element?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }}
+                    className="flex items-center gap-1.5 text-sm tracking-widest text-indigo-600 hover:text-indigo-700 underline decoration-indigo-300 hover:decoration-indigo-500 underline-offset-4 transition-all"
+                  >
+                    Product Transparency
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 13l-3 3m0 0l-3-3m3 3V8" />
+                    </svg>
+                  </button>
+                )}
                 <ExportSection issues={result.issues} grouped={groupedIssues} />
               </div>
             </div>
@@ -713,14 +727,6 @@ const App: React.FC = () => {
               )}
             </div>
 
-            {/* Transparency Panel (Developer Mode) */}
-            {isDeveloperMode && result?.metadata && (
-              <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8">
-                <RICEExplainer />
-                <TransparencyPanel metadata={result.metadata} issueCount={result.issues.length} />
-              </div>
-            )}
-
             {/* Bottom Section: Full Width Issues Table/List */}
             <div className="w-full animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">
               <div className="mb-6 flex items-center gap-4">
@@ -733,6 +739,24 @@ const App: React.FC = () => {
               </div>
               <TableView issues={result.issues} onSeek={seekTo} />
             </div>
+
+            {/* Product Transparency Section (Developer Mode) */}
+            {isDeveloperMode && result?.metadata && (
+              <div id="product-transparency" className="w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="mb-6 flex items-center gap-4">
+                  <h3 className="text-sm tracking-[0.25em] text-slate-900">Product Transparency</h3>
+                  <InfoTooltip
+                    content="How the AI analysis works: system prompts, cost breakdown, and priority scoring methodology."
+                    position="right"
+                  />
+                  <div className="h-px flex-1 bg-slate-200"></div>
+                </div>
+                <div className="space-y-8">
+                  <TransparencyPanel metadata={result.metadata} issueCount={result.issues.length} />
+                  <RICEExplainer />
+                </div>
+              </div>
+            )}
           </div>
         )}
       </main>

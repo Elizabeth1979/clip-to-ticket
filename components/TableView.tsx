@@ -3,7 +3,7 @@ import React, { useState, useMemo } from 'react';
 import { A11yIssue, Severity } from '../types';
 import { InfoTooltip } from './InfoTooltip';
 import { getWCAGLink, parseWCAGStandards } from '../utils/wcagUtils';
-import { getAPGPatternUrl } from '../services/apgPatternsService';
+import { parseAPGPatterns } from '../services/apgPatternsService';
 
 interface TableViewProps {
   issues: A11yIssue[];
@@ -64,8 +64,8 @@ const getEaseOfFix = (issue: A11yIssue): { label: string; color: string; order: 
   }
 
   // Fallback to heuristic calculation
-  const isManual = issue.apg_pattern ||
-    !issue.axe_rule_id ||
+  // APG patterns are not "manual" - they're design pattern references
+  const isManual = !issue.axe_rule_id ||
     issue.axe_rule_id.toLowerCase().includes('manual') ||
     issue.axe_rule_id.toLowerCase().includes('none') ||
     issue.axe_rule_id === 'no-axe-rule';
@@ -108,8 +108,8 @@ const calculatePriority = (issue: A11yIssue): number => {
   const impact = severity * severity;
 
   // Determine confidence based on detection method
-  const isManual = issue.apg_pattern ||
-    !issue.axe_rule_id ||
+  // APG patterns can still have high confidence if they also have axe rules
+  const isManual = !issue.axe_rule_id ||
     issue.axe_rule_id.toLowerCase().includes('manual') ||
     issue.axe_rule_id.toLowerCase().includes('none') ||
     issue.axe_rule_id === 'no-axe-rule';
@@ -257,17 +257,28 @@ export const TableView: React.FC<TableViewProps> = ({ issues, onSeek }) => {
               <th className="px-8 py-5 text-sm text-slate-400 tracking-widest">
                 <div className="flex items-center gap-3">
                   <button onClick={() => handleSort('axe_rule_id')} className="flex items-center gap-1 hover:text-slate-600 transition-colors">
-                    Axe Rule / APG {sortKey === 'axe_rule_id' && (direction === 'asc' ? '↑' : '↓')}
+                    Axe Rule {sortKey === 'axe_rule_id' && (direction === 'asc' ? '↑' : '↓')}
                   </button>
-                  <InfoTooltip content="Axe-core rule ID for automated testing, or APG pattern for design patterns requiring manual review." position="top" />
+                  <InfoTooltip content="Axe-core rule ID for automated testing. Links to Deque University documentation." position="top" />
+                </div>
+              </th>
+              <th className="px-8 py-5 text-sm text-slate-400 tracking-widest">
+                <div className="flex items-center gap-3">
+                  <span className="text-sm">APG Pattern</span>
+                  <InfoTooltip content="ARIA Authoring Practices Guide pattern reference for design implementation guidance." position="top" />
+                </div>
+              </th>
+              <th className="px-8 py-5 text-sm text-slate-400 tracking-widest">
+                <div className="flex items-center gap-3">
+                  <span className="text-sm">Fix Path</span>
+                  <InfoTooltip content="Recommended steps to resolve this accessibility issue." position="top" />
                 </div>
               </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
             {sortedIssues.map((issue, idx) => {
-              const isManual = issue.apg_pattern ||
-                !issue.axe_rule_id ||
+              const isManual = !issue.axe_rule_id ||
                 issue.axe_rule_id.toLowerCase().includes('manual') ||
                 issue.axe_rule_id.toLowerCase().includes('none') ||
                 issue.axe_rule_id === 'no-axe-rule';
@@ -286,10 +297,6 @@ export const TableView: React.FC<TableViewProps> = ({ issues, onSeek }) => {
                     <div className="space-y-2">
                       <p className="text-sm text-slate-900 leading-snug">{issue.issue_title}</p>
                       <p className="text-sm text-slate-600 leading-relaxed">{issue.issue_description}</p>
-                      <div className="pt-2 border-t border-slate-50 mt-2">
-                        <span className="text-sm tracking-widest text-slate-400">Fix Path:</span>
-                        <p className="text-sm text-slate-900 mt-1">{issue.suggested_fix}</p>
-                      </div>
                     </div>
                   </td>
                   <td className="px-8 py-6">
@@ -335,17 +342,7 @@ export const TableView: React.FC<TableViewProps> = ({ issues, onSeek }) => {
                     </div>
                   </td>
                   <td className="px-8 py-6">
-                    {issue.apg_pattern ? (
-                      <a
-                        href={getAPGPatternUrl(issue.apg_pattern) || 'https://www.w3.org/WAI/ARIA/apg/patterns/'}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-purple-600 tracking-widest underline whitespace-nowrap"
-                        title={`ARIA APG Pattern: ${issue.apg_pattern}`}
-                      >
-                        APG: {issue.apg_pattern}
-                      </a>
-                    ) : isManual ? (
+                    {isManual ? (
                       <span className="text-sm text-slate-300 tracking-widest italic">
                         Manual Verification
                       </span>
@@ -359,6 +356,29 @@ export const TableView: React.FC<TableViewProps> = ({ issues, onSeek }) => {
                         {issue.axe_rule_id}
                       </a>
                     )}
+                  </td>
+                  <td className="px-8 py-6">
+                    {issue.apg_pattern ? (
+                      <div className="flex flex-col gap-2">
+                        {parseAPGPatterns(issue.apg_pattern).map((pattern, patIdx) => (
+                          <a
+                            key={patIdx}
+                            href={pattern.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-purple-600 tracking-widest underline whitespace-nowrap"
+                            title={`ARIA APG: ${pattern.name}`}
+                          >
+                            {pattern.id}
+                          </a>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-sm text-slate-300">-</span>
+                    )}
+                  </td>
+                  <td className="px-8 py-6 min-w-[300px]">
+                    <p className="text-sm text-slate-900 leading-relaxed">{issue.suggested_fix}</p>
                   </td>
                 </tr>
               );

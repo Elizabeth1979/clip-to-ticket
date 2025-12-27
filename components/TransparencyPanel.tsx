@@ -113,7 +113,7 @@ export const TransparencyPanel: React.FC<TransparencyPanelProps> = ({ metadata, 
                     </div>
                     <div className="text-left">
                         <h3 className="text-sm tracking-widest text-slate-900">
-                            Developer Transparency
+                            Product Transparency
                         </h3>
                         <p className="text-sm text-slate-500">
                             View AI prompts and cost breakdown

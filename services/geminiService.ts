@@ -4,7 +4,7 @@ import { A11yIssue, Severity, AnalysisResult } from "../types";
 import { ARIA_APG_REFERENCE, WCAG22_QUICKREF } from "../documentation";
 import wcag22Full from "../data/wcag22-full.json";
 import { AxeRulesService } from "./axeRulesService";
-import { getFormattedPatternsForAI, getAPGPatternCount } from "./apgPatternsService";
+import { getFormattedPatternsForAI, getAPGPatternCount, getAPGPracticeCount } from "./apgPatternsService";
 
 // Elli is the queen
 
@@ -30,7 +30,7 @@ export class GeminiService {
       COMPLETE AXE-CORE RULES (${AxeRulesService.getRuleCount()} rules):
       ${AxeRulesService.getFormattedRulesForAI()}
       
-      ARIA APG PATTERNS (${getAPGPatternCount()} patterns):
+      ARIA APG (${getAPGPatternCount()} patterns + ${getAPGPracticeCount()} practices):
       ${getFormattedPatternsForAI()}
       
       QUICK REFERENCE LINKS:
@@ -51,6 +51,7 @@ export class GeminiService {
          - First, check if this is an ARIA APG design pattern issue (e.g., toolbar, menubar, dialog)
          - If it's an APG pattern:
            * Set apg_pattern to the pattern ID (e.g., "toolbar", "menubar")
+           * You can provide MULTIPLE patterns separated by commas (e.g., "button, link")
            * Set axe_rule_id to "none"
            * The severity will be determined by AI heuristics (not axe-core)
          - If it's NOT an APG pattern:
@@ -76,6 +77,16 @@ export class GeminiService {
          - Examples from the Axe-core rules above
          - ARIA APG patterns where applicable
          - Specific, actionable code snippets
+      
+      COMMON APG PRACTICE REFERENCES:
+      - For button-name, image-alt, label issues → Use "names-and-descriptions" practice
+      - For keyboard navigation issues → Use "keyboard-interface" practice  
+      - For landmark/region issues → Use "landmark-regions" practice
+      - For table/grid ARIA properties → Use "grid-and-table-properties" practice
+      - For role='presentation' issues → Use "hiding-semantics" practice
+      - For slider/progress bar properties → Use "range-related-properties" practice
+      - For heading/list/article roles → Use "structural-roles" practice
+      - For specific widget patterns → Use the pattern name (e.g., "toolbar", "menubar")
       
       ACCURACY REQUIREMENTS:
       - Use EXACT WCAG criteria numbers from the comprehensive reference
@@ -201,7 +212,7 @@ export class GeminiService {
       - Issues: ${result.issues.length}
       - Findings: ${result.issues.map(i => i.issue_title).join(', ')}
       
-      Note: You have access to comprehensive WCAG 2.2 data, all ${AxeRulesService.getRuleCount()} axe-core rules, and ${getAPGPatternCount()} ARIA APG patterns from the video analysis context.
+      Note: You have access to comprehensive WCAG 2.2 data, all ${AxeRulesService.getRuleCount()} axe-core rules, and ${getAPGPatternCount()} ARIA APG patterns + ${getAPGPracticeCount()} practices from the video analysis context.
       
       Do not repeat the audit findings in full. Focus on answering the user's specific technical question.
     `;

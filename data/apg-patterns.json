@@ -97,14 +97,6 @@
             "category": "widget"
         },
         {
-            "id": "landmarks",
-            "name": "Landmarks",
-            "fullName": "Landmarks",
-            "url": "https://www.w3.org/WAI/ARIA/apg/patterns/landmarks/",
-            "description": "Landmarks are a way to identify regions of a page, enabling keyboard users to quickly navigate to various sections of a page.",
-            "category": "navigation"
-        },
-        {
             "id": "link",
             "name": "Link",
             "fullName": "Link",
@@ -239,6 +231,64 @@
             "url": "https://www.w3.org/WAI/ARIA/apg/patterns/windowsplitter/",
             "description": "A window splitter is a moveable separator between two sections, or panes, of a window that enables users to change the relative size of the panes.",
             "category": "widget"
+        }
+    ],
+    "practices": [
+        {
+            "id": "grid-and-table-properties",
+            "name": "Grid and Table Properties",
+            "fullName": "Grid and Table Properties",
+            "url": "https://www.w3.org/WAI/ARIA/apg/practices/grid-and-table-properties/",
+            "description": "Best practices for using ARIA grid and table properties to make data tables and interactive grids accessible."
+        },
+        {
+            "id": "hiding-semantics",
+            "name": "Hiding Semantics",
+            "fullName": "Hiding Semantics with the presentation Role",
+            "url": "https://www.w3.org/WAI/ARIA/apg/practices/hiding-semantics/",
+            "description": "Best practices for using role='presentation' and role='none' to hide semantic meaning from assistive technologies."
+        },
+        {
+            "id": "keyboard-interface",
+            "name": "Keyboard Navigation",
+            "fullName": "Keyboard Interface",
+            "url": "https://www.w3.org/WAI/ARIA/apg/practices/keyboard-interface/",
+            "description": "Best practices for implementing keyboard navigation, including focus management, keyboard shortcuts, and ensuring all functionality is keyboard accessible."
+        },
+        {
+            "id": "landmark-regions",
+            "name": "Landmarks",
+            "fullName": "Landmark Regions",
+            "url": "https://www.w3.org/WAI/ARIA/apg/practices/landmark-regions/",
+            "description": "Best practices for using ARIA landmark roles to identify regions of a page, enabling keyboard users to quickly navigate to various sections."
+        },
+        {
+            "id": "names-and-descriptions",
+            "name": "Providing Accessible Names",
+            "fullName": "Providing Accessible Names and Descriptions",
+            "url": "https://www.w3.org/WAI/ARIA/apg/practices/names-and-descriptions/",
+            "description": "Best practices for providing accessible names and descriptions for UI components using aria-label, aria-labelledby, aria-describedby, and other techniques."
+        },
+        {
+            "id": "range-related-properties",
+            "name": "Range-Related Properties",
+            "fullName": "Range-Related Properties",
+            "url": "https://www.w3.org/WAI/ARIA/apg/practices/range-related-properties/",
+            "description": "Best practices for using ARIA properties related to range widgets like sliders, progress bars, and meters (aria-valuemin, aria-valuemax, aria-valuenow, aria-valuetext)."
+        },
+        {
+            "id": "read-me-first",
+            "name": "Read Me First",
+            "fullName": "Read Me First",
+            "url": "https://www.w3.org/WAI/ARIA/apg/practices/read-me-first/",
+            "description": "Introduction to ARIA authoring practices, including fundamental concepts and principles for creating accessible rich internet applications."
+        },
+        {
+            "id": "structural-roles",
+            "name": "Structural Roles",
+            "fullName": "Structural Roles",
+            "url": "https://www.w3.org/WAI/ARIA/apg/practices/structural-roles/",
+            "description": "Best practices for using ARIA structural roles to convey document structure and relationships (article, group, heading, list, listitem, etc.)."
         }
     ]
 }
