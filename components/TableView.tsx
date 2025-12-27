@@ -14,13 +14,29 @@ type SortDirection = 'asc' | 'desc';
 
 const severityOrder = { [Severity.CRITICAL]: 0, [Severity.SERIOUS]: 1, [Severity.MODERATE]: 2, [Severity.MINOR]: 3 };
 
-const getSeverityBadge = (severity: Severity) => {
-  switch (severity) {
-    case Severity.CRITICAL: return 'bg-red-50 text-red-600 border-red-100';
-    case Severity.SERIOUS: return 'bg-orange-50 text-orange-600 border-orange-100';
-    case Severity.MODERATE: return 'bg-indigo-50 text-indigo-600 border-indigo-100';
-    case Severity.MINOR: return 'bg-slate-50 text-slate-600 border-slate-100';
-    default: return 'bg-slate-50 text-slate-600 border-slate-100';
+const getSeverityBadge = (severity: Severity | string): { label: string; color: string; order: number } => {
+  // Normalize severity to handle both old (lowercase) and new (capitalized) formats
+  const normalizedSeverity = typeof severity === 'string'
+    ? severity.charAt(0).toUpperCase() + severity.slice(1).toLowerCase()
+    : severity;
+
+  switch (normalizedSeverity) {
+    case Severity.CRITICAL:
+    case 'Critical':
+      return { label: 'Critical', color: 'bg-red-50 text-red-600 border-red-100', order: 0 };
+    case Severity.SERIOUS:
+    case 'Serious':
+      return { label: 'Serious', color: 'bg-orange-50 text-orange-600 border-orange-100', order: 1 };
+    case Severity.MODERATE:
+    case 'Moderate':
+      return { label: 'Moderate', color: 'bg-amber-50 text-amber-600 border-amber-100', order: 2 };
+    case Severity.MINOR:
+    case 'Minor':
+      return { label: 'Minor', color: 'bg-slate-50 text-slate-600 border-slate-100', order: 3 };
+    default:
+      // Fallback for any unrecognized values
+      console.warn('Unrecognized severity value:', severity);
+      return { label: String(severity) || 'Unknown', color: 'bg-slate-50 text-slate-600 border-slate-100', order: 99 };
   }
 };
 
@@ -189,8 +205,8 @@ export const TableView: React.FC<TableViewProps> = ({ issues, onSeek }) => {
                     </div>
                   </td>
                   <td className="px-8 py-6">
-                    <span className={`text-sm px-2.5 py-1 rounded-md border tracking-widest whitespace-nowrap ${getSeverityBadge(issue.severity)}`}>
-                      {issue.severity}
+                    <span className={`text-sm px-2.5 py-1 rounded-md border tracking-widest whitespace-nowrap ${getSeverityBadge(issue.severity).color}`}>
+                      {getSeverityBadge(issue.severity).label}
                     </span>
                   </td>
                   <td className="px-8 py-6 min-w-[200px]">

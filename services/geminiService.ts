@@ -128,6 +128,11 @@ export class GeminiService {
       const data = await response.json();
       const parsedData = JSON.parse(data.text || '{}');
 
+      // Helper function to capitalize impact values from Axe rules
+      const capitalizeImpact = (impact: string): string => {
+        return impact.charAt(0).toUpperCase() + impact.slice(1);
+      };
+
       // Post-process issues to enforce Axe-core impact levels
       const issues = (parsedData.issues || []).map((issue: any) => {
         // If AI provided an Axe rule ID, enforce that rule's impact
@@ -136,7 +141,7 @@ export class GeminiService {
           if (axeRule?.impact) {
             return {
               ...issue,
-              severity: axeRule.impact,
+              severity: capitalizeImpact(axeRule.impact),
               impact_source: 'axe-core'
             };
           }
