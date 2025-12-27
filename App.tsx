@@ -470,12 +470,6 @@ const App: React.FC = () => {
                 </div>
               </div>
               <div className="flex items-center gap-4">
-                <button
-                  onClick={() => setIsTranscriptVisible(!isTranscriptVisible)}
-                  className="px-4 py-2.5 bg-white text-slate-700 border border-slate-200 rounded-xl text-sm tracking-widest hover:border-slate-900 transition-all shadow-sm"
-                >
-                  {isTranscriptVisible ? 'Theater Mode' : 'Show Transcript'}
-                </button>
                 <ExportSection issues={result.issues} grouped={groupedIssues} />
               </div>
             </div>
@@ -517,8 +511,23 @@ const App: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Caption Controls */}
+                  {/* Video Controls */}
                   <div className="absolute top-4 right-4 flex gap-2">
+                    {/* Theater Mode Toggle */}
+                    <button
+                      onClick={() => setIsTranscriptVisible(!isTranscriptVisible)}
+                      className="w-10 h-10 bg-black/60 hover:bg-black/80 rounded-lg flex items-center justify-center transition-all backdrop-blur-sm border border-white/10"
+                      title={isTranscriptVisible ? "Theater mode (hide transcript)" : "Show transcript"}
+                    >
+                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        {isTranscriptVisible ? (
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                        ) : (
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        )}
+                      </svg>
+                    </button>
+
                     {/* Caption Settings Button */}
                     <button
                       onClick={() => setShowCaptionSettings(!showCaptionSettings)}
