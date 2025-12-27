@@ -35,27 +35,36 @@ export class GeminiService {
       - ARIA APG Patterns: ${ARIA_APG_REFERENCE}
       
       ANALYSIS PIPELINE:
-      1. TRANSCRIPT: Generate a full verbatim diarized transcript. 
+      1. TRANSCRIPT: Generate a full verbatim diarized transcript.
          IMPORTANT: Every time a different person speaks, or after a short pause, start a NEW LINE.
          FORMAT: Speaker Name [MM:SS]: Message content here.
          
-      2. DETECTION: Identify specific accessibility issues by analyzing:
-         - Visual elements (contrast, focus, layout, spacing)
-         - Audio content (screen reader announcements, keyboard sounds, narration)
-         - Behavioral patterns (navigation flow, interactions, error handling)
+      2. ISSUE INTERPRETATION: For each accessibility barrier you observe:
+         - Describe what the issue is (e.g., "Link text is not descriptive")
+         - Identify which WCAG 2.2 criteria it violates
+         - Note the context and severity of impact
          
-      3. STANDARDS MAPPING: 
-         - Map each issue to exact WCAG 2.2 Success Criteria (use the comprehensive reference above)
-         - Include correct Axe-core rule ID from the enhanced rules (e.g., 'color-contrast')
-         - Reference specific techniques and examples from the knowledge base
+      3. AXE RULE MATCHING: For each issue identified above:
+         - Search the Axe-core rules for a rule that matches THIS SPECIFIC issue
+         - The rule description must align with your issue description
+         - If you find a confident match, provide the axe_rule_id
+         - If no clear match exists, leave axe_rule_id empty
+         - IMPORTANT: Do not force a match - it's better to leave it empty than to provide an incorrect rule
          
-      4. TRIAGE: Assign accurate Severity based on impact:
-         - Critical: Blocks access completely
-         - Serious: Significant barrier to access
-         - Moderate: Noticeable difficulty
-         - Minor: Inconvenience but accessible
-         
-      5. REMEDIATION: Provide code-level fixes using:
+      4. SEVERITY ASSIGNMENT:
+         - If you provided an axe_rule_id: The system will use that rule's impact level automatically
+         - If axe_rule_id is empty: Use WCAG conformance level as your guide:
+           * WCAG Level A violations → Critical (blocks basic access)
+           * WCAG Level AA violations → Serious (significant barriers)
+           * Best practices → Moderate (usability issues)
+           * Minor issues → Minor
+      
+      5. EASE OF FIX ASSESSMENT: Classify the difficulty to fix this issue:
+         - Easy: Static attributes (adding aria-label, aria-hidden, role, alt text, etc.)
+         - Moderate: Focus management, dynamic ARIA (aria-expanded, aria-checked, aria-live)
+         - Hard: Complex keyboard implementation (tabs, modal dialogs, custom widgets)
+      
+      6. REMEDIATION: Provide code-level fixes using:
          - Examples from the Axe-core rules above
          - ARIA APG patterns where applicable
          - Specific, actionable code snippets
@@ -83,13 +92,14 @@ export class GeminiService {
               wcag_reference: { type: Type.STRING },
               axe_rule_id: { type: Type.STRING },
               severity: { type: Type.STRING, enum: Object.values(Severity) },
+              ease_of_fix: { type: Type.STRING, enum: ['Easy', 'Moderate', 'Hard'] },
               suggested_fix: { type: Type.STRING },
               generated_alt_text: { type: Type.STRING },
               timestamp: { type: Type.STRING },
               status: { type: Type.STRING },
               disclaimer: { type: Type.STRING }
             },
-            required: ["issue_title", "issue_description", "wcag_reference", "axe_rule_id", "severity", "suggested_fix", "timestamp", "status", "disclaimer"]
+            required: ["issue_title", "issue_description", "wcag_reference", "axe_rule_id", "severity", "ease_of_fix", "suggested_fix", "timestamp", "status", "disclaimer"]
           }
         }
       },
@@ -118,9 +128,30 @@ export class GeminiService {
       const data = await response.json();
       const parsedData = JSON.parse(data.text || '{}');
 
+      // Post-process issues to enforce Axe-core impact levels
+      const issues = (parsedData.issues || []).map((issue: any) => {
+        // If AI provided an Axe rule ID, enforce that rule's impact
+        if (issue.axe_rule_id && issue.axe_rule_id.trim() !== '') {
+          const axeRule = AxeRulesService.getRuleById(issue.axe_rule_id);
+          if (axeRule?.impact) {
+            return {
+              ...issue,
+              severity: axeRule.impact,
+              impact_source: 'axe-core'
+            };
+          }
+        }
+
+        // Otherwise trust AI's WCAG-based assessment
+        return {
+          ...issue,
+          impact_source: 'wcag-heuristic'
+        };
+      });
+
       return {
         transcript: parsedData.transcript || "No transcript generated.",
-        issues: parsedData.issues || [],
+        issues,
         metadata: data.metadata // Include metadata from backend
       };
     } catch (err: any) {

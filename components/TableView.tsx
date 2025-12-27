@@ -25,6 +25,17 @@ const getSeverityBadge = (severity: Severity) => {
 };
 
 const getEaseOfFix = (issue: A11yIssue): { label: string; color: string; order: number } => {
+  // Use AI-provided ease_of_fix if available
+  if (issue.ease_of_fix) {
+    const easeMap = {
+      'Easy': { label: 'Easy', color: 'bg-emerald-50 text-emerald-600 border-emerald-100', order: 1 },
+      'Moderate': { label: 'Moderate', color: 'bg-amber-50 text-amber-600 border-amber-100', order: 2 },
+      'Hard': { label: 'Hard', color: 'bg-red-50 text-red-600 border-red-100', order: 3 }
+    };
+    return easeMap[issue.ease_of_fix];
+  }
+
+  // Fallback to heuristic calculation
   const isManual = !issue.axe_rule_id ||
     issue.axe_rule_id.toLowerCase().includes('manual') ||
     issue.axe_rule_id.toLowerCase().includes('none') ||
@@ -35,17 +46,17 @@ const getEaseOfFix = (issue: A11yIssue): { label: string; color: string; order: 
     if (issue.severity === Severity.CRITICAL || issue.severity === Severity.SERIOUS) {
       return { label: 'Hard', color: 'bg-red-50 text-red-600 border-red-100', order: 3 };
     }
-    return { label: 'Medium', color: 'bg-amber-50 text-amber-600 border-amber-100', order: 2 };
+    return { label: 'Moderate', color: 'bg-amber-50 text-amber-600 border-amber-100', order: 2 };
   }
 
   // Automated issues with axe rules
   if (issue.severity === Severity.CRITICAL) {
-    return { label: 'Medium', color: 'bg-amber-50 text-amber-600 border-amber-100', order: 2 };
+    return { label: 'Moderate', color: 'bg-amber-50 text-amber-600 border-amber-100', order: 2 };
   }
   if (issue.severity === Severity.MINOR || issue.severity === Severity.MODERATE) {
     return { label: 'Easy', color: 'bg-emerald-50 text-emerald-600 border-emerald-100', order: 1 };
   }
-  return { label: 'Medium', color: 'bg-amber-50 text-amber-600 border-amber-100', order: 2 };
+  return { label: 'Moderate', color: 'bg-amber-50 text-amber-600 border-amber-100', order: 2 };
 };
 
 

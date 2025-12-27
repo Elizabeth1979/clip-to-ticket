@@ -12,12 +12,14 @@ export interface A11yIssue {
   wcag_reference: string;
   axe_rule_id: string;
   severity: Severity;
+  ease_of_fix?: 'Easy' | 'Moderate' | 'Hard';
   suggested_fix: string;
   generated_alt_text?: string;
   timestamp: string;
   screenshot_context?: string; // Base64 or description of visual
   status: 'Open' | 'Resolved' | 'Triaged';
   disclaimer: string;
+  impact_source?: 'axe-core' | 'wcag-heuristic';
 }
 
 export interface GroupedReport {
