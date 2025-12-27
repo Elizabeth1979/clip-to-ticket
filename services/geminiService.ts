@@ -4,6 +4,7 @@ import { A11yIssue, Severity, AnalysisResult } from "../types";
 import { ARIA_APG_REFERENCE, WCAG22_QUICKREF } from "../documentation";
 import wcag22Full from "../data/wcag22-full.json";
 import { AxeRulesService } from "./axeRulesService";
+import { getFormattedPatternsForAI, getAPGPatternCount } from "./apgPatternsService";
 
 // Elli is the queen
 
@@ -29,6 +30,8 @@ export class GeminiService {
       COMPLETE AXE-CORE RULES (${AxeRulesService.getRuleCount()} rules):
       ${AxeRulesService.getFormattedRulesForAI()}
       
+      ARIA APG PATTERNS (${getAPGPatternCount()} patterns):
+      ${getFormattedPatternsForAI()}
       
       QUICK REFERENCE LINKS:
       - WCAG 2.2 Quick Reference: ${WCAG22_QUICKREF}
@@ -44,19 +47,24 @@ export class GeminiService {
          - Identify which WCAG 2.2 criteria it violates
          - Note the context and severity of impact
          
-      3. AXE RULE MATCHING: For each issue identified above:
-         - Search the Axe-core rules for a rule that matches THIS SPECIFIC issue
-         - The rule description must align with your issue description
-         - If you find a confident match, provide the axe_rule_id
-         - If no clear match exists, leave axe_rule_id empty
-         - IMPORTANT: Do not force a match - it's better to leave it empty than to provide an incorrect rule
+      3. AXE RULE & APG PATTERN MATCHING: For each issue identified above:
+         - First, check if this is an ARIA APG design pattern issue (e.g., toolbar, menubar, dialog)
+         - If it's an APG pattern:
+           * Set apg_pattern to the pattern ID (e.g., "toolbar", "menubar")
+           * Set axe_rule_id to "none"
+           * The severity will be determined by AI heuristics (not axe-core)
+         - If it's NOT an APG pattern:
+           * Search the Axe-core rules for a rule that matches THIS SPECIFIC issue
+           * If you find a confident match, provide the axe_rule_id and leave apg_pattern empty
+           * If no clear match exists, leave both axe_rule_id and apg_pattern empty
+         - IMPORTANT: Do not force a match - it's better to leave fields empty than to provide incorrect values
          
       4. SEVERITY ASSIGNMENT:
-         - If you provided an axe_rule_id: The system will use that rule's impact level automatically
-         - If axe_rule_id is empty: Use WCAG conformance level as your guide:
-           * WCAG Level A violations → Critical (blocks basic access)
-           * WCAG Level AA violations → Serious (significant barriers)
-           * Best practices → Moderate (usability issues)
+         - If you provided an axe_rule_id (not "none"): The system will use that rule's impact level automatically
+         - If you provided an apg_pattern OR axe_rule_id is empty: Use AI heuristics based on:
+           * WCAG conformance level (Level A → Critical, Level AA → Serious)
+           * User impact (blocks access → Critical, major barrier → Serious)
+           * Best practices → Moderate
            * Minor issues → Minor
       
       5. EASE OF FIX ASSESSMENT: Classify the difficulty to fix this issue:
@@ -91,6 +99,7 @@ export class GeminiService {
               issue_description: { type: Type.STRING },
               wcag_reference: { type: Type.STRING },
               axe_rule_id: { type: Type.STRING },
+              apg_pattern: { type: Type.STRING },
               severity: { type: Type.STRING, enum: Object.values(Severity) },
               ease_of_fix: { type: Type.STRING, enum: ['Easy', 'Moderate', 'Hard'] },
               suggested_fix: { type: Type.STRING },
@@ -135,8 +144,16 @@ export class GeminiService {
 
       // Post-process issues to enforce Axe-core impact levels
       const issues = (parsedData.issues || []).map((issue: any) => {
-        // If AI provided an Axe rule ID, enforce that rule's impact
-        if (issue.axe_rule_id && issue.axe_rule_id.trim() !== '') {
+        // If AI provided an APG pattern, use AI heuristics for severity
+        if (issue.apg_pattern && issue.apg_pattern.trim() !== '') {
+          return {
+            ...issue,
+            impact_source: 'apg-pattern-heuristic'
+          };
+        }
+
+        // If AI provided an Axe rule ID (and it's not "none"), enforce that rule's impact
+        if (issue.axe_rule_id && issue.axe_rule_id.trim() !== '' && issue.axe_rule_id.toLowerCase() !== 'none') {
           const axeRule = AxeRulesService.getRuleById(issue.axe_rule_id);
           if (axeRule?.impact) {
             return {
@@ -184,7 +201,7 @@ export class GeminiService {
       - Issues: ${result.issues.length}
       - Findings: ${result.issues.map(i => i.issue_title).join(', ')}
       
-      Note: You have access to comprehensive WCAG 2.2 data and all ${AxeRulesService.getRuleCount()} axe-core rules from the video analysis context.
+      Note: You have access to comprehensive WCAG 2.2 data, all ${AxeRulesService.getRuleCount()} axe-core rules, and ${getAPGPatternCount()} ARIA APG patterns from the video analysis context.
       
       Do not repeat the audit findings in full. Focus on answering the user's specific technical question.
     `;

@@ -11,6 +11,7 @@ export interface A11yIssue {
   issue_description: string;
   wcag_reference: string;
   axe_rule_id: string;
+  apg_pattern?: string; // APG pattern ID (e.g., "toolbar", "menubar") for patterns without axe rules
   severity: Severity;
   ease_of_fix?: 'Easy' | 'Moderate' | 'Hard';
   suggested_fix: string;

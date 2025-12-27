@@ -1,0 +1,244 @@
+{
+    "patterns": [
+        {
+            "id": "accordion",
+            "name": "Accordion",
+            "fullName": "Accordion (Sections With Show/Hide Functionality)",
+            "url": "https://www.w3.org/WAI/ARIA/apg/patterns/accordion/",
+            "description": "An accordion is a vertically stacked set of interactive headings that each contain a title, content snippet, or thumbnail representing a section of content.",
+            "category": "disclosure"
+        },
+        {
+            "id": "alert",
+            "name": "Alert",
+            "fullName": "Alert",
+            "url": "https://www.w3.org/WAI/ARIA/apg/patterns/alert/",
+            "description": "An alert is an element that displays a brief, important message in a way that attracts the user's attention without interrupting the user's task.",
+            "category": "live-region"
+        },
+        {
+            "id": "alertdialog",
+            "name": "Alert Dialog",
+            "fullName": "Alert and Message Dialogs",
+            "url": "https://www.w3.org/WAI/ARIA/apg/patterns/alertdialog/",
+            "description": "An alert dialog is a modal dialog that interrupts the user's workflow to communicate an important message and acquire a response.",
+            "category": "dialog"
+        },
+        {
+            "id": "breadcrumb",
+            "name": "Breadcrumb",
+            "fullName": "Breadcrumb",
+            "url": "https://www.w3.org/WAI/ARIA/apg/patterns/breadcrumb/",
+            "description": "A breadcrumb trail consists of a list of links to the parent pages of the current page in hierarchical order.",
+            "category": "navigation"
+        },
+        {
+            "id": "button",
+            "name": "Button",
+            "fullName": "Button",
+            "url": "https://www.w3.org/WAI/ARIA/apg/patterns/button/",
+            "description": "A button is a widget that enables users to trigger an action or event, such as submitting a form, opening a dialog, canceling an action, or performing a delete operation.",
+            "category": "widget"
+        },
+        {
+            "id": "carousel",
+            "name": "Carousel",
+            "fullName": "Carousel (Slide Show or Image Rotator)",
+            "url": "https://www.w3.org/WAI/ARIA/apg/patterns/carousel/",
+            "description": "A carousel presents a set of items, such as images or cards, in a rotating sequence.",
+            "category": "widget"
+        },
+        {
+            "id": "checkbox",
+            "name": "Checkbox",
+            "fullName": "Checkbox",
+            "url": "https://www.w3.org/WAI/ARIA/apg/patterns/checkbox/",
+            "description": "A checkbox is an input that allows users to choose one or more items from a set, or to turn an option on or off.",
+            "category": "widget"
+        },
+        {
+            "id": "combobox",
+            "name": "Combobox",
+            "fullName": "Combobox",
+            "url": "https://www.w3.org/WAI/ARIA/apg/patterns/combobox/",
+            "description": "A combobox is an input widget with an associated popup that enables users to select a value for the combobox from a collection of possible values.",
+            "category": "widget"
+        },
+        {
+            "id": "dialog-modal",
+            "name": "Dialog",
+            "fullName": "Dialog (Modal)",
+            "url": "https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/",
+            "description": "A dialog is a window overlaid on either the primary window or another dialog window.",
+            "category": "dialog"
+        },
+        {
+            "id": "disclosure",
+            "name": "Disclosure",
+            "fullName": "Disclosure (Show/Hide)",
+            "url": "https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/",
+            "description": "A disclosure is a button that controls the visibility of a section of content.",
+            "category": "disclosure"
+        },
+        {
+            "id": "feed",
+            "name": "Feed",
+            "fullName": "Feed",
+            "url": "https://www.w3.org/WAI/ARIA/apg/patterns/feed/",
+            "description": "A feed is a section of a page that automatically loads new sections of content as the user scrolls.",
+            "category": "widget"
+        },
+        {
+            "id": "grid",
+            "name": "Grid",
+            "fullName": "Grid (Interactive Tabular Data and Layout Containers)",
+            "url": "https://www.w3.org/WAI/ARIA/apg/patterns/grid/",
+            "description": "A grid widget is a container that enables users to navigate the information or interactive elements it contains using directional navigation keys.",
+            "category": "widget"
+        },
+        {
+            "id": "landmarks",
+            "name": "Landmarks",
+            "fullName": "Landmarks",
+            "url": "https://www.w3.org/WAI/ARIA/apg/patterns/landmarks/",
+            "description": "Landmarks are a way to identify regions of a page, enabling keyboard users to quickly navigate to various sections of a page.",
+            "category": "navigation"
+        },
+        {
+            "id": "link",
+            "name": "Link",
+            "fullName": "Link",
+            "url": "https://www.w3.org/WAI/ARIA/apg/patterns/link/",
+            "description": "A link widget provides an interactive reference to a resource.",
+            "category": "widget"
+        },
+        {
+            "id": "listbox",
+            "name": "Listbox",
+            "fullName": "Listbox",
+            "url": "https://www.w3.org/WAI/ARIA/apg/patterns/listbox/",
+            "description": "A listbox widget presents a list of options and allows a user to select one or more of them.",
+            "category": "widget"
+        },
+        {
+            "id": "menubar",
+            "name": "Menu/Menubar",
+            "fullName": "Menu and Menubar",
+            "url": "https://www.w3.org/WAI/ARIA/apg/patterns/menubar/",
+            "description": "A menu is a widget that offers a list of choices to the user, such as a set of actions or functions.",
+            "category": "widget"
+        },
+        {
+            "id": "menu-button",
+            "name": "Menu Button",
+            "fullName": "Menu Button",
+            "url": "https://www.w3.org/WAI/ARIA/apg/patterns/menu-button/",
+            "description": "A menu button is a button that opens a menu.",
+            "category": "widget"
+        },
+        {
+            "id": "meter",
+            "name": "Meter",
+            "fullName": "Meter",
+            "url": "https://www.w3.org/WAI/ARIA/apg/patterns/meter/",
+            "description": "A meter is a graphical display of a numeric value that varies within a defined range.",
+            "category": "widget"
+        },
+        {
+            "id": "radio",
+            "name": "Radio Group",
+            "fullName": "Radio Group",
+            "url": "https://www.w3.org/WAI/ARIA/apg/patterns/radio/",
+            "description": "A radio group is a set of checkable buttons, known as radio buttons, where no more than one of the buttons can be checked at a time.",
+            "category": "widget"
+        },
+        {
+            "id": "slider",
+            "name": "Slider",
+            "fullName": "Slider",
+            "url": "https://www.w3.org/WAI/ARIA/apg/patterns/slider/",
+            "description": "A slider is an input where the user selects a value from within a given range.",
+            "category": "widget"
+        },
+        {
+            "id": "slider-multithumb",
+            "name": "Multi-Thumb Slider",
+            "fullName": "Slider (Multi-Thumb)",
+            "url": "https://www.w3.org/WAI/ARIA/apg/patterns/slider-multithumb/",
+            "description": "A multi-thumb slider is a slider with two or more thumbs that each set a value in a group of related values.",
+            "category": "widget"
+        },
+        {
+            "id": "spinbutton",
+            "name": "Spinbutton",
+            "fullName": "Spinbutton",
+            "url": "https://www.w3.org/WAI/ARIA/apg/patterns/spinbutton/",
+            "description": "A spinbutton is an input widget that restricts its value to a set or range of discrete values.",
+            "category": "widget"
+        },
+        {
+            "id": "switch",
+            "name": "Switch",
+            "fullName": "Switch",
+            "url": "https://www.w3.org/WAI/ARIA/apg/patterns/switch/",
+            "description": "A switch is an input widget that allows users to choose one of two values: on or off.",
+            "category": "widget"
+        },
+        {
+            "id": "table",
+            "name": "Table",
+            "fullName": "Table",
+            "url": "https://www.w3.org/WAI/ARIA/apg/patterns/table/",
+            "description": "Like an HTML table element, a WAI-ARIA table is a static tabular structure containing one or more rows that each contain one or more cells; it is not an interactive widget.",
+            "category": "structure"
+        },
+        {
+            "id": "tabs",
+            "name": "Tabs",
+            "fullName": "Tabs",
+            "url": "https://www.w3.org/WAI/ARIA/apg/patterns/tabs/",
+            "description": "Tabs are a set of layered sections of content, known as tab panels, that display one panel of content at a time.",
+            "category": "widget"
+        },
+        {
+            "id": "toolbar",
+            "name": "Toolbar",
+            "fullName": "Toolbar",
+            "url": "https://www.w3.org/WAI/ARIA/apg/patterns/toolbar/",
+            "description": "A toolbar is a container for grouping a set of controls, such as buttons, menubuttons, or checkboxes.",
+            "category": "widget"
+        },
+        {
+            "id": "tooltip",
+            "name": "Tooltip",
+            "fullName": "Tooltip",
+            "url": "https://www.w3.org/WAI/ARIA/apg/patterns/tooltip/",
+            "description": "A tooltip is a popup that displays information related to an element when the element receives keyboard focus or the mouse hovers over it.",
+            "category": "widget"
+        },
+        {
+            "id": "treeview",
+            "name": "Tree View",
+            "fullName": "Tree View",
+            "url": "https://www.w3.org/WAI/ARIA/apg/patterns/treeview/",
+            "description": "A tree view widget presents a hierarchical list.",
+            "category": "widget"
+        },
+        {
+            "id": "treegrid",
+            "name": "Treegrid",
+            "fullName": "Treegrid",
+            "url": "https://www.w3.org/WAI/ARIA/apg/patterns/treegrid/",
+            "description": "A treegrid widget presents a hierarchical data grid consisting of tabular information that is editable or interactive.",
+            "category": "widget"
+        },
+        {
+            "id": "windowsplitter",
+            "name": "Window Splitter",
+            "fullName": "Window Splitter",
+            "url": "https://www.w3.org/WAI/ARIA/apg/patterns/windowsplitter/",
+            "description": "A window splitter is a moveable separator between two sections, or panes, of a window that enables users to change the relative size of the panes.",
+            "category": "widget"
+        }
+    ]
+}

@@ -3,16 +3,24 @@ import React, { useState, useMemo } from 'react';
 import { A11yIssue, Severity } from '../types';
 import { InfoTooltip } from './InfoTooltip';
 import { getWCAGLink, parseWCAGStandards } from '../utils/wcagUtils';
+import { getAPGPatternUrl } from '../services/apgPatternsService';
 
 interface TableViewProps {
   issues: A11yIssue[];
   onSeek: (timestamp: string) => void;
 }
 
-type SortKey = 'timestamp' | 'issue_title' | 'severity' | 'wcag_reference' | 'axe_rule_id' | 'ease_of_fix';
+type SortKey = 'timestamp' | 'issue_title' | 'severity' | 'wcag_reference' | 'axe_rule_id' | 'ease_of_fix' | 'priority';
 type SortDirection = 'asc' | 'desc';
 
 const severityOrder = { [Severity.CRITICAL]: 0, [Severity.SERIOUS]: 1, [Severity.MODERATE]: 2, [Severity.MINOR]: 3 };
+// Map severity strings to numeric values for RICE calculation
+const severityValue: Record<string, number> = {
+  'Critical': 4,
+  'Serious': 3,
+  'Moderate': 2,
+  'Minor': 1
+};
 
 const getSeverityBadge = (severity: Severity | string): { label: string; color: string; order: number } => {
   // Normalize severity to handle both old (lowercase) and new (capitalized) formats
@@ -43,16 +51,21 @@ const getSeverityBadge = (severity: Severity | string): { label: string; color: 
 const getEaseOfFix = (issue: A11yIssue): { label: string; color: string; order: number } => {
   // Use AI-provided ease_of_fix if available
   if (issue.ease_of_fix) {
-    const easeMap = {
+    const easeMap: Record<string, { label: string; color: string; order: number }> = {
       'Easy': { label: 'Easy', color: 'bg-emerald-50 text-emerald-600 border-emerald-100', order: 1 },
       'Moderate': { label: 'Moderate', color: 'bg-amber-50 text-amber-600 border-amber-100', order: 2 },
       'Hard': { label: 'Hard', color: 'bg-red-50 text-red-600 border-red-100', order: 3 }
     };
-    return easeMap[issue.ease_of_fix];
+    const result = easeMap[issue.ease_of_fix];
+    if (result) {
+      return result;
+    }
+    console.warn('Unrecognized ease_of_fix value:', issue.ease_of_fix);
   }
 
   // Fallback to heuristic calculation
-  const isManual = !issue.axe_rule_id ||
+  const isManual = issue.apg_pattern ||
+    !issue.axe_rule_id ||
     issue.axe_rule_id.toLowerCase().includes('manual') ||
     issue.axe_rule_id.toLowerCase().includes('none') ||
     issue.axe_rule_id === 'no-axe-rule';
@@ -75,10 +88,58 @@ const getEaseOfFix = (issue: A11yIssue): { label: string; color: string; order: 
   return { label: 'Moderate', color: 'bg-amber-50 text-amber-600 border-amber-100', order: 2 };
 };
 
+/**
+ * Calculate RICE Priority Score
+ * Formula: (Severity² × Confidence) / Effort
+ * 
+ * - Severity: 1-4 based on severity level (Critical=4, Serious=3, Moderate=2, Minor=1)
+ * - Impact: Severity² to emphasize critical issues (1, 4, 9, or 16)
+ * - Confidence: 1.0 for axe-core rules, 0.7 for manual verification
+ * - Effort: 1 (Easy), 2 (Moderate), 3 (Hard)
+ * 
+ * Returns: Score from 0-16, where higher = higher priority
+ */
+const calculatePriority = (issue: A11yIssue): number => {
+  // Get severity value (1-4) - handle both string and enum values
+  const severityKey = String(issue.severity);
+  const severity = severityValue[severityKey] ?? 1;
+
+  // Calculate impact (severity squared)
+  const impact = severity * severity;
+
+  // Determine confidence based on detection method
+  const isManual = issue.apg_pattern ||
+    !issue.axe_rule_id ||
+    issue.axe_rule_id.toLowerCase().includes('manual') ||
+    issue.axe_rule_id.toLowerCase().includes('none') ||
+    issue.axe_rule_id === 'no-axe-rule';
+  const confidence = isManual ? 0.7 : 1.0;
+
+  // Get effort from ease of fix
+  const easeOfFix = getEaseOfFix(issue);
+  const effort = easeOfFix.order; // 1 (Easy), 2 (Moderate), 3 (Hard)
+
+  // Calculate RICE score
+  const score = (impact * confidence) / effort;
+
+  return score;
+};
+
+const getPriorityBadge = (score: number): { label: string; color: string } => {
+  if (score >= 10) {
+    return { label: 'P0 - Critical', color: 'bg-red-50 text-red-700 border-red-200' };
+  } else if (score >= 6) {
+    return { label: 'P1 - High', color: 'bg-orange-50 text-orange-700 border-orange-200' };
+  } else if (score >= 3) {
+    return { label: 'P2 - Medium', color: 'bg-amber-50 text-amber-700 border-amber-200' };
+  } else {
+    return { label: 'P3 - Low', color: 'bg-slate-50 text-slate-600 border-slate-200' };
+  }
+};
 
 export const TableView: React.FC<TableViewProps> = ({ issues, onSeek }) => {
-  const [sortKey, setSortKey] = useState<SortKey>('severity');
-  const [direction, setDirection] = useState<SortDirection>('asc');
+  const [sortKey, setSortKey] = useState<SortKey>('priority');
+  const [direction, setDirection] = useState<SortDirection>('desc');
 
   const sortedIssues = useMemo(() => {
     const sorted = [...issues].sort((a, b) => {
@@ -93,6 +154,11 @@ export const TableView: React.FC<TableViewProps> = ({ issues, onSeek }) => {
       if (sortKey === 'ease_of_fix') {
         valA = getEaseOfFix(a).order;
         valB = getEaseOfFix(b).order;
+      }
+
+      if (sortKey === 'priority') {
+        valA = calculatePriority(a);
+        valB = calculatePriority(b);
       }
 
       if (valA < valB) return direction === 'asc' ? -1 : 1;
@@ -151,6 +217,35 @@ export const TableView: React.FC<TableViewProps> = ({ issues, onSeek }) => {
                   />
                 </div>
               </th>
+              <th className="px-8 py-5 text-sm text-slate-400 tracking-widest whitespace-nowrap">
+                <div className="flex items-center gap-3">
+                  <button onClick={() => handleSort('ease_of_fix')} className="flex items-center gap-1 hover:text-slate-600 transition-colors">
+                    Ease of Fix {sortKey === 'ease_of_fix' && (direction === 'asc' ? '↑' : '↓')}
+                  </button>
+                  <InfoTooltip content="Estimated difficulty to resolve this issue. Based on severity and whether automated testing is available." position="top" />
+                </div>
+              </th>
+              <th className="px-8 py-5 text-sm text-slate-400 tracking-widest whitespace-nowrap">
+                <div className="flex items-center gap-3">
+                  <button onClick={() => handleSort('priority')} className="flex items-center gap-1 hover:text-slate-600 transition-colors">
+                    Priority {sortKey === 'priority' && (direction === 'asc' ? '↑' : '↓')}
+                  </button>
+                  <InfoTooltip
+                    content={
+                      <div className="space-y-2">
+                        <div><strong>RICE Score:</strong> (Severity² × Confidence) / Effort</div>
+                        <div className="text-xs space-y-1 mt-2 pt-2 border-t border-slate-200">
+                          <div><strong>P0 (10+):</strong> Critical priority - fix immediately</div>
+                          <div><strong>P1 (6-10):</strong> High priority - fix soon</div>
+                          <div><strong>P2 (3-6):</strong> Medium priority - schedule fix</div>
+                          <div><strong>P3 (&lt;3):</strong> Low priority - backlog</div>
+                        </div>
+                      </div>
+                    }
+                    position="top"
+                  />
+                </div>
+              </th>
               <th className="px-8 py-5 text-sm text-slate-400 tracking-widest">
                 <div className="flex items-center gap-3">
                   <button onClick={() => handleSort('wcag_reference')} className="flex items-center gap-1 hover:text-slate-600 transition-colors">
@@ -162,24 +257,17 @@ export const TableView: React.FC<TableViewProps> = ({ issues, onSeek }) => {
               <th className="px-8 py-5 text-sm text-slate-400 tracking-widest">
                 <div className="flex items-center gap-3">
                   <button onClick={() => handleSort('axe_rule_id')} className="flex items-center gap-1 hover:text-slate-600 transition-colors">
-                    Axe Rule {sortKey === 'axe_rule_id' && (direction === 'asc' ? '↑' : '↓')}
+                    Axe Rule / APG {sortKey === 'axe_rule_id' && (direction === 'asc' ? '↑' : '↓')}
                   </button>
-                  <InfoTooltip content="Axe-core rule ID for automated testing. 'Manual Verification' means this requires human review." position="top" />
-                </div>
-              </th>
-              <th className="px-8 py-5 text-sm text-slate-400 tracking-widest whitespace-nowrap">
-                <div className="flex items-center gap-3">
-                  <button onClick={() => handleSort('ease_of_fix')} className="flex items-center gap-1 hover:text-slate-600 transition-colors">
-                    Ease of Fix {sortKey === 'ease_of_fix' && (direction === 'asc' ? '↑' : '↓')}
-                  </button>
-                  <InfoTooltip content="Estimated difficulty to resolve this issue. Based on severity and whether automated testing is available." position="top" />
+                  <InfoTooltip content="Axe-core rule ID for automated testing, or APG pattern for design patterns requiring manual review." position="top" />
                 </div>
               </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
             {sortedIssues.map((issue, idx) => {
-              const isManual = !issue.axe_rule_id ||
+              const isManual = issue.apg_pattern ||
+                !issue.axe_rule_id ||
                 issue.axe_rule_id.toLowerCase().includes('manual') ||
                 issue.axe_rule_id.toLowerCase().includes('none') ||
                 issue.axe_rule_id === 'no-axe-rule';
@@ -209,6 +297,21 @@ export const TableView: React.FC<TableViewProps> = ({ issues, onSeek }) => {
                       {getSeverityBadge(issue.severity).label}
                     </span>
                   </td>
+                  <td className="px-8 py-6">
+                    <span className={`text-sm px-2.5 py-1 rounded-md border tracking-widest whitespace-nowrap ${getEaseOfFix(issue).color}`}>
+                      {getEaseOfFix(issue).label}
+                    </span>
+                  </td>
+                  <td className="px-8 py-6">
+                    <div className="flex flex-col gap-1">
+                      <span className={`text-sm px-2.5 py-1 rounded-md border tracking-widest whitespace-nowrap ${getPriorityBadge(calculatePriority(issue)).color}`}>
+                        {getPriorityBadge(calculatePriority(issue)).label}
+                      </span>
+                      <span className="text-xs text-slate-400 tracking-wider">
+                        Score: {calculatePriority(issue).toFixed(1)}
+                      </span>
+                    </div>
+                  </td>
                   <td className="px-8 py-6 min-w-[200px]">
                     <div className="flex flex-col gap-2">
                       {parseWCAGStandards(issue.wcag_reference).map((standard, stdIdx) => (
@@ -232,7 +335,17 @@ export const TableView: React.FC<TableViewProps> = ({ issues, onSeek }) => {
                     </div>
                   </td>
                   <td className="px-8 py-6">
-                    {isManual ? (
+                    {issue.apg_pattern ? (
+                      <a
+                        href={getAPGPatternUrl(issue.apg_pattern) || 'https://www.w3.org/WAI/ARIA/apg/patterns/'}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-purple-600 tracking-widest underline whitespace-nowrap"
+                        title={`ARIA APG Pattern: ${issue.apg_pattern}`}
+                      >
+                        APG: {issue.apg_pattern}
+                      </a>
+                    ) : isManual ? (
                       <span className="text-sm text-slate-300 tracking-widest italic">
                         Manual Verification
                       </span>
@@ -246,11 +359,6 @@ export const TableView: React.FC<TableViewProps> = ({ issues, onSeek }) => {
                         {issue.axe_rule_id}
                       </a>
                     )}
-                  </td>
-                  <td className="px-8 py-6">
-                    <span className={`text-sm px-2.5 py-1 rounded-md border tracking-widest whitespace-nowrap ${getEaseOfFix(issue).color}`}>
-                      {getEaseOfFix(issue).label}
-                    </span>
                   </td>
                 </tr>
               );

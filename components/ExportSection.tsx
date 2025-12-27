@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { A11yIssue, GroupedReport } from '../types';
+import { getAPGPatternUrl } from '../services/apgPatternsService';
 
 interface ExportSectionProps {
   issues: A11yIssue[];
@@ -23,13 +24,14 @@ export const ExportSection: React.FC<ExportSectionProps> = ({ issues, grouped })
   };
 
   const exportCSV = () => {
-    const headers = ['Summary', 'Description', 'Severity', 'WCAG Reference', 'Axe Rule', 'Suggested Fix', 'Timestamp', 'Alt Text', 'Status'];
+    const headers = ['Summary', 'Description', 'Severity', 'WCAG Reference', 'Axe Rule', 'APG Pattern', 'Suggested Fix', 'Timestamp', 'Alt Text', 'Status'];
     const rows = issues.map(i => [
       i.issue_title,
       i.issue_description,
       i.severity,
       i.wcag_reference,
       i.axe_rule_id,
+      i.apg_pattern || '',
       i.suggested_fix,
       i.timestamp,
       i.generated_alt_text || '',
@@ -52,6 +54,10 @@ export const ExportSection: React.FC<ExportSectionProps> = ({ issues, grouped })
         md += `- **Description**: ${i.issue_description}\n`;
         md += `- **Severity**: ${i.severity}\n`;
         md += `- **WCAG**: ${i.wcag_reference}\n`;
+        if (i.apg_pattern) {
+          const patternUrl = getAPGPatternUrl(i.apg_pattern);
+          md += `- **APG Pattern**: [${i.apg_pattern}](${patternUrl || 'https://www.w3.org/WAI/ARIA/apg/patterns/'})\n`;
+        }
         md += `- **Axe Rule**: ${i.axe_rule_id}\n`;
         md += `- **Timestamp**: ${i.timestamp}\n`;
         md += `- **Suggested Fix**: ${i.suggested_fix}\n`;

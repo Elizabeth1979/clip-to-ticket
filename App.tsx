@@ -7,6 +7,7 @@ import { TableView } from './components/TableView';
 import { AIAnalyst } from './components/AIAnalyst';
 import { TransparencyPanel } from './components/TransparencyPanel';
 import { InfoTooltip } from './components/InfoTooltip';
+import { RICEExplainer } from './components/RICEExplainer';
 import { Chat } from '@google/genai';
 
 // Elli is the queen
@@ -714,7 +715,8 @@ const App: React.FC = () => {
 
             {/* Transparency Panel (Developer Mode) */}
             {isDeveloperMode && result?.metadata && (
-              <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8">
+                <RICEExplainer />
                 <TransparencyPanel metadata={result.metadata} issueCount={result.issues.length} />
               </div>
             )}
