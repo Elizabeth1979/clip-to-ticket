@@ -101,21 +101,27 @@ export const TableView: React.FC<TableViewProps> = ({ issues, onSeek }) => {
         <table className="w-full text-left border-collapse table-auto">
           <thead>
             <tr className="bg-slate-50 border-b border-slate-100">
-              <th className="px-8 py-5 text-sm text-slate-400 tracking-widest cursor-pointer group whitespace-nowrap" onClick={() => handleSort('timestamp')}>
-                <div className="flex items-center gap-2">
-                  Time {sortKey === 'timestamp' && (direction === 'asc' ? '↑' : '↓')}
+              <th className="px-8 py-5 text-sm text-slate-400 tracking-widest whitespace-nowrap">
+                <div className="flex items-center gap-3">
+                  <button onClick={() => handleSort('timestamp')} className="flex items-center gap-1 hover:text-slate-600 transition-colors">
+                    Time {sortKey === 'timestamp' && (direction === 'asc' ? '↑' : '↓')}
+                  </button>
                   <InfoTooltip content="Click timestamp to jump to this moment in the video" position="top" />
                 </div>
               </th>
-              <th className="px-8 py-5 text-sm text-slate-400 tracking-widest cursor-pointer group" onClick={() => handleSort('issue_title')}>
-                <div className="flex items-center gap-2">
-                  Issue & Context {sortKey === 'issue_title' && (direction === 'asc' ? '↑' : '↓')}
+              <th className="px-8 py-5 text-sm text-slate-400 tracking-widest">
+                <div className="flex items-center gap-3">
+                  <button onClick={() => handleSort('issue_title')} className="flex items-center gap-1 hover:text-slate-600 transition-colors">
+                    Issue & Context {sortKey === 'issue_title' && (direction === 'asc' ? '↑' : '↓')}
+                  </button>
                   <InfoTooltip content="Description of the accessibility barrier detected by AI analysis of your video" position="top" />
                 </div>
               </th>
-              <th className="px-8 py-5 text-sm text-slate-400 tracking-widest cursor-pointer group whitespace-nowrap" onClick={() => handleSort('severity')}>
-                <div className="flex items-center gap-2">
-                  Impact {sortKey === 'severity' && (direction === 'asc' ? '↑' : '↓')}
+              <th className="px-8 py-5 text-sm text-slate-400 tracking-widest whitespace-nowrap">
+                <div className="flex items-center gap-3">
+                  <button onClick={() => handleSort('severity')} className="flex items-center gap-1 hover:text-slate-600 transition-colors">
+                    Impact {sortKey === 'severity' && (direction === 'asc' ? '↑' : '↓')}
+                  </button>
                   <InfoTooltip
                     content={
                       <div className="space-y-1">
@@ -129,21 +135,27 @@ export const TableView: React.FC<TableViewProps> = ({ issues, onSeek }) => {
                   />
                 </div>
               </th>
-              <th className="px-8 py-5 text-sm text-slate-400 tracking-widest cursor-pointer group" onClick={() => handleSort('wcag_reference')}>
-                <div className="flex items-center gap-2">
-                  Standards {sortKey === 'wcag_reference' && (direction === 'asc' ? '↑' : '↓')}
+              <th className="px-8 py-5 text-sm text-slate-400 tracking-widest">
+                <div className="flex items-center gap-3">
+                  <button onClick={() => handleSort('wcag_reference')} className="flex items-center gap-1 hover:text-slate-600 transition-colors">
+                    Standards {sortKey === 'wcag_reference' && (direction === 'asc' ? '↑' : '↓')}
+                  </button>
                   <InfoTooltip content="WCAG 2.2 Success Criteria violated. Click to view official documentation." position="top" />
                 </div>
               </th>
-              <th className="px-8 py-5 text-sm text-slate-400 tracking-widest cursor-pointer group" onClick={() => handleSort('axe_rule_id')}>
-                <div className="flex items-center gap-2">
-                  Axe Rule {sortKey === 'axe_rule_id' && (direction === 'asc' ? '↑' : '↓')}
+              <th className="px-8 py-5 text-sm text-slate-400 tracking-widest">
+                <div className="flex items-center gap-3">
+                  <button onClick={() => handleSort('axe_rule_id')} className="flex items-center gap-1 hover:text-slate-600 transition-colors">
+                    Axe Rule {sortKey === 'axe_rule_id' && (direction === 'asc' ? '↑' : '↓')}
+                  </button>
                   <InfoTooltip content="Axe-core rule ID for automated testing. 'Manual Verification' means this requires human review." position="top" />
                 </div>
               </th>
-              <th className="px-8 py-5 text-sm text-slate-400 tracking-widest cursor-pointer group whitespace-nowrap" onClick={() => handleSort('ease_of_fix')}>
-                <div className="flex items-center gap-2">
-                  Ease of Fix {sortKey === 'ease_of_fix' && (direction === 'asc' ? '↑' : '↓')}
+              <th className="px-8 py-5 text-sm text-slate-400 tracking-widest whitespace-nowrap">
+                <div className="flex items-center gap-3">
+                  <button onClick={() => handleSort('ease_of_fix')} className="flex items-center gap-1 hover:text-slate-600 transition-colors">
+                    Ease of Fix {sortKey === 'ease_of_fix' && (direction === 'asc' ? '↑' : '↓')}
+                  </button>
                   <InfoTooltip content="Estimated difficulty to resolve this issue. Based on severity and whether automated testing is available." position="top" />
                 </div>
               </th>

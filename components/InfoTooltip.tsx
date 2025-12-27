@@ -134,11 +134,11 @@ export const InfoTooltip: React.FC<InfoTooltipProps> = ({
                         e.stopPropagation();
                         setIsVisible(!isVisible);
                     }}
-                    className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-indigo-100 text-indigo-600 hover:bg-indigo-200 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1"
+                    className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 hover:bg-indigo-200 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1"
                     aria-label="More information"
                     aria-expanded={isVisible}
                 >
-                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                     </svg>
                 </button>
@@ -154,7 +154,7 @@ export const InfoTooltip: React.FC<InfoTooltipProps> = ({
                     <div
                         ref={tooltipRef}
                         role="tooltip"
-                        className="fixed z-[9999] pointer-events-auto animate-in fade-in duration-200"
+                        className="fixed z-[9999] pointer-events-auto"
                         style={tooltipStyle}
                     >
                         <div className="relative bg-slate-900 text-white text-sm px-5 py-4 rounded-xl shadow-2xl max-w-md whitespace-normal leading-relaxed">
