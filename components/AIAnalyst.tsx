@@ -130,7 +130,7 @@ export const AIAnalyst: React.FC<AIAnalystProps> = ({ isOpen, onClose, chat }) =
               onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
               placeholder="Ask for fix code or documentation..."
               rows={2}
-              className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-[14px] focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all resize-none pr-14 custom-scrollbar"
+              className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-[14px] transition-all resize-none pr-14 custom-scrollbar"
             />
             <button
               onClick={handleSend}

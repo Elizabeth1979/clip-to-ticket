@@ -681,7 +681,7 @@ const App: React.FC = () => {
                             <input
                               type="text"
                               placeholder={s}
-                              className="flex-1 text-sm px-3 py-2 bg-white border border-slate-200 rounded-lg outline-none"
+                              className="flex-1 text-sm px-3 py-2 bg-white border border-slate-200 rounded-lg"
                               onKeyDown={(e) => { if (e.key === 'Enter') handleRenameSpeaker(s, e.currentTarget.value); }}
                             />
                           </div>

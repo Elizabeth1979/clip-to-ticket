@@ -134,7 +134,7 @@ export const InfoTooltip: React.FC<InfoTooltipProps> = ({
                         e.stopPropagation();
                         setIsVisible(!isVisible);
                     }}
-                    className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 hover:bg-indigo-200 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1"
+                    className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 hover:bg-indigo-200 transition-colors cursor-pointer"
                     aria-label="More information"
                     aria-expanded={isVisible}
                 >
