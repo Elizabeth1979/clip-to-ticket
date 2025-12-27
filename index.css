@@ -25,20 +25,21 @@ body {
 }
 
 /* Global Focus Ring Styles */
-*:focus {
+#root *:focus {
   outline: none;
 }
 
-*:focus-visible {
-  outline: 3px solid #00639b !important;
+/* Higher specificity selector (ID = 1-0-0) to override generic utility classes (0-1-0) without !important */
+#root *:focus-visible {
+  outline: 3px solid #00639b;
   /* Google Calendar focus color */
-  outline-offset: 2px !important;
-  transition: border-radius 0.35s cubic-bezier(0.27, 1.06, 0.18, 1);
+  outline-offset: 2px;
+  transition: all 0.35s cubic-bezier(0.27, 1.06, 0.18, 1);
 }
 
 /* Apply pulse animation only when motion is allowed */
 @media (prefers-reduced-motion: no-preference) {
-  *:focus-visible {
+  #root *:focus-visible {
     animation: focus-pulse 1.2s cubic-bezier(0.27, 1.06, 0.18, 1);
   }
 }
