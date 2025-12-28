@@ -540,7 +540,7 @@ const App: React.FC = () => {
                   }}
                   className="flex items-center gap-1.5 text-sm tracking-widest text-indigo-600 hover:text-indigo-700 underline decoration-indigo-300 hover:decoration-indigo-500 underline-offset-4 transition-all"
                 >
-                  System Prompt
+                  Product Transparency
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 13l-3 3m0 0l-3-3m3 3V8" />
                   </svg>
@@ -807,7 +807,15 @@ const App: React.FC = () => {
 
             {/* Product Transparency Section */}
             {result?.metadata && (
-              <div id="product-transparency" className="w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div id="product-transparency" className="scroll-mt-24 mb-6 flex items-center gap-4">
+                  <h3 className="text-sm tracking-[0.25em] text-slate-900 uppercase">Product Transparency</h3>
+                  <InfoTooltip
+                    content="Detailed technical breakdown of the AI analysis pipeline and the RICE priority scoring system."
+                    position="right"
+                  />
+                  <div className="h-px flex-1 bg-slate-200"></div>
+                </div>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
                   <TransparencyPanel metadata={result.metadata} issueCount={result.issues.length} />
                   <RICEExplainer />
