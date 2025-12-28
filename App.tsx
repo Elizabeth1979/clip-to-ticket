@@ -324,7 +324,7 @@ const App: React.FC = () => {
 
   const stopAnalysis = () => {
     if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
+      abortControllerRef.current.abort('User cancelled the analysis');
     }
   };
 

@@ -195,6 +195,12 @@ export class GeminiService {
         metadata: data.metadata // Include metadata from backend
       };
     } catch (err: any) {
+      // Re-throw abort errors so they can be handled properly by the caller
+      if (err.name === 'AbortError' || signal?.aborted) {
+        const abortError = new Error('Analysis cancelled');
+        abortError.name = 'AbortError';
+        throw abortError;
+      }
       console.error("Failed to analyze video:", err);
       throw new Error(err.message || `Video Analysis Pipeline Error: Unable to complete the analysis process. Common causes include: (1) Backend server unreachable at ${API_BASE_URL}, (2) Network connectivity issues, (3) Video encoding not supported, or (4) Response parsing failure. Check your network connection and ensure the backend server is running.`);
     }
@@ -365,6 +371,12 @@ export class GeminiService {
         metadata: data.metadata
       };
     } catch (err: any) {
+      // Re-throw abort errors so they can be handled properly by the caller
+      if (err.name === 'AbortError' || signal?.aborted) {
+        const abortError = new Error('Analysis cancelled');
+        abortError.name = 'AbortError';
+        throw abortError;
+      }
       console.error("Failed to analyze media:", err);
       throw new Error(err.message || `Media Analysis Pipeline Error: Unable to complete the analysis process.`);
     }
