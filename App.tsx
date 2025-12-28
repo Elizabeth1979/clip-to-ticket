@@ -46,7 +46,7 @@ const App: React.FC = () => {
 
   const [isAnalystOpen, setIsAnalystOpen] = useState(false);
   const [analystChat, setAnalystChat] = useState<Chat | null>(null);
-  const [isDeveloperMode, setIsDeveloperMode] = useState(false);
+
   const [showCaptions, setShowCaptions] = useState(true);
   const [captionTrackUrl, setCaptionTrackUrl] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -391,18 +391,6 @@ const App: React.FC = () => {
                 New Audit
               </button>
             )}
-            <button
-              onClick={() => setIsDeveloperMode(!isDeveloperMode)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm tracking-widest transition-all ${isDeveloperMode
-                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200'
-                : 'bg-white text-slate-600 border border-slate-200 hover:border-indigo-600'
-                }`}
-            >
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-              </svg>
-              Developer Mode
-            </button>
             <span className="flex items-center gap-2 text-sm tracking-widest px-3 py-1 bg-indigo-50/50 text-indigo-600 rounded-full border border-indigo-100 shadow-sm">
               <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
               AI Assistant • WCAG 2.2 & Axe-Core Verified
@@ -545,20 +533,18 @@ const App: React.FC = () => {
                 </div>
               </div>
               <div className="flex items-center gap-4">
-                {isDeveloperMode && (
-                  <button
-                    onClick={() => {
-                      const element = document.getElementById('product-transparency');
-                      element?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }}
-                    className="flex items-center gap-1.5 text-sm tracking-widest text-indigo-600 hover:text-indigo-700 underline decoration-indigo-300 hover:decoration-indigo-500 underline-offset-4 transition-all"
-                  >
-                    Product Transparency
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 13l-3 3m0 0l-3-3m3 3V8" />
-                    </svg>
-                  </button>
-                )}
+                <button
+                  onClick={() => {
+                    const element = document.getElementById('product-transparency');
+                    element?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }}
+                  className="flex items-center gap-1.5 text-sm tracking-widest text-indigo-600 hover:text-indigo-700 underline decoration-indigo-300 hover:decoration-indigo-500 underline-offset-4 transition-all"
+                >
+                  Product Transparency
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 13l-3 3m0 0l-3-3m3 3V8" />
+                  </svg>
+                </button>
                 <ExportSection issues={result.issues} grouped={groupedIssues} />
               </div>
             </div>
@@ -819,8 +805,8 @@ const App: React.FC = () => {
               />
             </div>
 
-            {/* Product Transparency Section (Developer Mode) */}
-            {isDeveloperMode && result?.metadata && (
+            {/* Product Transparency Section */}
+            {result?.metadata && (
               <div id="product-transparency" className="w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="mb-6 flex items-center gap-4">
                   <h3 className="text-sm tracking-[0.25em] text-slate-900">Product Transparency</h3>
