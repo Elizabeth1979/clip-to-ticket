@@ -362,23 +362,14 @@ export const TableView: React.FC<TableViewProps> = ({ issues, onSeek, onUpdateIs
 
               return (
                 <tr key={idx} className={`transition-colors align-top ${isEditing ? 'bg-indigo-50/50' : 'hover:bg-slate-50/50'}`}>
-                  {/* Timestamp */}
+                  {/* Timestamp (not editable) */}
                   <td className="px-8 py-6">
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        value={editForm?.timestamp || ''}
-                        onChange={(e) => handleFormChange('timestamp', e.target.value)}
-                        className="text-sm text-slate-900 bg-white px-3 py-1.5 rounded-lg border border-indigo-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all w-24"
-                      />
-                    ) : (
-                      <button
-                        onClick={() => onSeek(issue.timestamp)}
-                        className="text-sm text-slate-900 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 hover:border-indigo-600 transition-colors whitespace-nowrap"
-                      >
-                        {issue.timestamp}
-                      </button>
-                    )}
+                    <button
+                      onClick={() => onSeek(issue.timestamp)}
+                      className="text-sm text-slate-900 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 hover:border-indigo-600 transition-colors whitespace-nowrap"
+                    >
+                      {issue.timestamp}
+                    </button>
                   </td>
 
                   {/* Issue Title */}
