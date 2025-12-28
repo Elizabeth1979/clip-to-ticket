@@ -1,5 +1,5 @@
 {
-    "name": "mediatoticket-server",
+    "name": "cliptoticket-server",
     "version": "1.0.0",
     "type": "module",
     "scripts": {

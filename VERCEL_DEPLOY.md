@@ -58,7 +58,7 @@ Once deployed, test these URLs (replace `your-app` with your Vercel URL):
    ```
    https://your-app.vercel.app
    ```
-   Should show your MediaToTicket interface
+   Should show your ClipToTicket interface
 
 ---
 

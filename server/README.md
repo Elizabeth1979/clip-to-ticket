@@ -1,4 +1,4 @@
-# MediaToTicket Server
+# ClipToTicket Server
 
 Secure backend proxy for Gemini API calls.
 

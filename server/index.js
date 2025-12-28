@@ -347,7 +347,7 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`🔒 MediaToTicket API Proxy running on port ${PORT}`);
+  console.log(`🔒 ClipToTicket API Proxy running on port ${PORT}`);
   console.log(`📍 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
   console.log(`🔑 API Key configured: ${!!process.env.GEMINI_API_KEY}`);
 });
