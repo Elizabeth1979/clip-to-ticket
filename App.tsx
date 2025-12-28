@@ -1,13 +1,14 @@
 
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { GeminiService } from './services/geminiService';
-import { A11yIssue, GroupedReport, Severity, AnalysisResult, TranscriptLine } from './types';
+import { A11yIssue, GroupedReport, Severity, AnalysisResult, TranscriptLine, ImageItem } from './types';
 import { ExportSection } from './components/ExportSection';
 import { TableView } from './components/TableView';
 import { AIAnalyst } from './components/AIAnalyst';
 import { TransparencyPanel } from './components/TransparencyPanel';
 import { InfoTooltip } from './components/InfoTooltip';
 import { RICEExplainer } from './components/RICEExplainer';
+import { ImageUploadSection } from './components/ImageUploadSection';
 import { Chat } from '@google/genai';
 
 // Elli is the queen
@@ -28,6 +29,7 @@ const STATUS_MESSAGES = [
 const App: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [images, setImages] = useState<ImageItem[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<AnalysisResult | null>(null);
@@ -220,13 +222,13 @@ const App: React.FC = () => {
 
   const loadExampleVideo = async () => {
     try {
-      const response = await fetch('/examples/Ed-WixUser-edited.mp4');
+      const response = await fetch('/examples/wix-video.mp4');
       if (!response.ok) {
-        setError("Example Video Not Found: Unable to locate 'Ed-WixUser-edited.mp4'. Expected location: /public/examples/Ed-WixUser-edited.mp4. Please verify the file exists in your project's public/examples directory.");
+        setError("Example Video Not Found: Unable to locate 'wix-video.mp4'. Expected location: /public/examples/wix-video.mp4. Please verify the file exists in your project's public/examples directory.");
         return;
       }
       const blob = await response.blob();
-      const exampleFile = new File([blob], 'Ed-WixUser-edited.mp4', { type: 'video/mp4' });
+      const exampleFile = new File([blob], 'wix-video.mp4', { type: 'video/mp4' });
 
       if (videoUrl) URL.revokeObjectURL(videoUrl);
       setFile(exampleFile);
@@ -238,7 +240,7 @@ const App: React.FC = () => {
       setCurrentTime(0);
       setAnalystChat(null);
     } catch (err) {
-      setError("Failed to Load Example Video: An error occurred while loading 'Ed-WixUser-edited.mp4' from /public/examples/. This could be due to: (1) File not found in the expected location, (2) Network error, or (3) File permissions issue. Please check the browser console for more details.");
+      setError("Failed to Load Example Video: An error occurred while loading 'wix-video.mp4' from /public/examples/. This could be due to: (1) File not found in the expected location, (2) Network error, or (3) File permissions issue. Please check the browser console for more details.");
     }
   };
 
@@ -254,9 +256,9 @@ const App: React.FC = () => {
     });
   };
 
-  const processVideo = async () => {
-    if (!file) {
-      setError("No Video Selected: Please upload a video file before starting the analysis. Click the upload area above or drag and drop a video file (MP4, WebM, MOV, or MKV format).");
+  const processMedia = async () => {
+    if (!file && images.length === 0) {
+      setError("No Media Selected: Please upload a video file or screenshots before starting the analysis.");
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
@@ -279,15 +281,29 @@ const App: React.FC = () => {
     }, 200);
 
     try {
-      const base64 = await convertToBase64(file);
-      const analysis = await geminiService.analyzeVideo(base64, file.type);
+      // Prepare video data if present
+      const videoData = file ? {
+        base64: await convertToBase64(file),
+        mimeType: file.type
+      } : undefined;
+
+      // Prepare images data if present
+      const imagesData = images.length > 0 ? await Promise.all(
+        images.map(async (img) => ({
+          base64: await convertToBase64(img.file),
+          mimeType: img.file.type,
+          comment: img.comment
+        }))
+      ) : undefined;
+
+      const analysis = await geminiService.analyzeMedia(videoData, imagesData);
       clearInterval(interval);
       setProgress(100);
       setStatusMessage("Audit complete. Ready for review!");
       setResult(analysis);
     } catch (err: any) {
       clearInterval(interval);
-      setError(err.message || "Video Analysis Failed: An unexpected error occurred while processing your video. This could be due to: (1) Network connectivity issues, (2) Backend server unavailable, (3) Video file corruption, or (4) API rate limits. Please try again or check the browser console for technical details.");
+      setError(err.message || "Media Analysis Failed: An unexpected error occurred while processing your media. Please try again or check the browser console for technical details.");
     } finally {
       setIsProcessing(false);
       setButtonLabel("Generate an accessibility report from media");
@@ -357,7 +373,7 @@ const App: React.FC = () => {
           </div>
           <div className="flex items-center gap-4">
             {result && (
-              <button onClick={() => { setResult(null); setFile(null); setVideoUrl(null); setEditedTranscript(""); setCurrentTime(0); }} className="text-sm tracking-widest text-slate-500 hover:text-slate-900 px-4 py-2 transition-colors">
+              <button onClick={() => { setResult(null); setFile(null); setVideoUrl(null); setImages([]); setEditedTranscript(""); setCurrentTime(0); }} className="text-sm tracking-widest text-slate-500 hover:text-slate-900 px-4 py-2 transition-colors">
                 New Audit
               </button>
             )}
@@ -385,20 +401,20 @@ const App: React.FC = () => {
         {!result && (
           <div className="max-w-4xl mx-auto py-12">
             <div className="text-center mb-12">
-              <h2 className="text-4xl text-slate-900 tracking-tight mb-4">Transform video into actionable reports.</h2>
-              <p className="text-lg text-slate-500">Upload your narrated screen recording to generate a WCAG-compliant audit.</p>
+              <h2 className="text-4xl text-slate-900 tracking-tight mb-4">Transform media into actionable reports.</h2>
+              <p className="text-lg text-slate-500">Upload video recordings, screenshots, or both for a WCAG-compliant audit.</p>
             </div>
 
             <section className="bg-white rounded-[2rem] shadow-2xl shadow-slate-200/50 border border-slate-200 overflow-hidden">
-              <div className={`p-10 transition-all ${file ? 'bg-white' : 'hover:bg-slate-50 cursor-pointer'}`}>
-                {!file && (
+              <div className={`p-10 transition-all ${(file || images.length > 0) ? 'bg-white' : ''}`}>
+                {!file && images.length === 0 && (
                   <div className="flex flex-col items-center justify-center min-h-[400px]">
                     <label className="flex flex-col items-center justify-center cursor-pointer">
                       <input type="file" accept="video/mp4,video/webm,video/quicktime,video/x-matroska" onChange={handleFileChange} className="hidden" />
                       <div className="w-20 h-20 bg-indigo-50 rounded-[1.5rem] flex items-center justify-center mb-6 text-indigo-600">
-                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
                       </div>
-                      <span className="text-xl text-slate-900 mb-2">Drop media to begin</span>
+                      <span className="text-xl text-slate-900 mb-2">Upload a video recording</span>
                       <span className="text-slate-500">MP4, WebM, or MOV supported</span>
                     </label>
 
@@ -408,28 +424,63 @@ const App: React.FC = () => {
                       <div className="h-px flex-1 bg-slate-200"></div>
                     </div>
 
-                    <button
-                      onClick={loadExampleVideo}
-                      className="mt-6 px-6 py-3 bg-white border-2 border-slate-200 rounded-xl text-sm text-slate-700 hover:border-indigo-600 hover:text-indigo-600 transition-all shadow-sm hover:shadow-md active:scale-[0.98] flex items-center gap-2"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                      Load Example Video
-                    </button>
+                    <div className="flex gap-4 mt-6">
+                      <button
+                        onClick={loadExampleVideo}
+                        className="px-6 py-3 bg-white border-2 border-slate-200 rounded-xl text-sm text-slate-700 hover:border-indigo-600 hover:text-indigo-600 transition-all shadow-sm hover:shadow-md active:scale-[0.98] flex items-center gap-2"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        Load Example Video
+                      </button>
+                    </div>
+
+                    {/* Screenshots Only Section */}
+                    <div className="w-full max-w-2xl mt-10 pt-8 border-t border-slate-200">
+                      <div className="text-center mb-4">
+                        <span className="text-sm text-slate-500">No video? Analyze screenshots instead</span>
+                      </div>
+                      <ImageUploadSection
+                        images={images}
+                        onImagesChange={setImages}
+                        disabled={isProcessing}
+                      />
+                      {images.length > 0 && (
+                        <div className="mt-6 flex justify-center">
+                          <button
+                            onClick={processMedia}
+                            disabled={isProcessing}
+                            className={`px-8 py-4 rounded-2xl text-lg transition-all active:scale-[0.98] shadow-xl ${isProcessing ? 'bg-slate-100 text-slate-400' : 'bg-slate-900 text-white hover:bg-indigo-700 shadow-indigo-200'}`}
+                          >
+                            {isProcessing ? "Analyzing..." : `Analyze ${images.length} Screenshot${images.length > 1 ? 's' : ''}`}
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
 
                 {file && (
                   <div className="flex flex-col items-center">
-                    <div className="w-full max-w-2xl aspect-video rounded-2xl overflow-hidden bg-slate-900 mb-10 shadow-2xl relative border border-slate-800">
+                    <div className="w-full max-w-2xl aspect-video rounded-2xl overflow-hidden bg-slate-900 mb-6 shadow-2xl relative border border-slate-800">
                       <video ref={previewVideoRef} src={videoUrl || ""} className="w-full h-full object-contain" controls />
                     </div>
-                    <div className="flex items-center gap-4 mb-10 bg-slate-50 px-6 py-3 rounded-full border border-slate-100">
+                    <div className="flex items-center gap-4 mb-6 bg-slate-50 px-6 py-3 rounded-full border border-slate-100">
                       <span className="text-sm text-slate-700 max-w-sm truncate">{file.name}</span>
-                      <button onClick={() => setFile(null)} className="text-sm text-red-500 tracking-widest">Remove</button>
+                      <button onClick={() => { setFile(null); setVideoUrl(null); }} className="text-sm text-red-500 tracking-widest">Remove</button>
                     </div>
-                    <div className="w-full max-w-lg">
-                      <button onClick={processVideo} disabled={isProcessing} className={`w-full py-5 rounded-2xl text-lg transition-all active:scale-[0.98] shadow-xl ${isProcessing ? 'bg-slate-100 text-slate-400' : 'bg-slate-900 text-white hover:bg-indigo-700 shadow-indigo-200'}`}>
-                        {isProcessing ? "Analyzing..." : "Analyze Narrated Recording"}
+
+                    {/* Image Upload Section */}
+                    <div className="w-full max-w-2xl">
+                      <ImageUploadSection
+                        images={images}
+                        onImagesChange={setImages}
+                        disabled={isProcessing}
+                      />
+                    </div>
+
+                    <div className="w-full max-w-lg mt-8">
+                      <button onClick={processMedia} disabled={isProcessing} className={`w-full py-5 rounded-2xl text-lg transition-all active:scale-[0.98] shadow-xl ${isProcessing ? 'bg-slate-100 text-slate-400' : 'bg-slate-900 text-white hover:bg-indigo-700 shadow-indigo-200'}`}>
+                        {isProcessing ? "Analyzing..." : images.length > 0 ? `Analyze Video + ${images.length} Screenshot${images.length > 1 ? 's' : ''}` : "Analyze Narrated Recording"}
                       </button>
                     </div>
                   </div>

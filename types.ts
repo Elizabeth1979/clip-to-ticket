@@ -6,6 +6,14 @@ export enum Severity {
   MINOR = 'Minor'
 }
 
+// Uploaded image with optional comment describing the accessibility issue
+export interface ImageItem {
+  id: string;
+  file: File;
+  url: string;          // Object URL for preview
+  comment: string;      // Description of the issue (can be empty)
+}
+
 export interface A11yIssue {
   issue_title: string;
   issue_description: string;
@@ -39,6 +47,7 @@ export interface CostBreakdown {
   inputTokens: number;
   outputTokens: number;
   videoSeconds?: number;
+  imageCount?: number;    // Number of images analyzed
   inputCost: number;
   outputCost: number;
   videoCost: number;

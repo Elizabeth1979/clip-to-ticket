@@ -193,6 +193,168 @@ export class GeminiService {
     }
   }
 
+  // New method to analyze mixed media (video + images)
+  async analyzeMedia(
+    video?: { base64: string; mimeType: string },
+    images?: { base64: string; mimeType: string; comment?: string }[]
+  ): Promise<AnalysisResult> {
+    // If only video provided, use the existing analyzeVideo method
+    if (video && (!images || images.length === 0)) {
+      return this.analyzeVideo(video.base64, video.mimeType);
+    }
+
+    const hasVideo = !!video;
+    const imageCount = images?.length || 0;
+
+    const systemInstruction = `
+      You are a Senior Accessibility QA Architect analyzing ${hasVideo ? 'a screen recording' : ''}${hasVideo && imageCount > 0 ? ' and ' : ''}${imageCount > 0 ? `${imageCount} screenshot${imageCount > 1 ? 's' : ''}` : ''} for accessibility issues.
+      
+      ${hasVideo ? `The video includes:
+      - Visual UI inspection (color, layout, focus indicators, responsive design)
+      - Screen reader output (NVDA, JAWS, VoiceOver, etc.)
+      - Keyboard navigation demonstrations
+      - Expert commentary and narration on accessibility barriers` : ''}
+      
+      ${imageCount > 0 ? `For screenshots:
+      - Analyze each image for visual accessibility issues
+      - If a description is provided with the image, use it as context
+      - If no description is provided, infer issues from visual inspection
+      - Common issues to look for: color contrast, missing labels, focus indicators, touch targets, text alternatives` : ''}
+      
+      Through this multimodal analysis, you can detect ALL WCAG 2.2 Success Criteria.
+      
+      COMPREHENSIVE WCAG 2.2 REFERENCE:
+      ${JSON.stringify(wcag22Full, null, 2)}
+      
+      COMPLETE AXE-CORE RULES (${AxeRulesService.getRuleCount()} rules):
+      ${AxeRulesService.getFormattedRulesForAI()}
+      
+      ARIA APG (${getAPGPatternCount()} patterns + ${getAPGPracticeCount()} practices):
+      ${getFormattedPatternsForAI()}
+      
+      QUICK REFERENCE LINKS:
+      - WCAG 2.2 Quick Reference: ${WCAG22_QUICKREF}
+      - ARIA APG Patterns: ${ARIA_APG_REFERENCE}
+      
+      ANALYSIS PIPELINE:
+      1. TRANSCRIPT: ${hasVideo ? 'Generate a full verbatim diarized transcript from the video.' : 'Since there is no video, leave the transcript field empty or provide a brief summary of what you analyzed.'}
+         ${hasVideo ? `IMPORTANT: Every time a different person speaks, or after a short pause, start a NEW LINE.
+         FORMAT: Speaker Name [MM:SS]: Message content here.` : ''}
+         
+      2. ISSUE INTERPRETATION: For each accessibility barrier you observe:
+         - Describe what the issue is (e.g., "Link text is not descriptive")
+         - Identify which WCAG 2.2 criteria it violates
+         - Note the context and severity of impact
+         ${imageCount > 0 ? '- For screenshot issues, use "Screenshot X" as the timestamp reference' : ''}
+         
+      3. AXE RULE & APG PATTERN MATCHING: For each issue identified above:
+         - First, check if this is an ARIA APG design pattern issue
+         - If it's an APG pattern, set apg_pattern to the pattern ID
+         - If it's NOT an APG pattern, search Axe-core rules for a match
+         - IMPORTANT: Do not force a match - it's better to leave fields empty than provide incorrect values
+         
+      4. SEVERITY ASSIGNMENT:
+         - If you provided an axe_rule_id (not "none"): The system will use that rule's impact level automatically
+         - Otherwise: Use AI heuristics based on WCAG conformance level and user impact
+      
+      5. EASE OF FIX ASSESSMENT: Classify the difficulty to fix this issue:
+         - Easy: Static attributes (adding aria-label, aria-hidden, role, alt text, etc.)
+         - Moderate: Focus management, dynamic ARIA (aria-expanded, aria-checked, aria-live)
+         - Hard: Complex keyboard implementation (tabs, modal dialogs, custom widgets)
+      
+      6. REMEDIATION: Provide code-level fixes using ARIA APG patterns where applicable.
+      
+      ACCURACY REQUIREMENTS:
+      - Use EXACT WCAG criteria numbers from the comprehensive reference
+      - Use EXACT Axe-core rule IDs from the enhanced rules
+      - Include links to official documentation
+      
+      FORMATTING: JSON ONLY. Use actual newline characters in the transcript string.
+    `;
+
+    const responseSchema = {
+      type: Type.OBJECT,
+      properties: {
+        transcript: { type: Type.STRING },
+        issues: {
+          type: Type.ARRAY,
+          items: {
+            type: Type.OBJECT,
+            properties: {
+              issue_title: { type: Type.STRING },
+              issue_description: { type: Type.STRING },
+              wcag_reference: { type: Type.STRING },
+              axe_rule_id: { type: Type.STRING },
+              apg_pattern: { type: Type.STRING },
+              severity: { type: Type.STRING, enum: Object.values(Severity) },
+              ease_of_fix: { type: Type.STRING, enum: ['Easy', 'Moderate', 'Hard'] },
+              suggested_fix: { type: Type.STRING },
+              generated_alt_text: { type: Type.STRING },
+              timestamp: { type: Type.STRING },
+              status: { type: Type.STRING },
+              disclaimer: { type: Type.STRING }
+            },
+            required: ["issue_title", "issue_description", "wcag_reference", "axe_rule_id", "severity", "ease_of_fix", "suggested_fix", "timestamp", "status", "disclaimer"]
+          }
+        }
+      },
+      required: ["transcript", "issues"]
+    };
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/analyze-media`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          video: video || null,
+          images: images || [],
+          systemInstruction,
+          responseSchema
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: response.statusText }));
+        throw new Error(errorData.error || `Backend Analysis Request Failed: The server at ${API_BASE_URL} returned an error (${response.status} ${response.statusText}).`);
+      }
+
+      const data = await response.json();
+      const parsedData = JSON.parse(data.text || '{}');
+
+      // Helper function to capitalize impact values from Axe rules
+      const capitalizeImpact = (impact: string): string => {
+        return impact.charAt(0).toUpperCase() + impact.slice(1);
+      };
+
+      // Post-process issues to enforce Axe-core impact levels
+      const issues = (parsedData.issues || []).map((issue: any) => {
+        if (issue.apg_pattern && issue.apg_pattern.trim() !== '') {
+          return { ...issue, impact_source: 'apg-pattern-heuristic' };
+        }
+
+        if (issue.axe_rule_id && issue.axe_rule_id.trim() !== '' && issue.axe_rule_id.toLowerCase() !== 'none') {
+          const axeRule = AxeRulesService.getRuleById(issue.axe_rule_id);
+          if (axeRule?.impact) {
+            return { ...issue, severity: capitalizeImpact(axeRule.impact), impact_source: 'axe-core' };
+          }
+        }
+
+        return { ...issue, impact_source: 'wcag-heuristic' };
+      });
+
+      return {
+        transcript: parsedData.transcript || (hasVideo ? "No transcript generated." : "Screenshot analysis - no video transcript."),
+        issues,
+        metadata: data.metadata
+      };
+    } catch (err: any) {
+      console.error("Failed to analyze media:", err);
+      throw new Error(err.message || `Media Analysis Pipeline Error: Unable to complete the analysis process.`);
+    }
+  }
+
   createAnalystChat(result: AnalysisResult): ProxyChat {
     const context = `
       You are the ClipToTicket AI Analyst. You provide ultra-concise, technical support for fixing accessibility barriers.

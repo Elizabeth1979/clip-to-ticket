@@ -140,6 +140,119 @@ app.post('/api/analyze-video', async (req, res) => {
   }
 });
 
+// Mixed media analysis endpoint (video + images)
+app.post('/api/analyze-media', async (req, res) => {
+  try {
+    const { video, images, systemInstruction, responseSchema } = req.body;
+
+    // Validate that we have at least some media
+    if (!video && (!images || images.length === 0)) {
+      return res.status(400).json({ error: 'Missing required fields: either video or images must be provided' });
+    }
+
+    const hasVideo = !!video;
+    const imageCount = images?.length || 0;
+    console.log(`[${new Date().toISOString()}] Analyzing media: ${hasVideo ? 'video' : 'no video'}, ${imageCount} image(s)...`);
+    const startTime = Date.now();
+
+    // Build multi-part content
+    const parts = [];
+
+    // Add video if present
+    if (video) {
+      parts.push({
+        inlineData: {
+          data: video.base64,
+          mimeType: video.mimeType,
+        },
+      });
+    }
+
+    // Add each image with optional comment context
+    if (images && images.length > 0) {
+      images.forEach((img, i) => {
+        parts.push({
+          inlineData: {
+            data: img.base64,
+            mimeType: img.mimeType,
+          },
+        });
+        // Add comment as context text if provided
+        if (img.comment && img.comment.trim()) {
+          parts.push({
+            text: `Screenshot ${i + 1} context from user: "${img.comment.trim()}"`,
+          });
+        }
+      });
+    }
+
+    // Add the analysis prompt
+    parts.push({
+      text: 'Perform an exhaustive accessibility audit using Deque WCAG 2.2 and Axe-core 4.11 standards. Provide the transcript (if video) and structured issues list.',
+    });
+
+    const response = await genAI.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: {
+        parts,
+      },
+      config: {
+        systemInstruction,
+        responseMimeType: 'application/json',
+        responseSchema
+      },
+    });
+
+    const endTime = Date.now();
+    const processingTimeMs = endTime - startTime;
+
+    // Extract token usage from response (if available)
+    const usageMetadata = response.usageMetadata || {};
+    const inputTokens = usageMetadata.promptTokenCount || 0;
+    const outputTokens = usageMetadata.candidatesTokenCount || 0;
+
+    // Calculate costs (Gemini 3 Flash pricing)
+    const FLASH_INPUT_PER_1M = 0.075;
+    const FLASH_OUTPUT_PER_1M = 0.30;
+    const inputCost = (inputTokens / 1_000_000) * FLASH_INPUT_PER_1M;
+    const outputCost = (outputTokens / 1_000_000) * FLASH_OUTPUT_PER_1M;
+    const totalCost = inputCost + outputCost;
+
+    console.log(`[${new Date().toISOString()}] Analysis complete - ${processingTimeMs}ms, ${inputTokens} input tokens, ${outputTokens} output tokens, $${totalCost.toFixed(4)}`);
+
+    res.json({
+      text: response.text,
+      metadata: {
+        systemPrompt: systemInstruction,
+        model: 'gemini-3-flash-preview',
+        processingTimeMs,
+        costBreakdown: {
+          inputTokens,
+          outputTokens,
+          videoSeconds: 0,
+          imageCount,
+          inputCost,
+          outputCost,
+          videoCost: 0,
+          totalCost
+        },
+        stages: [
+          { name: 'Media Upload', startTime, endTime: startTime + 100, status: 'complete' },
+          { name: 'AI Analysis', startTime: startTime + 100, endTime: endTime - 100, status: 'complete' },
+          { name: 'Report Generation', startTime: endTime - 100, endTime, status: 'complete' }
+        ],
+        timestamp: new Date().toISOString()
+      }
+    });
+  } catch (error) {
+    console.error('Media analysis error:', error);
+    res.status(500).json({
+      error: error.message || 'Media analysis failed',
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+  }
+});
+
 // Chat session storage (in-memory for now)
 const chatSessions = new Map();
 
