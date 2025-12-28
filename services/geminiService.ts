@@ -14,7 +14,7 @@ const API_BASE_URL = import.meta.env.PROD
   : 'http://localhost:3001';
 
 export class GeminiService {
-  async analyzeVideo(videoBase64: string, mimeType: string): Promise<AnalysisResult> {
+  async analyzeVideo(videoBase64: string, mimeType: string, signal?: AbortSignal): Promise<AnalysisResult> {
     const systemInstruction = `
       You are a Senior Accessibility QA Architect analyzing comprehensive screen recordings that include:
       - Visual UI inspection (color, layout, focus indicators, responsive design)
@@ -23,6 +23,12 @@ export class GeminiService {
       - Expert commentary and narration on accessibility barriers
       
       Through this multimodal analysis, you can detect ALL WCAG 2.2 Success Criteria.
+      
+      CONTENT FOCUS: When analyzing audio/narration, focus on actionable accessibility insights.
+      - Ignore filler words (um, uh, like, you know), false starts, and verbal tics
+      - Disregard off-topic commentary unrelated to accessibility barriers
+      - Prioritize statements that describe specific UI issues, user frustrations, or WCAG violations
+      - Extract the core meaning even from rambling or repetitive explanations
       
       COMPREHENSIVE WCAG 2.2 REFERENCE:
       ${JSON.stringify(wcag22Full, null, 2)}
@@ -137,7 +143,8 @@ export class GeminiService {
           mimeType,
           systemInstruction,
           responseSchema
-        })
+        }),
+        signal
       });
 
       if (!response.ok) {
@@ -196,11 +203,12 @@ export class GeminiService {
   // New method to analyze mixed media (video + images)
   async analyzeMedia(
     video?: { base64: string; mimeType: string },
-    images?: { base64: string; mimeType: string; comment?: string }[]
+    images?: { base64: string; mimeType: string; comment?: string }[],
+    signal?: AbortSignal
   ): Promise<AnalysisResult> {
     // If only video provided, use the existing analyzeVideo method
     if (video && (!images || images.length === 0)) {
-      return this.analyzeVideo(video.base64, video.mimeType);
+      return this.analyzeVideo(video.base64, video.mimeType, signal);
     }
 
     const hasVideo = !!video;
@@ -222,6 +230,12 @@ export class GeminiService {
       - Common issues to look for: color contrast, missing labels, focus indicators, touch targets, text alternatives` : ''}
       
       Through this multimodal analysis, you can detect ALL WCAG 2.2 Success Criteria.
+      
+      CONTENT FOCUS: When analyzing audio/narration, focus on actionable accessibility insights.
+      - Ignore filler words (um, uh, like, you know), false starts, and verbal tics
+      - Disregard off-topic commentary unrelated to accessibility barriers
+      - Prioritize statements that describe specific UI issues, user frustrations, or WCAG violations
+      - Extract the core meaning even from rambling or repetitive explanations
       
       COMPREHENSIVE WCAG 2.2 REFERENCE:
       ${JSON.stringify(wcag22Full, null, 2)}
@@ -312,7 +326,8 @@ export class GeminiService {
           images: images || [],
           systemInstruction,
           responseSchema
-        })
+        }),
+        signal
       });
 
       if (!response.ok) {

@@ -62,6 +62,7 @@ const App: React.FC = () => {
   const previewVideoRef = useRef<HTMLVideoElement>(null);
   const transcriptContainerRef = useRef<HTMLDivElement>(null);
   const activeLineRef = useRef<HTMLDivElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
   const geminiService = useMemo(() => new GeminiService(), []);
 
   useEffect(() => {
@@ -263,6 +264,10 @@ const App: React.FC = () => {
       return;
     }
 
+    // Create a new AbortController for this analysis
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+
     setIsProcessing(true);
     setProgress(0);
     setError(null);
@@ -296,17 +301,30 @@ const App: React.FC = () => {
         }))
       ) : undefined;
 
-      const analysis = await geminiService.analyzeMedia(videoData, imagesData);
+      const analysis = await geminiService.analyzeMedia(videoData, imagesData, abortController.signal);
       clearInterval(interval);
       setProgress(100);
       setStatusMessage("Audit complete. Ready for review!");
       setResult(analysis);
     } catch (err: any) {
       clearInterval(interval);
-      setError(err.message || "Media Analysis Failed: An unexpected error occurred while processing your media. Please try again or check the browser console for technical details.");
+      // Check if the error was due to an abort
+      if (err.name === 'AbortError') {
+        setStatusMessage("Analysis cancelled.");
+        setProgress(0);
+      } else {
+        setError(err.message || "Media Analysis Failed: An unexpected error occurred while processing your media. Please try again or check the browser console for technical details.");
+      }
     } finally {
       setIsProcessing(false);
       setButtonLabel("Generate an accessibility report from media");
+      abortControllerRef.current = null;
+    }
+  };
+
+  const stopAnalysis = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
     }
   };
 
@@ -551,6 +569,15 @@ const App: React.FC = () => {
                 <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
                   <div className="h-full bg-indigo-600 transition-all duration-700 ease-out rounded-full" style={{ width: `${progress}%` }} />
                 </div>
+                <button
+                  onClick={stopAnalysis}
+                  className="mt-4 w-full px-4 py-2.5 bg-white border border-red-200 rounded-xl text-sm text-red-600 hover:bg-red-50 hover:border-red-400 transition-all flex items-center justify-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  Stop Analysis
+                </button>
               </div>
             )}
 
