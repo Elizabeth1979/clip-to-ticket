@@ -808,7 +808,7 @@ const App: React.FC = () => {
             {/* Product Transparency Section */}
             {result?.metadata && (
               <div id="product-transparency" className="w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="space-y-8">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
                   <TransparencyPanel metadata={result.metadata} issueCount={result.issues.length} />
                   <RICEExplainer />
                 </div>
