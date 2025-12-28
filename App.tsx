@@ -373,7 +373,7 @@ const App: React.FC = () => {
 
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col">
       <header className="bg-white border-b border-slate-200 py-4 px-8 sticky top-0 z-50">
         <div className="max-w-[1600px] mx-auto flex justify-between items-center">
           <div className="flex items-center gap-4">
@@ -399,108 +399,160 @@ const App: React.FC = () => {
         </div>
       </header>
 
-      <main className="max-w-[1600px] mx-auto p-8 pb-32">
+      <main className="max-w-[1600px] mx-auto p-6 pb-24 flex-1">
         {!result && (
-          <div className="max-w-4xl mx-auto py-12">
-            <div className="text-center mb-12">
-              <h2 className="text-4xl text-slate-900 tracking-tight mb-4">Transform media into actionable reports.</h2>
-              <p className="text-lg text-slate-500">Upload video recordings, screenshots, or both for a WCAG-compliant audit.</p>
+          <div className="max-w-5xl mx-auto py-6">
+            <div className="text-center mb-6">
+              <h2 className="text-3xl text-slate-900 tracking-tight mb-2">Transform media into actionable reports.</h2>
+              <p className="text-base text-slate-500">Upload video recordings, screenshots, or both for a WCAG-compliant audit.</p>
             </div>
 
-            <section className="bg-white rounded-[2rem] shadow-2xl shadow-slate-200/50 border border-slate-200 overflow-hidden">
-              <div className={`p-10 transition-all ${(file || images.length > 0) ? 'bg-white' : ''}`}>
-                {!file && images.length === 0 && (
-                  <div className="flex flex-col items-center justify-center min-h-[400px]">
-                    <label className="flex flex-col items-center justify-center cursor-pointer">
-                      <input type="file" accept="video/mp4,video/webm,video/quicktime,video/x-matroska" onChange={handleFileChange} className="hidden" />
-                      <div className="w-20 h-20 bg-indigo-50 rounded-[1.5rem] flex items-center justify-center mb-6 text-indigo-600">
-                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-                      </div>
-                      <span className="text-xl text-slate-900 mb-2">Upload a video recording</span>
-                      <span className="text-slate-500">MP4, WebM, or MOV supported</span>
-                    </label>
-
-                    <div className="flex items-center gap-4 mt-8 w-full max-w-md">
-                      <div className="h-px flex-1 bg-slate-200"></div>
-                      <span className="text-sm tracking-widest text-slate-400">Or</span>
-                      <div className="h-px flex-1 bg-slate-200"></div>
+            {/* Two Column Layout for Upload Cards */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Video Upload Card */}
+              <section className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-200 overflow-hidden h-full">
+                <div className="p-6 flex flex-col h-full">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
                     </div>
-
-                    <div className="flex gap-4 mt-6">
-                      <button
-                        onClick={loadExampleVideo}
-                        className="px-6 py-3 bg-white border-2 border-slate-200 rounded-xl text-sm text-slate-700 hover:border-indigo-600 hover:text-indigo-600 transition-all shadow-sm hover:shadow-md active:scale-[0.98] flex items-center gap-2"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                        Load Example Video
-                      </button>
+                    <div>
+                      <h3 className="text-base font-medium text-slate-900">Video Recording</h3>
+                      <p className="text-sm text-slate-400">MP4, WebM, or MOV</p>
                     </div>
+                  </div>
 
-                    {/* Screenshots Only Section */}
-                    <div className="w-full max-w-2xl mt-10 pt-8 border-t border-slate-200">
-                      <div className="text-center mb-4">
-                        <span className="text-sm text-slate-500">No video? Analyze screenshots instead</span>
-                      </div>
-                      <ImageUploadSection
-                        images={images}
-                        onImagesChange={setImages}
-                        disabled={isProcessing}
-                      />
-                      {images.length > 0 && (
-                        <div className="mt-6 flex justify-center">
-                          <button
-                            onClick={processMedia}
-                            disabled={isProcessing}
-                            className={`px-8 py-4 rounded-2xl text-lg transition-all active:scale-[0.98] shadow-xl ${isProcessing ? 'bg-slate-100 text-slate-400' : 'bg-slate-900 text-white hover:bg-indigo-700 shadow-indigo-200'}`}
-                          >
-                            {isProcessing ? "Analyzing..." : `Analyze ${images.length} Screenshot${images.length > 1 ? 's' : ''}`}
-                          </button>
+                  <div className="flex-1">
+                    {!file ? (
+                      <label className="flex flex-col items-center justify-center cursor-pointer border-2 border-dashed border-slate-200 rounded-xl p-6 hover:border-indigo-400 hover:bg-indigo-50/30 transition-all h-full min-h-[180px]">
+                        <input type="file" accept="video/mp4,video/webm,video/quicktime,video/x-matroska" onChange={handleFileChange} className="hidden" />
+                        <svg className="w-10 h-10 text-slate-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+                        <span className="text-sm text-slate-600">Drop video here or click to browse</span>
+                      </label>
+                    ) : (
+                      <div className="space-y-3">
+                        <div className="aspect-video rounded-xl overflow-hidden bg-slate-900 shadow-lg border border-slate-800">
+                          <video ref={previewVideoRef} src={videoUrl || ""} className="w-full h-full object-contain" controls />
                         </div>
-                      )}
-                    </div>
+                        <div className="flex items-center justify-between bg-slate-50 px-4 py-2 rounded-lg border border-slate-100">
+                          <span className="text-sm text-slate-700 truncate max-w-[200px]">{file.name}</span>
+                          <button onClick={() => { setFile(null); setVideoUrl(null); }} className="text-sm text-red-500 hover:text-red-700 transition-colors">Remove</button>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
 
-                {file && (
-                  <div className="flex flex-col items-center">
-                    <div className="w-full max-w-2xl aspect-video rounded-2xl overflow-hidden bg-slate-900 mb-6 shadow-2xl relative border border-slate-800">
-                      <video ref={previewVideoRef} src={videoUrl || ""} className="w-full h-full object-contain" controls />
-                    </div>
-                    <div className="flex items-center gap-4 mb-6 bg-slate-50 px-6 py-3 rounded-full border border-slate-100">
-                      <span className="text-sm text-slate-700 max-w-sm truncate">{file.name}</span>
-                      <button onClick={() => { setFile(null); setVideoUrl(null); }} className="text-sm text-red-500 tracking-widest">Remove</button>
-                    </div>
+                  <button
+                    onClick={loadExampleVideo}
+                    className="w-full mt-auto px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-600 hover:border-indigo-500 hover:text-indigo-600 transition-all flex items-center justify-center gap-2"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    Load Example Video
+                  </button>
+                </div>
+              </section>
 
-                    {/* Image Upload Section */}
-                    <div className="w-full max-w-2xl">
-                      <ImageUploadSection
-                        images={images}
-                        onImagesChange={setImages}
+              {/* Screenshots Upload Card */}
+              <section className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-200 overflow-hidden h-full">
+                <div className="p-6 flex flex-col h-full">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center text-amber-600">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                      </div>
+                      <div>
+                        <h3 className="text-base font-medium text-slate-900">Screenshots</h3>
+                        <p className="text-sm text-slate-400">PNG, JPG, WebP, GIF</p>
+                      </div>
+                    </div>
+                    <label className="ml-4 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm text-slate-700 hover:border-amber-500 hover:text-amber-600 transition-all cursor-pointer flex items-center gap-2 flex-shrink-0">
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/jpg,image/webp,image/gif"
+                        multiple
+                        onChange={(e) => {
+                          const files = e.target.files;
+                          if (!files) return;
+                          const newImages = Array.from(files)
+                            .filter((f: File) => f.type.startsWith('image/'))
+                            .map((file: File) => ({
+                              id: `img_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                              file,
+                              url: URL.createObjectURL(file),
+                              comment: ''
+                            }));
+                          if (newImages.length > 0) setImages(prev => [...prev, ...newImages]);
+                          e.target.value = '';
+                        }}
+                        className="hidden"
                         disabled={isProcessing}
                       />
-                    </div>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
+                      Add Image
+                    </label>
+                  </div>
 
-                    <div className="w-full max-w-lg mt-8">
-                      <button onClick={processMedia} disabled={isProcessing} className={`w-full py-5 rounded-2xl text-lg transition-all active:scale-[0.98] shadow-xl ${isProcessing ? 'bg-slate-100 text-slate-400' : 'bg-slate-900 text-white hover:bg-indigo-700 shadow-indigo-200'}`}>
-                        {isProcessing ? "Analyzing..." : images.length > 0 ? `Analyze Video + ${images.length} Screenshot${images.length > 1 ? 's' : ''}` : "Analyze Narrated Recording"}
-                      </button>
-                    </div>
+                  <div className="flex-1">
+                    <ImageUploadSection
+                      images={images}
+                      onImagesChange={setImages}
+                      disabled={isProcessing}
+                      compact={true}
+                    />
                   </div>
-                )}
-              </div>
 
-              {isProcessing && (
-                <div className="p-10 bg-slate-50 border-t border-slate-100">
-                  <div className="flex justify-between items-center mb-4">
-                    <span className="text-sm text-slate-900 tracking-widest">{statusMessage}</span>
-                    <span className="text-sm text-indigo-700">{progress}%</span>
-                  </div>
-                  <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
-                    <div className="h-full bg-indigo-600 transition-all duration-700 ease-out rounded-full" style={{ width: `${progress}%` }} />
-                  </div>
+                  <button
+                    onClick={async () => {
+                      try {
+                        const response = await fetch('/examples/iframe.png');
+                        if (!response.ok) return;
+                        const blob = await response.blob();
+                        const exampleFile = new File([blob], 'iframe.png', { type: 'image/png' });
+                        const newImage = {
+                          id: `img_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                          file: exampleFile,
+                          url: URL.createObjectURL(exampleFile),
+                          comment: ''
+                        };
+                        setImages(prev => [...prev, newImage]);
+                      } catch (err) {
+                        console.error('Failed to load example image:', err);
+                      }
+                    }}
+                    className="w-full mt-auto px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-600 hover:border-amber-500 hover:text-amber-600 transition-all flex items-center justify-center gap-2"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                    Load Example Image
+                  </button>
                 </div>
-              )}
-            </section>
+              </section>
+            </div>
+
+            {/* Analyze Button - Below Both Cards */}
+            {(file || images.length > 0) && (
+              <div className="mt-6 flex justify-center">
+                <button
+                  onClick={processMedia}
+                  disabled={isProcessing}
+                  className={`px-10 py-4 rounded-2xl text-lg transition-all active:scale-[0.98] shadow-xl ${isProcessing ? 'bg-slate-100 text-slate-400' : 'bg-slate-900 text-white hover:bg-indigo-700 shadow-indigo-200'}`}
+                >
+                  {isProcessing ? "Analyzing..." : file && images.length > 0 ? `Analyze Video + ${images.length} Screenshot${images.length > 1 ? 's' : ''}` : file ? "Analyze Video Recording" : `Analyze ${images.length} Screenshot${images.length > 1 ? 's' : ''}`}
+                </button>
+              </div>
+            )}
+
+            {/* Progress Bar */}
+            {isProcessing && (
+              <div className="mt-6 p-6 bg-white rounded-2xl border border-slate-200 shadow-sm">
+                <div className="flex justify-between items-center mb-3">
+                  <span className="text-sm text-slate-900">{statusMessage}</span>
+                  <span className="text-sm text-indigo-600 font-medium">{progress}%</span>
+                </div>
+                <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
+                  <div className="h-full bg-indigo-600 transition-all duration-700 ease-out rounded-full" style={{ width: `${progress}%` }} />
+                </div>
+              </div>
+            )}
 
             {error && (
               <div className="mt-8 p-6 bg-white rounded-2xl border-l-4 border-amber-500 shadow-xl shadow-slate-200/50 animate-in slide-in-from-top-2">
@@ -854,7 +906,7 @@ const App: React.FC = () => {
         </>
       )}
 
-      <footer className="max-w-[1600px] mx-auto p-8 border-t border-slate-100">
+      <footer className="max-w-[1600px] mx-auto p-8 border-t border-slate-100 mt-auto">
         <p className="text-center text-slate-600 text-sm tracking-widest">
           made with ❤️ by e11i
         </p>
