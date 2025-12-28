@@ -1,19 +1,18 @@
-# ClipToTicket - AI Context Document
+# MediaToTicket - AI Context Document
 
 ## Project Identity
 
-**Name**: ClipToTicket  
+**Name**: MediaToTicket  
 **Tagline**: Narrate barriers. Ship tickets.  
 **Version**: 1.5.0  
-**Type**: AI-powered accessibility QA tool  
-**Primary Use Case**: Transform narrated screen recordings into WCAG 2.2 compliant accessibility audit reports
+**Type**: AI-powered accessibility QA tool
 
 ---
 
 ## Core Functionality
 
 ### What It Does
-ClipToTicket analyzes video recordings of accessibility audits where QA engineers narrate issues as they navigate an application. The AI extracts:
+MediaToTicket analyzes video recordings of accessibility audits where QA engineers narrate issues as they navigate an application. The AI extracts:
 1. Verbatim transcripts with speaker diarization and timestamps
 2. Structured accessibility issues mapped to WCAG 2.2 and Axe-core 4.11
 3. Severity classifications (Critical, Serious, Moderate, Minor)
@@ -376,4 +375,4 @@ See `PRODUCT_ROADMAP.md` for detailed feature proposals and prioritization.
 
 ---
 
-*This document provides comprehensive context for AI assistants (Claude, ChatGPT, Gemini) working on the ClipToTicket codebase.*
+*This document provides comprehensive context for AI assistants (Claude, ChatGPT, Gemini) working on the MediaToTicket codebase.*

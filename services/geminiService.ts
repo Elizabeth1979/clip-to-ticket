@@ -10,7 +10,7 @@ import { getFormattedPatternsForAI, getAPGPatternCount, getAPGPracticeCount } fr
 
 // Use Render backend in production, localhost in development
 const API_BASE_URL = import.meta.env.PROD
-  ? 'https://cliptoticket-backend.onrender.com'
+  ? 'https://mediatoticket-backend.onrender.com'
   : 'http://localhost:3001';
 
 export class GeminiService {
@@ -357,7 +357,7 @@ export class GeminiService {
 
   createAnalystChat(result: AnalysisResult): ProxyChat {
     const context = `
-      You are the ClipToTicket AI Analyst. You provide ultra-concise, technical support for fixing accessibility barriers.
+      You are the MediaToTicket AI Analyst. You provide ultra-concise, technical support for fixing accessibility barriers.
       
       STRICT RESPONSE GUIDELINES:
       1. BREVITY: Never use 50 words when 10 will do. Use bullet points for all lists.

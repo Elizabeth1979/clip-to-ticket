@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# ClipToTicket Server Setup Script
+# MediaToTicket Server Setup Script
 
-echo "🔧 Setting up ClipToTicket backend server..."
+echo "🔧 Setting up MediaToTicket backend server..."
 echo ""
 
 # Check if .env.local exists in parent directory

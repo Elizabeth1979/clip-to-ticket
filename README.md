@@ -1,4 +1,4 @@
-# ClipToTicket
+# MediaToTicket
 
 <div align="center">
 
@@ -16,7 +16,7 @@ An AI-powered accessibility QA tool that transforms narrated screen recordings i
 
 ## 🎯 Overview
 
-ClipToTicket revolutionizes accessibility testing by combining AI-powered video analysis with industry-standard compliance frameworks. Record your screen while testing with **screen readers, keyboard navigation, and expert narration**, and ClipToTicket generates a comprehensive audit report with:
+MediaToTicket revolutionizes accessibility testing by combining AI-powered video analysis with industry-standard compliance frameworks. Record your screen while testing with **screen readers, keyboard navigation, and expert narration**, and MediaToTicket generates a comprehensive audit report with:
 
 - **Verbatim transcripts** with speaker diarization and timestamps
 - **Complete WCAG 2.2 coverage** - detects ALL success criteria (A, AA, AAA) through multimodal analysis
@@ -25,9 +25,9 @@ ClipToTicket revolutionizes accessibility testing by combining AI-powered video 
 - **Actionable remediation code** following ARIA APG patterns
 - **Interactive AI analyst** for technical implementation guidance
 
-### What Makes ClipToTicket Unique?
+### What Makes MediaToTicket Unique?
 
-Unlike traditional automated tools that only scan static HTML, ClipToTicket analyzes **comprehensive accessibility testing** including:
+Unlike traditional automated tools that only scan static HTML, MediaToTicket analyzes **comprehensive accessibility testing** including:
 - 👁️ **Visual inspection** - color contrast, focus indicators, layout, responsive design
 - 🔊 **Screen reader output** - NVDA, JAWS, VoiceOver announcements and behavior
 - ⌨️ **Keyboard navigation** - tab order, focus management, keyboard traps
@@ -78,7 +78,7 @@ This multimodal approach enables detection of **all WCAG 2.2 Success Criteria**,
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd clip-to-ticket
+   cd media-to-ticket
    ```
 
 2. **Install dependencies**
@@ -108,7 +108,7 @@ This multimodal approach enables detection of **all WCAG 2.2 Success Criteria**,
 
 ### 1. Record Your Comprehensive Audit
 
-ClipToTicket analyzes **all aspects** of your accessibility testing. Here's how to create effective recordings:
+MediaToTicket analyzes **all aspects** of your accessibility testing. Here's how to create effective recordings:
 
 **Basic Setup:**
 - Use your preferred screen recording tool (QuickTime, OBS, Loom, etc.)
@@ -144,7 +144,7 @@ ClipToTicket analyzes **all aspects** of your accessibility testing. Here's how 
 ```
 
 ### 2. Upload & Analyze
-- Drag and drop your video into ClipToTicket
+- Drag and drop your video into MediaToTicket
 - Click "Analyze Narrated Recording"
 - Wait for AI processing (typically 20-40 seconds)
 
@@ -180,7 +180,7 @@ ClipToTicket analyzes **all aspects** of your accessibility testing. Here's how 
 ## 📁 Project Structure
 
 ```
-clip-to-ticket/
+media-to-ticket/
 ├── components/
 │   ├── AIAnalyst.tsx       # AI chat interface
 │   ├── ExportSection.tsx   # Export functionality
@@ -219,7 +219,7 @@ The application uses Vite for fast development and optimized builds. Key configu
 
 ## 🎨 Design Philosophy
 
-ClipToTicket follows **W3C Web Content Accessibility Guidelines** and modern UX principles:
+MediaToTicket follows **W3C Web Content Accessibility Guidelines** and modern UX principles:
 
 - **Semantic HTML**: Proper heading hierarchy, landmarks, and ARIA labels
 - **Keyboard Navigation**: Full keyboard accessibility for all interactive elements
@@ -271,6 +271,6 @@ For questions, issues, or feature requests:
 
 **Made with ❤️ for the accessibility community**
 
-*ClipToTicket v1.5.0*
+*MediaToTicket v1.5.0*
 
 </div>

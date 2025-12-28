@@ -1,4 +1,4 @@
-# ClipToTicket Product Roadmap
+# MediaToTicket Product Roadmap
 
 **Version**: 1.5.0 → 2.0.0  
 **Last Updated**: 2025-12-24  
@@ -8,7 +8,7 @@
 
 ## 🎯 Executive Summary
 
-This roadmap outlines strategic improvements for ClipToTicket based on:
+This roadmap outlines strategic improvements for MediaToTicket based on:
 - **W3C Web Standards** (WCAG 2.2, ARIA 1.3, HTML5)
 - **User Experience Best Practices** (Nielsen Norman Group, Material Design)
 - **Performance Optimization** (Core Web Vitals, Lighthouse)
@@ -256,7 +256,7 @@ useEffect(() => {
 ```tsx
 useEffect(() => {
   if (result) {
-    localStorage.setItem('cliptoticket_latest', JSON.stringify({
+    localStorage.setItem('mediatoticket_latest', JSON.stringify({
       result,
       timestamp: Date.now(),
       videoName: file?.name
@@ -266,7 +266,7 @@ useEffect(() => {
 
 // On mount
 useEffect(() => {
-  const saved = localStorage.getItem('cliptoticket_latest');
+  const saved = localStorage.getItem('mediatoticket_latest');
   if (saved) {
     const { result, timestamp, videoName } = JSON.parse(saved);
     // Show "Resume audit from {videoName}?" prompt
@@ -332,7 +332,7 @@ const filteredIssues = useMemo(() => {
 **Solution**:
 - [ ] Add "Export to Jira" button
 - [ ] Implement OAuth flow for Jira/GitHub/Linear
-- [ ] Map ClipToTicket fields to ticket fields
+- [ ] Map MediaToTicket fields to ticket fields
 - [ ] Batch create tickets (one per issue or grouped)
 - [ ] Include video timestamp links in ticket description
 - [ ] Attach screenshots/video clips to tickets
