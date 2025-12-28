@@ -112,10 +112,10 @@ export const TransparencyPanel: React.FC<TransparencyPanelProps> = ({ metadata, 
                         </svg>
                     </div>
                     <div className="text-left">
-                        <h3 className="text-sm tracking-widest text-slate-900">
+                        <h3 className="text-base font-semibold text-slate-900">
                             Product Transparency
                         </h3>
-                        <p className="text-sm text-slate-500">
+                        <p className="text-sm text-slate-500 mt-1">
                             View AI prompts and cost breakdown
                         </p>
                     </div>

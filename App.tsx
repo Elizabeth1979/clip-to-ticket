@@ -358,6 +358,20 @@ const App: React.FC = () => {
     return grouped;
   }, [result]);
 
+  const handleUpdateIssue = useCallback((index: number, updatedIssue: A11yIssue) => {
+    if (!result) return;
+    const newIssues = [...result.issues];
+    newIssues[index] = updatedIssue;
+    setResult({ ...result, issues: newIssues });
+  }, [result]);
+
+  const handleDeleteIssue = useCallback((index: number) => {
+    if (!result) return;
+    const newIssues = result.issues.filter((_, i) => i !== index);
+    setResult({ ...result, issues: newIssues });
+  }, [result]);
+
+
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
       <header className="bg-white border-b border-slate-200 py-4 px-8 sticky top-0 z-50">
@@ -518,7 +532,16 @@ const App: React.FC = () => {
                 </div>
                 <div>
                   <h2 className="text-lg text-slate-900">Analysis Complete</h2>
-                  <p className="text-slate-500 text-sm mt-0.5">{result.issues.length} points of interest identified.</p>
+                  <p className="text-red-600 text-sm mt-0.5">
+                    {result.issues.length} issues detected – <a
+                      href="#issues-table"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        document.getElementById('issues-table')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }}
+                      className="underline hover:text-red-800 transition-colors"
+                    >see the table below</a>
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-4">
@@ -779,7 +802,7 @@ const App: React.FC = () => {
             </div>
 
             {/* Bottom Section: Full Width Issues Table/List */}
-            <div className="w-full animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">
+            <div id="issues-table" className="w-full animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">
               <div className="mb-6 flex items-center gap-4">
                 <h3 className="text-sm tracking-[0.25em] text-slate-900">Detailed Findings</h3>
                 <InfoTooltip
@@ -788,7 +811,12 @@ const App: React.FC = () => {
                 />
                 <div className="h-px flex-1 bg-slate-200"></div>
               </div>
-              <TableView issues={result.issues} onSeek={seekTo} />
+              <TableView
+                issues={result.issues}
+                onSeek={seekTo}
+                onUpdateIssue={handleUpdateIssue}
+                onDeleteIssue={handleDeleteIssue}
+              />
             </div>
 
             {/* Product Transparency Section (Developer Mode) */}
