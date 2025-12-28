@@ -16,10 +16,10 @@ export const RICEExplainer: React.FC = () => {
                         </svg>
                     </div>
                     <div className="text-left">
-                        <h3 className="text-sm tracking-widest text-slate-900">
+                        <h3 className="text-base font-semibold text-slate-900">
                             RICE Priority Scoring
                         </h3>
-                        <p className="text-sm text-slate-500">
+                        <p className="text-sm text-slate-500 mt-1">
                             How we calculate issue priority
                         </p>
                     </div>
