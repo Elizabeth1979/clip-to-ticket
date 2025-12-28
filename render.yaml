@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: cliptoticket-backend
+    name: mediatoticket-backend
     runtime: node
     plan: free
     buildCommand: cd server && npm install
