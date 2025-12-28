@@ -91,15 +91,14 @@ const getEaseOfFix = (issue: A11yIssue): { label: string; color: string; order: 
 };
 
 /**
- * Calculate RICE Priority Score
- * Formula: (Severity² × Confidence) / Effort
+ * Calculate Priority Score
+ * Formula: Severity² / Effort
  * 
  * - Severity: 1-4 based on severity level (Critical=4, Serious=3, Moderate=2, Minor=1)
  * - Impact: Severity² to emphasize critical issues (1, 4, 9, or 16)
- * - Confidence: 1.0 for axe-core rules, 0.7 for manual verification
  * - Effort: 1 (Easy), 2 (Moderate), 3 (Hard)
  * 
- * Returns: Score from 0-16, where higher = higher priority
+ * Returns: Score from 0.33-16, where higher = higher priority
  */
 const calculatePriority = (issue: A11yIssue): number => {
   // Get severity value (1-4) - handle both string and enum values
@@ -109,20 +108,12 @@ const calculatePriority = (issue: A11yIssue): number => {
   // Calculate impact (severity squared)
   const impact = severity * severity;
 
-  // Determine confidence based on detection method
-  // APG patterns can still have high confidence if they also have axe rules
-  const isManual = !issue.axe_rule_id ||
-    issue.axe_rule_id.toLowerCase().includes('manual') ||
-    issue.axe_rule_id.toLowerCase().includes('none') ||
-    issue.axe_rule_id === 'no-axe-rule';
-  const confidence = isManual ? 0.7 : 1.0;
-
   // Get effort from ease of fix
   const easeOfFix = getEaseOfFix(issue);
   const effort = easeOfFix.order; // 1 (Easy), 2 (Moderate), 3 (Hard)
 
-  // Calculate RICE score
-  const score = (impact * confidence) / effort;
+  // Calculate priority score
+  const score = impact / effort;
 
   return score;
 };
@@ -303,7 +294,7 @@ export const TableView: React.FC<TableViewProps> = ({ issues, onSeek, onUpdateIs
                   <InfoTooltip
                     content={
                       <div className="space-y-2">
-                        <div><strong>RICE Score:</strong> (Severity² × Confidence) / Effort</div>
+                        <div><strong>Priority Score:</strong> Impact² / Effort</div>
                         <div className="text-xs space-y-1 mt-2 pt-2 border-t border-slate-200">
                           <div><strong>P0 (10+):</strong> Critical priority - fix immediately</div>
                           <div><strong>P1 (6-10):</strong> High priority - fix soon</div>

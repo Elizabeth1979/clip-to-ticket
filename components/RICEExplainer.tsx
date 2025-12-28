@@ -42,19 +42,19 @@ export const RICEExplainer: React.FC = () => {
                         <div className="text-center">
                             <p className="text-sm text-slate-600 mb-2">Formula</p>
                             <p className="text-2xl text-slate-900 mb-1">
-                                Priority Score = <span className="text-indigo-600">(Severity² × Confidence) / Effort</span>
+                                Priority Score = <span className="text-indigo-600">Impact² / Effort</span>
                             </p>
                             <p className="text-sm text-slate-500 mt-3">Higher score = Higher priority</p>
                         </div>
                     </div>
 
                     {/* Components */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                        {/* Severity */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        {/* Impact (Severity Squared) */}
                         <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
                             <h3 className="text-sm text-slate-900 mb-3 flex items-center gap-2">
-                                <span className="w-6 h-6 bg-red-100 text-red-600 rounded-lg flex items-center justify-center text-xs">S²</span>
-                                Severity (Squared)
+                                <span className="w-6 h-6 bg-red-100 text-red-600 rounded-lg flex items-center justify-center text-xs">I²</span>
+                                Impact (Severity²)
                             </h3>
                             <div className="space-y-2 text-sm">
                                 <div className="flex justify-between">
@@ -75,25 +75,6 @@ export const RICEExplainer: React.FC = () => {
                                 </div>
                             </div>
                             <p className="text-xs text-slate-500 mt-3 italic">Squaring emphasizes critical issues</p>
-                        </div>
-
-                        {/* Confidence */}
-                        <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
-                            <h3 className="text-sm text-slate-900 mb-3 flex items-center gap-2">
-                                <span className="w-6 h-6 bg-emerald-100 text-emerald-600 rounded-lg flex items-center justify-center text-xs">C</span>
-                                Confidence
-                            </h3>
-                            <div className="space-y-2 text-sm">
-                                <div className="flex justify-between">
-                                    <span className="text-slate-600">Axe-core rule</span>
-                                    <span className="text-slate-900">1.0</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-slate-600">Manual verify</span>
-                                    <span className="text-slate-900">0.7</span>
-                                </div>
-                            </div>
-                            <p className="text-xs text-slate-500 mt-3 italic">Automated detection = higher confidence</p>
                         </div>
 
                         {/* Effort */}
@@ -166,48 +147,45 @@ export const RICEExplainer: React.FC = () => {
                             <div className="bg-slate-50 rounded-lg p-4 border border-slate-100">
                                 <div className="flex items-start justify-between mb-2">
                                     <div>
-                                        <p className="text-sm text-slate-900">Missing button label (Axe-core detected)</p>
+                                        <p className="text-sm text-slate-900">Missing button label</p>
                                         <p className="text-xs text-slate-500 mt-1">Critical + Easy fix</p>
                                     </div>
                                     <span className="text-sm px-2.5 py-1 rounded-md border bg-red-50 text-red-700 border-red-200 whitespace-nowrap">P0 - Critical</span>
                                 </div>
                                 <div className="bg-white rounded-lg p-3 text-xs space-y-1">
-                                    <p className="text-slate-600">Severity: Critical (4) → Impact: 4² = <strong className="text-slate-900">16</strong></p>
-                                    <p className="text-slate-600">Confidence: Axe-core = <strong className="text-slate-900">1.0</strong></p>
+                                    <p className="text-slate-600">Impact: Critical (4)² = <strong className="text-slate-900">16</strong></p>
                                     <p className="text-slate-600">Effort: Easy = <strong className="text-slate-900">1</strong></p>
-                                    <p className="text-indigo-600 mt-2">Score: (16 × 1.0) / 1 = <strong className="text-lg">16.0</strong></p>
+                                    <p className="text-indigo-600 mt-2">Score: 16 / 1 = <strong className="text-lg">16.0</strong></p>
                                 </div>
                             </div>
 
                             <div className="bg-slate-50 rounded-lg p-4 border border-slate-100">
                                 <div className="flex items-start justify-between mb-2">
                                     <div>
-                                        <p className="text-sm text-slate-900">Color contrast issue (Axe-core detected)</p>
+                                        <p className="text-sm text-slate-900">Color contrast issue</p>
                                         <p className="text-xs text-slate-500 mt-1">Serious + Easy fix</p>
                                     </div>
                                     <span className="text-sm px-2.5 py-1 rounded-md border bg-orange-50 text-orange-700 border-orange-200 whitespace-nowrap">P1 - High</span>
                                 </div>
                                 <div className="bg-white rounded-lg p-3 text-xs space-y-1">
-                                    <p className="text-slate-600">Severity: Serious (3) → Impact: 3² = <strong className="text-slate-900">9</strong></p>
-                                    <p className="text-slate-600">Confidence: Axe-core = <strong className="text-slate-900">1.0</strong></p>
+                                    <p className="text-slate-600">Impact: Serious (3)² = <strong className="text-slate-900">9</strong></p>
                                     <p className="text-slate-600">Effort: Easy = <strong className="text-slate-900">1</strong></p>
-                                    <p className="text-indigo-600 mt-2">Score: (9 × 1.0) / 1 = <strong className="text-lg">9.0</strong></p>
+                                    <p className="text-indigo-600 mt-2">Score: 9 / 1 = <strong className="text-lg">9.0</strong></p>
                                 </div>
                             </div>
 
                             <div className="bg-slate-50 rounded-lg p-4 border border-slate-100">
                                 <div className="flex items-start justify-between mb-2">
                                     <div>
-                                        <p className="text-sm text-slate-900">Complex keyboard navigation (Manual review)</p>
+                                        <p className="text-sm text-slate-900">Complex keyboard navigation</p>
                                         <p className="text-xs text-slate-500 mt-1">Critical + Hard fix</p>
                                     </div>
-                                    <span className="text-sm px-2.5 py-1 rounded-md border bg-amber-50 text-amber-700 border-amber-200 whitespace-nowrap">P2 - Medium</span>
+                                    <span className="text-sm px-2.5 py-1 rounded-md border bg-orange-50 text-orange-700 border-orange-200 whitespace-nowrap">P1 - High</span>
                                 </div>
                                 <div className="bg-white rounded-lg p-3 text-xs space-y-1">
-                                    <p className="text-slate-600">Severity: Critical (4) → Impact: 4² = <strong className="text-slate-900">16</strong></p>
-                                    <p className="text-slate-600">Confidence: Manual = <strong className="text-slate-900">0.7</strong></p>
+                                    <p className="text-slate-600">Impact: Critical (4)² = <strong className="text-slate-900">16</strong></p>
                                     <p className="text-slate-600">Effort: Hard = <strong className="text-slate-900">3</strong></p>
-                                    <p className="text-indigo-600 mt-2">Score: (16 × 0.7) / 3 = <strong className="text-lg">3.7</strong></p>
+                                    <p className="text-indigo-600 mt-2">Score: 16 / 3 = <strong className="text-lg">5.3</strong></p>
                                 </div>
                             </div>
                         </div>
@@ -234,8 +212,8 @@ export const RICEExplainer: React.FC = () => {
                             <div className="flex gap-3">
                                 <span className="text-emerald-600 flex-shrink-0">✓</span>
                                 <div>
-                                    <p className="text-slate-900">Accounts for uncertainty</p>
-                                    <p className="text-xs text-slate-500 mt-1">Manual verification gets lower confidence scores</p>
+                                    <p className="text-slate-900">Transparent calculation</p>
+                                    <p className="text-xs text-slate-500 mt-1">Priority derived from visible Impact and Effort columns</p>
                                 </div>
                             </div>
                             <div className="flex gap-3">
