@@ -440,16 +440,16 @@ const App: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="flex-1">
+                  <div className="flex-1 min-h-[320px]">
                     {!file ? (
-                      <label className="flex flex-col items-center justify-center cursor-pointer border-2 border-dashed border-slate-200 rounded-xl p-6 hover:border-indigo-400 hover:bg-indigo-50/30 transition-all h-full min-h-[180px]">
+                      <label className="flex flex-col items-center justify-center cursor-pointer border-2 border-dashed border-slate-200 rounded-xl p-6 hover:border-indigo-400 hover:bg-indigo-50/30 transition-all h-full">
                         <input type="file" accept="video/mp4,video/webm,video/quicktime,video/x-matroska" onChange={handleFileChange} className="hidden" />
                         <svg className="w-10 h-10 text-slate-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
                         <span className="text-sm text-slate-600">Drop video here or click to browse</span>
                       </label>
                     ) : (
-                      <div className="space-y-3">
-                        <div className="aspect-video rounded-xl overflow-hidden bg-slate-900 shadow-lg border border-slate-800">
+                      <div className="space-y-3 h-full">
+                        <div className="rounded-xl overflow-hidden bg-slate-900 shadow-lg border border-slate-800 h-[calc(100%-48px)]">
                           <video ref={previewVideoRef} src={videoUrl || ""} className="w-full h-full object-contain" controls />
                         </div>
                         <div className="flex items-center justify-between bg-slate-50 px-4 py-2 rounded-lg border border-slate-100">
@@ -462,7 +462,7 @@ const App: React.FC = () => {
 
                   <button
                     onClick={loadExampleVideo}
-                    className="w-full mt-auto px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-600 hover:border-indigo-500 hover:text-indigo-600 transition-all flex items-center justify-center gap-2"
+                    className="w-full mt-4 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-600 hover:border-indigo-500 hover:text-indigo-600 transition-all flex items-center justify-center gap-2"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                     Load Example Video
@@ -510,7 +510,7 @@ const App: React.FC = () => {
                     </label>
                   </div>
 
-                  <div className="flex-1">
+                  <div className="flex-1 min-h-[320px]">
                     <ImageUploadSection
                       images={images}
                       onImagesChange={setImages}
@@ -537,7 +537,7 @@ const App: React.FC = () => {
                         console.error('Failed to load example image:', err);
                       }
                     }}
-                    className="w-full mt-auto px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-600 hover:border-amber-500 hover:text-amber-600 transition-all flex items-center justify-center gap-2"
+                    className="w-full mt-4 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-600 hover:border-amber-500 hover:text-amber-600 transition-all flex items-center justify-center gap-2"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                     Load Example Image

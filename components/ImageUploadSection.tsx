@@ -95,7 +95,7 @@ export const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
                     <div
                         onDrop={handleDrop}
                         onDragOver={handleDragOver}
-                        className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:border-amber-400 hover:bg-amber-50/30 transition-all cursor-pointer min-h-[180px] flex flex-col items-center justify-center"
+                        className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:border-amber-400 hover:bg-amber-50/30 transition-all cursor-pointer h-full flex flex-col items-center justify-center"
                         onClick={() => fileInputRef.current?.click()}
                     >
                         <svg className="w-10 h-10 text-slate-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
