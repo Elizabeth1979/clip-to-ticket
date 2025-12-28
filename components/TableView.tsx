@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { A11yIssue, Severity } from '../types';
 import { InfoTooltip } from './InfoTooltip';
 import { getWCAGLink, parseWCAGStandards } from '../utils/wcagUtils';
@@ -192,6 +192,21 @@ export const TableView: React.FC<TableViewProps> = ({ issues, onSeek, onUpdateIs
     }
   };
 
+  // Auto-resize textarea to fit content
+  const autoResize = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const textarea = e.target;
+    textarea.style.height = 'auto';
+    textarea.style.height = `${textarea.scrollHeight}px`;
+  }, []);
+
+  // Initialize textarea height on focus
+  const initResize = useCallback((textarea: HTMLTextAreaElement | null) => {
+    if (textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = `${textarea.scrollHeight}px`;
+    }
+  }, []);
+
   const sortedIssues = useMemo(() => {
     const sorted = [...issues].sort((a, b) => {
       let valA: any = a[sortKey];
@@ -369,11 +384,12 @@ export const TableView: React.FC<TableViewProps> = ({ issues, onSeek, onUpdateIs
                   {/* Issue Title */}
                   <td className="px-8 py-6 min-w-[250px]">
                     {isEditing ? (
-                      <input
-                        type="text"
+                      <textarea
+                        ref={initResize}
                         value={editForm?.issue_title || ''}
                         onChange={(e) => handleFormChange('issue_title', e.target.value)}
-                        className="w-full text-base font-semibold text-slate-900 bg-white px-3 py-2 rounded-lg border border-indigo-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all"
+                        onInput={autoResize}
+                        className="w-full text-base font-semibold text-slate-900 bg-white px-3 py-2 rounded-lg border border-indigo-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all resize-none min-h-[44px] overflow-hidden"
                       />
                     ) : (
                       <p className="text-base font-semibold text-slate-900 leading-snug">{issue.issue_title}</p>
@@ -384,10 +400,11 @@ export const TableView: React.FC<TableViewProps> = ({ issues, onSeek, onUpdateIs
                   <td className="px-8 py-6 min-w-[300px]">
                     {isEditing ? (
                       <textarea
+                        ref={initResize}
                         value={editForm?.issue_description || ''}
                         onChange={(e) => handleFormChange('issue_description', e.target.value)}
-                        rows={3}
-                        className="w-full text-sm text-slate-700 bg-white px-3 py-2 rounded-lg border border-indigo-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all resize-y"
+                        onInput={autoResize}
+                        className="w-full text-sm text-slate-700 bg-white px-3 py-2 rounded-lg border border-indigo-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all resize-none min-h-[80px] overflow-hidden"
                       />
                     ) : (
                       <p className="text-sm text-slate-500 leading-relaxed">{issue.issue_description}</p>
@@ -539,10 +556,11 @@ export const TableView: React.FC<TableViewProps> = ({ issues, onSeek, onUpdateIs
                   <td className="px-8 py-6 min-w-[300px]">
                     {isEditing ? (
                       <textarea
+                        ref={initResize}
                         value={editForm?.suggested_fix || ''}
                         onChange={(e) => handleFormChange('suggested_fix', e.target.value)}
-                        rows={3}
-                        className="w-full text-sm text-slate-700 bg-white px-3 py-2 rounded-lg border border-indigo-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all resize-y"
+                        onInput={autoResize}
+                        className="w-full text-sm text-slate-700 bg-white px-3 py-2 rounded-lg border border-indigo-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all resize-none min-h-[80px] overflow-hidden"
                       />
                     ) : (
                       <p className="text-sm text-slate-900 leading-relaxed">{issue.suggested_fix}</p>

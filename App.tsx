@@ -802,8 +802,8 @@ const App: React.FC = () => {
             </div>
 
             {/* Bottom Section: Full Width Issues Table/List */}
-            <div id="issues-table" className="w-full animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">
-              <div className="mb-6 flex items-center gap-4">
+            <div className="w-full animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">
+              <div id="issues-table" className="scroll-mt-24 mb-6 flex items-center gap-4">
                 <h3 className="text-sm tracking-[0.25em] text-slate-900">Detailed Findings</h3>
                 <InfoTooltip
                   content="These accessibility barriers were detected by AI analysis of your video, including visual inspection, screen reader output, and expert narration."
