@@ -467,12 +467,13 @@ export const TableView: React.FC<TableViewProps> = ({ issues, onSeek, onUpdateIs
                             <span className="text-sm text-indigo-600 tracking-widest">
                               {standard.number}
                             </span>
-                            {stdIdx === 0 && standard.name && (
+                            {standard.name && (
                               <span className="text-sm text-slate-400 group-hover/link:text-slate-900 transition-colors">
-                                {standard.name}
+                                {standard.name} ({standard.level}{standard.introducedVersion ? `, ${standard.introducedVersion}` : ''})
                               </span>
                             )}
                           </a>
+
                         ))}
                       </div>
                     )}

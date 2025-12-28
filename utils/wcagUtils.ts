@@ -4,6 +4,7 @@ interface WCAGSuccessCriterion {
     id: string;
     num: string;
     handle: string;
+    level: string;
 }
 
 interface WCAGGuideline {
@@ -18,9 +19,16 @@ interface WCAGData {
     principles?: WCAGPrinciple[];
 }
 
-// Build a mapping of WCAG standard numbers to their Understanding document slugs
-const buildWCAGMap = (): { [key: string]: string } => {
-    const map: { [key: string]: string } = {};
+interface WCAGMetadata {
+    id: string;
+    name: string;
+    level: string;
+    introducedVersion: string;
+}
+
+// Build a mapping of WCAG standard numbers to their metadata
+const buildWCAGMap = (): { [key: string]: WCAGMetadata } => {
+    const map: { [key: string]: WCAGMetadata } = {};
 
     const data = wcagData as WCAGData;
 
@@ -30,7 +38,14 @@ const buildWCAGMap = (): { [key: string]: string } => {
                 for (const guideline of principle.guidelines) {
                     if (guideline.successcriteria) {
                         for (const criterion of guideline.successcriteria) {
-                            map[criterion.num] = criterion.id;
+                            const versions = (criterion as any).versions || [];
+                            const introduced = versions[0] || '';
+                            map[criterion.num] = {
+                                id: criterion.id,
+                                name: criterion.handle,
+                                level: criterion.level,
+                                introducedVersion: (introduced === '2.1' || introduced === '2.2') ? introduced : ''
+                            };
                         }
                     }
                 }
@@ -50,9 +65,9 @@ const wcagMap = buildWCAGMap();
  * @returns The full URL to the Understanding document
  */
 export const getWCAGLink = (standardNumber: string): string => {
-    const slug = wcagMap[standardNumber.trim()];
-    if (slug) {
-        return `https://www.w3.org/WAI/WCAG22/Understanding/${slug}.html`;
+    const meta = wcagMap[standardNumber.trim()];
+    if (meta) {
+        return `https://www.w3.org/WAI/WCAG22/Understanding/${meta.id}.html`;
     }
     return `https://www.w3.org/WAI/WCAG22/Understanding/`;
 };
@@ -60,18 +75,22 @@ export const getWCAGLink = (standardNumber: string): string => {
 /**
  * Parse WCAG standards from a reference string
  * @param reference - The WCAG reference string (e.g., "4.1.2 Name, Role, Value" or "1.3.1, 2.4.1")
- * @returns Array of parsed standards with number and name
+ * @returns Array of parsed standards with number, name, level and introduced version
  */
-export const parseWCAGStandards = (reference: string): Array<{ number: string; name: string }> => {
+export const parseWCAGStandards = (reference: string): Array<{ number: string; name: string; level: string; introducedVersion: string }> => {
     // Extract all WCAG standard numbers (e.g., "4.1.2", "2.4.1")
     const numberMatches = reference.match(/\d+\.\d+\.\d+/g) || [];
 
-    // Extract the criterion name (everything after the last standard number)
-    const nameMatch = reference.match(/\d+\.\d+\.\d+\s+(.+)/);
-    const criterionName = nameMatch ? nameMatch[1] : '';
-
-    return numberMatches.map(num => ({
-        number: num,
-        name: criterionName
-    }));
+    return numberMatches.map(num => {
+        const meta = wcagMap[num];
+        return {
+            number: num,
+            name: meta?.name || '',
+            level: meta?.level || '',
+            introducedVersion: meta?.introducedVersion || ''
+        };
+    });
 };
+
+
+
