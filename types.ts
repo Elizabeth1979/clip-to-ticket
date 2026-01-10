@@ -14,6 +14,14 @@ export interface ImageItem {
   comment: string;      // Description of the issue (can be empty)
 }
 
+export interface MediaItem {
+  id: string;
+  file: File;
+  type: 'video' | 'image' | 'audio' | 'pdf';
+  url: string;
+  comment: string;
+}
+
 export interface A11yIssue {
   issue_title: string;
   issue_description: string;
@@ -72,6 +80,7 @@ export interface AnalysisMetadata {
 
 export interface AnalysisResult {
   transcript: string;
+  detected_language?: string;
   issues: A11yIssue[];
   metadata?: AnalysisMetadata;
 }

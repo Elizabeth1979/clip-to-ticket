@@ -14,7 +14,15 @@ const API_BASE_URL = import.meta.env.PROD
   : 'http://localhost:3001';
 
 export class GeminiService {
-  async analyzeVideo(videoBase64: string, mimeType: string, signal?: AbortSignal): Promise<AnalysisResult> {
+  async analyzeVideo(videoBase64: string, mimeType: string, targetLanguage: string = 'Original', signal?: AbortSignal): Promise<AnalysisResult> {
+    // Construct language instruction
+    let languageInstruction = "";
+    if (targetLanguage === 'Original') {
+      languageInstruction = "TRANSCRIPT: Generate a full verbatim diarized transcript of the video audio in its ORIGINAL language (do not translate). Detect and report the language code in 'detected_language'.";
+    } else {
+      languageInstruction = `TRANSCRIPT: Generate a full diarized transcript of the video audio and TRANSLATE it into ${targetLanguage}. Report the ORIGINAL detected source language code in 'detected_language'.`;
+    }
+
     const systemInstruction = `
       You are a Senior Accessibility QA Architect analyzing comprehensive screen recordings that include:
       - Visual UI inspection (color, layout, focus indicators, responsive design)
@@ -44,7 +52,7 @@ export class GeminiService {
       - ARIA APG Patterns: ${ARIA_APG_REFERENCE}
       
       ANALYSIS PIPELINE:
-      1. TRANSCRIPT: Generate a full verbatim diarized transcript.
+      1. ${languageInstruction}
          IMPORTANT: Every time a different person speaks, or after a short pause, start a NEW LINE.
          FORMAT: Speaker Name [MM:SS]: Message content here.
          
@@ -75,9 +83,14 @@ export class GeminiService {
            * Minor issues → Minor
       
       5. EASE OF FIX ASSESSMENT: Classify the difficulty to fix this issue:
-         - Easy: Static attributes (adding aria-label, aria-hidden, role, alt text, etc.)
-         - Moderate: Focus management, dynamic ARIA (aria-expanded, aria-checked, aria-live)
-         - Hard: Complex keyboard implementation (tabs, modal dialogs, custom widgets)
+         - Quick Win: Boilerplate fixes with no content creation - removing attributes or using standard values
+           Examples: alt="" for decorative images, removing tabindex, aria-hidden="true", role="presentation", type="button"
+         - Easy: Static/fixed ARIA attributes that require meaningful content but no logic
+           Examples: Descriptive aria-label, meaningful alt text, lang attribute, aria-describedby with custom text
+         - Moderate: Focus management or dynamic ARIA that changes based on state
+           Examples: Setting focus on modal open/close, aria-expanded, aria-checked, aria-live regions, aria-activedescendant
+         - Hard: Complex widget implementation, keyboard navigation patterns, or fixes requiring design/functionality changes
+           Examples: Custom combobox/dropdown, data grid keyboard navigation, carousel controls, drag-and-drop, color contrast requiring design approval
       
       6. REMEDIATION: Provide code-level fixes using:
          - Examples from the Axe-core rules above
@@ -107,6 +120,7 @@ export class GeminiService {
       type: Type.OBJECT,
       properties: {
         transcript: { type: Type.STRING },
+        detected_language: { type: Type.STRING },
         issues: {
           type: Type.ARRAY,
           items: {
@@ -118,7 +132,7 @@ export class GeminiService {
               axe_rule_id: { type: Type.STRING },
               apg_pattern: { type: Type.STRING },
               severity: { type: Type.STRING, enum: Object.values(Severity) },
-              ease_of_fix: { type: Type.STRING, enum: ['Easy', 'Moderate', 'Hard'] },
+              ease_of_fix: { type: Type.STRING, enum: ['Quick Win', 'Easy', 'Moderate', 'Hard'] },
               suggested_fix: { type: Type.STRING },
               generated_alt_text: { type: Type.STRING },
               timestamp: { type: Type.STRING },
@@ -191,6 +205,7 @@ export class GeminiService {
 
       return {
         transcript: parsedData.transcript || "No transcript generated.",
+        detected_language: parsedData.detected_language,
         issues,
         metadata: data.metadata // Include metadata from backend
       };
@@ -210,15 +225,24 @@ export class GeminiService {
   async analyzeMedia(
     video?: { base64: string; mimeType: string },
     images?: { base64: string; mimeType: string; comment?: string }[],
+    targetLanguage: string = 'Original',
     signal?: AbortSignal
   ): Promise<AnalysisResult> {
-    // If only video provided, use the existing analyzeVideo method
+    // If only video provided, use the existing analyzeVideo method (adapted for new signature)
     if (video && (!images || images.length === 0)) {
-      return this.analyzeVideo(video.base64, video.mimeType, signal);
+      return this.analyzeVideo(video.base64, video.mimeType, targetLanguage, signal);
     }
 
     const hasVideo = !!video;
     const imageCount = images?.length || 0;
+
+    // Construct language instruction
+    let languageInstruction = "";
+    if (targetLanguage === 'Original') {
+      languageInstruction = "TRANSCRIPT: Generate a full verbatim diarized transcript of the video audio in its ORIGINAL language (do not translate). Detect and report the language code in 'detected_language'.";
+    } else {
+      languageInstruction = `TRANSCRIPT: Generate a full diarized transcript of the video audio and TRANSLATE it into ${targetLanguage}. Report the ORIGINAL detected source language code in 'detected_language'.`;
+    }
 
     const systemInstruction = `
       You are a Senior Accessibility QA Architect analyzing ${hasVideo ? 'a screen recording' : ''}${hasVideo && imageCount > 0 ? ' and ' : ''}${imageCount > 0 ? `${imageCount} screenshot${imageCount > 1 ? 's' : ''}` : ''} for accessibility issues.
@@ -257,7 +281,7 @@ export class GeminiService {
       - ARIA APG Patterns: ${ARIA_APG_REFERENCE}
       
       ANALYSIS PIPELINE:
-      1. TRANSCRIPT: ${hasVideo ? 'Generate a full verbatim diarized transcript from the video.' : 'Since there is no video, leave the transcript field empty or provide a brief summary of what you analyzed.'}
+      1. ${hasVideo ? languageInstruction : 'Since there is no video, leave the transcript field empty or provide a brief summary of what you analyzed.'}
          ${hasVideo ? `IMPORTANT: Every time a different person speaks, or after a short pause, start a NEW LINE.
          FORMAT: Speaker Name [MM:SS]: Message content here.` : ''}
          
@@ -278,9 +302,14 @@ export class GeminiService {
          - Otherwise: Use AI heuristics based on WCAG conformance level and user impact
       
       5. EASE OF FIX ASSESSMENT: Classify the difficulty to fix this issue:
-         - Easy: Static attributes (adding aria-label, aria-hidden, role, alt text, etc.)
-         - Moderate: Focus management, dynamic ARIA (aria-expanded, aria-checked, aria-live)
-         - Hard: Complex keyboard implementation (tabs, modal dialogs, custom widgets)
+         - Quick Win: Boilerplate fixes with no content creation - removing attributes or using standard values
+           Examples: alt="" for decorative images, removing tabindex, aria-hidden="true", role="presentation", type="button"
+         - Easy: Static/fixed ARIA attributes that require meaningful content but no logic
+           Examples: Descriptive aria-label, meaningful alt text, lang attribute, aria-describedby with custom text
+         - Moderate: Focus management or dynamic ARIA that changes based on state
+           Examples: Setting focus on modal open/close, aria-expanded, aria-checked, aria-live regions, aria-activedescendant
+         - Hard: Complex widget implementation, keyboard navigation patterns, or fixes requiring design/functionality changes
+           Examples: Custom combobox/dropdown, data grid keyboard navigation, carousel controls, drag-and-drop, color contrast requiring design approval
       
       6. REMEDIATION: Provide code-level fixes using ARIA APG patterns where applicable.
       
@@ -296,6 +325,7 @@ export class GeminiService {
       type: Type.OBJECT,
       properties: {
         transcript: { type: Type.STRING },
+        detected_language: { type: Type.STRING },
         issues: {
           type: Type.ARRAY,
           items: {
@@ -307,7 +337,7 @@ export class GeminiService {
               axe_rule_id: { type: Type.STRING },
               apg_pattern: { type: Type.STRING },
               severity: { type: Type.STRING, enum: Object.values(Severity) },
-              ease_of_fix: { type: Type.STRING, enum: ['Easy', 'Moderate', 'Hard'] },
+              ease_of_fix: { type: Type.STRING, enum: ['Quick Win', 'Easy', 'Moderate', 'Hard'] },
               suggested_fix: { type: Type.STRING },
               generated_alt_text: { type: Type.STRING },
               timestamp: { type: Type.STRING },
@@ -367,6 +397,7 @@ export class GeminiService {
 
       return {
         transcript: parsedData.transcript || (hasVideo ? "No transcript generated." : "Screenshot analysis - no video transcript."),
+        detected_language: parsedData.detected_language,
         issues,
         metadata: data.metadata
       };

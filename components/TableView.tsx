@@ -4,6 +4,7 @@ import { A11yIssue, Severity } from '../types';
 import { InfoTooltip } from './InfoTooltip';
 import { getWCAGLink, parseWCAGStandards } from '../utils/wcagUtils';
 import { parseAPGPatterns } from '../services/apgPatternsService';
+import { Modal } from './Modal';
 
 interface TableViewProps {
   issues: A11yIssue[];
@@ -51,13 +52,15 @@ const getSeverityBadge = (severity: Severity | string): { label: string; color: 
 };
 
 const getEaseOfFix = (issue: A11yIssue): { label: string; color: string; order: number } => {
-  // Use AI-provided ease_of_fix if available
+  const easeMap: Record<string, { label: string; color: string; order: number }> = {
+    'Quick Win': { label: 'Quick Win', color: 'bg-cyan-50 text-cyan-600 border-cyan-100', order: 0 },
+    'Easy': { label: 'Easy', color: 'bg-emerald-50 text-emerald-600 border-emerald-100', order: 1 },
+    'Moderate': { label: 'Moderate', color: 'bg-amber-50 text-amber-600 border-amber-100', order: 2 },
+    'Hard': { label: 'Hard', color: 'bg-red-50 text-red-600 border-red-100', order: 3 }
+  };
+
+  // Use AI-provided ease_of_fix
   if (issue.ease_of_fix) {
-    const easeMap: Record<string, { label: string; color: string; order: number }> = {
-      'Easy': { label: 'Easy', color: 'bg-emerald-50 text-emerald-600 border-emerald-100', order: 1 },
-      'Moderate': { label: 'Moderate', color: 'bg-amber-50 text-amber-600 border-amber-100', order: 2 },
-      'Hard': { label: 'Hard', color: 'bg-red-50 text-red-600 border-red-100', order: 3 }
-    };
     const result = easeMap[issue.ease_of_fix];
     if (result) {
       return result;
@@ -65,29 +68,8 @@ const getEaseOfFix = (issue: A11yIssue): { label: string; color: string; order: 
     console.warn('Unrecognized ease_of_fix value:', issue.ease_of_fix);
   }
 
-  // Fallback to heuristic calculation
-  // APG patterns are not "manual" - they're design pattern references
-  const isManual = !issue.axe_rule_id ||
-    issue.axe_rule_id.toLowerCase().includes('manual') ||
-    issue.axe_rule_id.toLowerCase().includes('none') ||
-    issue.axe_rule_id === 'no-axe-rule';
-
-  // Manual verification issues are typically harder
-  if (isManual) {
-    if (issue.severity === Severity.CRITICAL || issue.severity === Severity.SERIOUS) {
-      return { label: 'Hard', color: 'bg-red-50 text-red-600 border-red-100', order: 3 };
-    }
-    return { label: 'Moderate', color: 'bg-amber-50 text-amber-600 border-amber-100', order: 2 };
-  }
-
-  // Automated issues with axe rules
-  if (issue.severity === Severity.CRITICAL) {
-    return { label: 'Moderate', color: 'bg-amber-50 text-amber-600 border-amber-100', order: 2 };
-  }
-  if (issue.severity === Severity.MINOR || issue.severity === Severity.MODERATE) {
-    return { label: 'Easy', color: 'bg-emerald-50 text-emerald-600 border-emerald-100', order: 1 };
-  }
-  return { label: 'Moderate', color: 'bg-amber-50 text-amber-600 border-amber-100', order: 2 };
+  // Default to Moderate if AI didn't provide a value (should rarely happen)
+  return easeMap['Moderate'];
 };
 
 /**
@@ -135,6 +117,7 @@ export const TableView: React.FC<TableViewProps> = ({ issues, onSeek, onUpdateIs
   const [direction, setDirection] = useState<SortDirection>('desc');
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editForm, setEditForm] = useState<A11yIssue | null>(null);
+  const [issueToDelete, setIssueToDelete] = useState<A11yIssue | null>(null);
 
   // Find original index of an issue (before sorting) for update callbacks
   const getOriginalIndex = (issue: A11yIssue): number => {
@@ -166,15 +149,24 @@ export const TableView: React.FC<TableViewProps> = ({ issues, onSeek, onUpdateIs
     setEditForm(null);
   };
 
-  const handleDeleteIssue = (issue: A11yIssue) => {
-    if (onDeleteIssue) {
-      const originalIdx = getOriginalIndex(issue);
+  const handleDeleteClick = (issue: A11yIssue) => {
+    setIssueToDelete(issue);
+  };
+
+  const confirmDelete = () => {
+    if (issueToDelete && onDeleteIssue) {
+      const originalIdx = getOriginalIndex(issueToDelete);
       if (originalIdx !== -1) {
         onDeleteIssue(originalIdx);
       }
     }
+    setIssueToDelete(null);
     setEditingIndex(null);
     setEditForm(null);
+  };
+
+  const cancelDelete = () => {
+    setIssueToDelete(null);
   };
 
   const handleFormChange = (field: keyof A11yIssue, value: any) => {
@@ -235,387 +227,408 @@ export const TableView: React.FC<TableViewProps> = ({ issues, onSeek, onUpdateIs
   };
 
   return (
-    <div className="bg-white rounded-[2rem] shadow-sm border border-slate-200 overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse table-auto">
-          <thead>
-            <tr className="bg-slate-50 border-b border-slate-100">
-              <th className="px-8 py-5 text-sm text-slate-400 tracking-widest whitespace-nowrap">
-                <div className="flex items-center gap-3">
-                  <button onClick={() => handleSort('timestamp')} className="flex items-center gap-1 hover:text-slate-600 transition-colors">
-                    Time {sortKey === 'timestamp' && (direction === 'asc' ? '↑' : '↓')}
-                  </button>
-                  <InfoTooltip content="Click timestamp to jump to this moment in the video" position="top" />
-                </div>
-              </th>
-              <th className="px-8 py-5 text-sm text-slate-400 tracking-widest">
-                <div className="flex items-center gap-3">
-                  <span className="text-sm">Issue</span>
-                  <InfoTooltip content="Title of the accessibility barrier detected" position="top" />
-                </div>
-              </th>
-              <th className="px-8 py-5 text-sm text-slate-400 tracking-widest">
-                <div className="flex items-center gap-3">
-                  <span className="text-sm">Description</span>
-                  <InfoTooltip content="Detailed context about the accessibility issue" position="top" />
-                </div>
-              </th>
-              <th className="px-8 py-5 text-sm text-slate-400 tracking-widest whitespace-nowrap">
-                <div className="flex items-center gap-3">
-                  <button onClick={() => handleSort('severity')} className="flex items-center gap-1 hover:text-slate-600 transition-colors">
-                    Impact {sortKey === 'severity' && (direction === 'asc' ? '↑' : '↓')}
-                  </button>
-                  <InfoTooltip
-                    content={
-                      <div className="space-y-1">
-                        <div><strong>Critical:</strong> Blocks access completely</div>
-                        <div><strong>Serious:</strong> Major barrier to access</div>
-                        <div><strong>Moderate:</strong> Noticeable difficulty</div>
-                        <div><strong>Minor:</strong> Inconvenience but accessible</div>
-                      </div>
-                    }
-                    position="top"
-                  />
-                </div>
-              </th>
-              <th className="px-8 py-5 text-sm text-slate-400 tracking-widest whitespace-nowrap">
-                <div className="flex items-center gap-3">
-                  <button onClick={() => handleSort('ease_of_fix')} className="flex items-center gap-1 hover:text-slate-600 transition-colors">
-                    Ease of Fix {sortKey === 'ease_of_fix' && (direction === 'asc' ? '↑' : '↓')}
-                  </button>
-                  <InfoTooltip content="Estimated difficulty to resolve this issue. Based on severity and whether automated testing is available." position="top" />
-                </div>
-              </th>
-              <th className="px-8 py-5 text-sm text-slate-400 tracking-widest whitespace-nowrap">
-                <div className="flex items-center gap-3">
-                  <button onClick={() => handleSort('priority')} className="flex items-center gap-1 hover:text-slate-600 transition-colors">
-                    Priority {sortKey === 'priority' && (direction === 'asc' ? '↑' : '↓')}
-                  </button>
-                  <InfoTooltip
-                    content={
-                      <div className="space-y-2">
-                        <div><strong>Priority Score:</strong> Impact² / Effort</div>
-                        <div className="text-xs space-y-1 mt-2 pt-2 border-t border-slate-200">
-                          <div><strong>P0 (10+):</strong> Critical priority - fix immediately</div>
-                          <div><strong>P1 (6-10):</strong> High priority - fix soon</div>
-                          <div><strong>P2 (3-6):</strong> Medium priority - schedule fix</div>
-                          <div><strong>P3 (&lt;3):</strong> Low priority - backlog</div>
-                        </div>
-                      </div>
-                    }
-                    position="top"
-                  />
-                </div>
-              </th>
-              <th className="px-8 py-5 text-sm text-slate-400 tracking-widest">
-                <div className="flex items-center gap-3">
-                  <button onClick={() => handleSort('wcag_reference')} className="flex items-center gap-1 hover:text-slate-600 transition-colors">
-                    Standards {sortKey === 'wcag_reference' && (direction === 'asc' ? '↑' : '↓')}
-                  </button>
-                  <InfoTooltip content="WCAG 2.2 Success Criteria violated. Click to view official documentation." position="top" />
-                </div>
-              </th>
-              <th className="px-8 py-5 text-sm text-slate-400 tracking-widest">
-                <div className="flex items-center gap-3">
-                  <button onClick={() => handleSort('axe_rule_id')} className="flex items-center gap-1 hover:text-slate-600 transition-colors">
-                    Axe Rule {sortKey === 'axe_rule_id' && (direction === 'asc' ? '↑' : '↓')}
-                  </button>
-                  <InfoTooltip content="Axe-core rule ID for automated testing. Links to Deque University documentation." position="top" />
-                </div>
-              </th>
-              <th className="px-8 py-5 text-sm text-slate-400 tracking-widest">
-                <div className="flex items-center gap-3">
-                  <span className="text-sm">APG Pattern</span>
-                  <InfoTooltip content="ARIA Authoring Practices Guide pattern reference for design implementation guidance." position="top" />
-                </div>
-              </th>
-              <th className="px-8 py-5 text-sm text-slate-400 tracking-widest">
-                <div className="flex items-center gap-3">
-                  <span className="text-sm">Fix Path</span>
-                  <InfoTooltip content="Recommended steps to resolve this accessibility issue." position="top" />
-                </div>
-              </th>
-              {onUpdateIssue && (
-                <th className="px-8 py-5 text-sm text-slate-400 tracking-widest sticky right-0 bg-slate-50">
-                  <span className="text-sm">Actions</span>
-                </th>
-              )}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-50">
-            {sortedIssues.map((issue, idx) => {
-              const isEditing = editingIndex === idx;
-              const currentIssue = isEditing && editForm ? editForm : issue;
-              const isManual = !currentIssue.axe_rule_id ||
-                currentIssue.axe_rule_id.toLowerCase().includes('manual') ||
-                currentIssue.axe_rule_id.toLowerCase().includes('none') ||
-                currentIssue.axe_rule_id === 'no-axe-rule';
-
-              return (
-                <tr key={idx} className={`transition-colors align-top ${isEditing ? 'bg-indigo-50/50' : 'hover:bg-slate-50/50'}`}>
-                  {/* Timestamp (not editable) */}
-                  <td className="px-8 py-6">
-                    <button
-                      onClick={() => onSeek(issue.timestamp)}
-                      className="text-sm text-slate-900 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 hover:border-indigo-600 transition-colors whitespace-nowrap"
-                    >
-                      {issue.timestamp}
+    <>
+      <div className="bg-white rounded-[2rem] shadow-sm border border-slate-200 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse table-auto">
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-100">
+                <th className="px-4 py-4 md:px-8 md:py-5 text-sm text-slate-400 tracking-widest whitespace-nowrap">
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => handleSort('timestamp')} className="flex items-center gap-1 hover:text-slate-600 transition-colors">
+                      Time {sortKey === 'timestamp' && (direction === 'asc' ? '↑' : '↓')}
                     </button>
-                  </td>
-
-                  {/* Issue Title */}
-                  <td className="px-8 py-6 min-w-[250px]">
-                    {isEditing ? (
-                      <textarea
-                        ref={initResize}
-                        value={editForm?.issue_title || ''}
-                        onChange={(e) => handleFormChange('issue_title', e.target.value)}
-                        onInput={autoResize}
-                        className="w-full text-base font-semibold text-slate-900 bg-white px-3 py-2 rounded-lg border border-indigo-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all resize-none min-h-[44px] overflow-hidden"
-                      />
-                    ) : (
-                      <p className="text-base font-semibold text-slate-900 leading-snug">{issue.issue_title}</p>
-                    )}
-                  </td>
-
-                  {/* Description */}
-                  <td className="px-8 py-6 min-w-[300px]">
-                    {isEditing ? (
-                      <textarea
-                        ref={initResize}
-                        value={editForm?.issue_description || ''}
-                        onChange={(e) => handleFormChange('issue_description', e.target.value)}
-                        onInput={autoResize}
-                        className="w-full text-sm text-slate-700 bg-white px-3 py-2 rounded-lg border border-indigo-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all resize-none min-h-[80px] overflow-hidden"
-                      />
-                    ) : (
-                      <p className="text-sm text-slate-500 leading-relaxed">{issue.issue_description}</p>
-                    )}
-                  </td>
-
-                  {/* Impact/Severity */}
-                  <td className="px-8 py-6">
-                    {isEditing ? (
-                      <select
-                        value={editForm?.severity || ''}
-                        onChange={(e) => handleFormChange('severity', e.target.value as Severity)}
-                        className="text-sm bg-white px-3 py-2 rounded-lg border border-indigo-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all"
-                      >
-                        <option value="Critical">Critical</option>
-                        <option value="Serious">Serious</option>
-                        <option value="Moderate">Moderate</option>
-                        <option value="Minor">Minor</option>
-                      </select>
-                    ) : (
-                      <span className={`text-sm px-2.5 py-1 rounded-md border tracking-widest whitespace-nowrap ${getSeverityBadge(issue.severity).color}`}>
-                        {getSeverityBadge(issue.severity).label}
-                      </span>
-                    )}
-                  </td>
-
-                  {/* Ease of Fix */}
-                  <td className="px-8 py-6">
-                    {isEditing ? (
-                      <select
-                        value={editForm?.ease_of_fix || ''}
-                        onChange={(e) => handleFormChange('ease_of_fix', e.target.value as 'Easy' | 'Moderate' | 'Hard')}
-                        className="text-sm bg-white px-3 py-2 rounded-lg border border-indigo-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all"
-                      >
-                        <option value="Easy">Easy</option>
-                        <option value="Moderate">Moderate</option>
-                        <option value="Hard">Hard</option>
-                      </select>
-                    ) : (
-                      <span className={`text-sm px-2.5 py-1 rounded-md border tracking-widest whitespace-nowrap ${getEaseOfFix(issue).color}`}>
-                        {getEaseOfFix(issue).label}
-                      </span>
-                    )}
-                  </td>
-
-                  {/* Priority (read-only - calculated) */}
-                  <td className="px-8 py-6">
-                    <div className="flex flex-col gap-1">
-                      <span className={`text-sm px-2.5 py-1 rounded-md border tracking-widest whitespace-nowrap ${getPriorityBadge(calculatePriority(currentIssue)).color}`}>
-                        {getPriorityBadge(calculatePriority(currentIssue)).label}
-                      </span>
-                      <span className="text-xs text-slate-400 tracking-wider">
-                        Score: {calculatePriority(currentIssue).toFixed(1)}
-                      </span>
-                    </div>
-                  </td>
-
-                  {/* WCAG Reference */}
-                  <td className="px-8 py-6 min-w-[200px]">
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        value={editForm?.wcag_reference || ''}
-                        onChange={(e) => handleFormChange('wcag_reference', e.target.value)}
-                        placeholder="e.g., 1.3.1, 2.4.1"
-                        className="w-full text-sm text-slate-700 bg-white px-3 py-2 rounded-lg border border-indigo-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all"
-                      />
-                    ) : (
-                      <div className="flex flex-col gap-2">
-                        {parseWCAGStandards(issue.wcag_reference).map((standard, stdIdx) => (
-                          <a
-                            key={stdIdx}
-                            href={getWCAGLink(standard.number)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="group/link flex flex-col gap-1 underline"
-                          >
-                            <span className="text-sm text-indigo-600 tracking-widest">
-                              {standard.number}
-                            </span>
-                            {standard.name && (
-                              <span className="text-sm text-slate-400 group-hover/link:text-slate-900 transition-colors">
-                                {standard.name} ({standard.level}{standard.introducedVersion ? `, ${standard.introducedVersion}` : ''})
-                              </span>
-                            )}
-                          </a>
-
-                        ))}
-                      </div>
-                    )}
-                  </td>
-
-                  {/* Axe Rule */}
-                  <td className="px-8 py-6">
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        value={editForm?.axe_rule_id || ''}
-                        onChange={(e) => handleFormChange('axe_rule_id', e.target.value)}
-                        placeholder="e.g., color-contrast"
-                        className="w-full text-sm text-slate-700 bg-white px-3 py-2 rounded-lg border border-indigo-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all"
-                      />
-                    ) : isManual ? (
-                      <span className="text-sm text-slate-300 tracking-widest italic">
-                        Manual Verification
-                      </span>
-                    ) : (
-                      <a
-                        href={`https://dequeuniversity.com/rules/axe/4.1/${issue.axe_rule_id}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-indigo-600 tracking-widest underline whitespace-nowrap"
-                      >
-                        {issue.axe_rule_id}
-                      </a>
-                    )}
-                  </td>
-
-                  {/* APG Pattern */}
-                  <td className="px-8 py-6">
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        value={editForm?.apg_pattern || ''}
-                        onChange={(e) => handleFormChange('apg_pattern', e.target.value)}
-                        placeholder="e.g., toolbar, menubar"
-                        className="w-full text-sm text-slate-700 bg-white px-3 py-2 rounded-lg border border-indigo-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all"
-                      />
-                    ) : issue.apg_pattern ? (
-                      <div className="flex flex-col gap-2">
-                        {parseAPGPatterns(issue.apg_pattern).map((pattern, patIdx) => (
-                          <a
-                            key={patIdx}
-                            href={pattern.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-sm text-purple-600 tracking-widest underline whitespace-nowrap"
-                            title={`ARIA APG: ${pattern.name}`}
-                          >
-                            {pattern.id}
-                          </a>
-                        ))}
-                      </div>
-                    ) : (
-                      <span className="text-sm text-slate-300">-</span>
-                    )}
-                  </td>
-
-                  {/* Suggested Fix */}
-                  <td className="px-8 py-6 min-w-[300px]">
-                    {isEditing ? (
-                      <textarea
-                        ref={initResize}
-                        value={editForm?.suggested_fix || ''}
-                        onChange={(e) => handleFormChange('suggested_fix', e.target.value)}
-                        onInput={autoResize}
-                        className="w-full text-sm text-slate-700 bg-white px-3 py-2 rounded-lg border border-indigo-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all resize-none min-h-[80px] overflow-hidden"
-                      />
-                    ) : (
-                      <p className="text-sm text-slate-900 leading-relaxed">{issue.suggested_fix}</p>
-                    )}
-                  </td>
-
-                  {/* Actions */}
-                  {onUpdateIssue && (
-                    <td className="px-8 py-6 sticky right-0 bg-white">
-                      {isEditing ? (
-                        <div className="flex flex-col gap-2">
-                          <button
-                            onClick={() => handleSaveEdit(issue)}
-                            className="flex items-center justify-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm rounded-lg transition-colors"
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                            </svg>
-                            Save
-                          </button>
-                          <button
-                            onClick={handleCancelEdit}
-                            className="flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm rounded-lg transition-colors"
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                            Cancel
-                          </button>
+                    <InfoTooltip content="Click timestamp to jump to this moment in the video" position="top" />
+                  </div>
+                </th>
+                <th className="px-4 py-4 md:px-8 md:py-5 text-sm text-slate-400 tracking-widest">
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm">Issue</span>
+                    <InfoTooltip content="Title of the accessibility barrier detected" position="top" />
+                  </div>
+                </th>
+                <th className="px-4 py-4 md:px-8 md:py-5 text-sm text-slate-400 tracking-widest">
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm">Description</span>
+                    <InfoTooltip content="Detailed context about the accessibility issue" position="top" />
+                  </div>
+                </th>
+                <th className="px-4 py-4 md:px-8 md:py-5 text-sm text-slate-400 tracking-widest whitespace-nowrap">
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => handleSort('severity')} className="flex items-center gap-1 hover:text-slate-600 transition-colors">
+                      Impact {sortKey === 'severity' && (direction === 'asc' ? '↑' : '↓')}
+                    </button>
+                    <InfoTooltip
+                      content={
+                        <div className="space-y-1">
+                          <div><strong>Critical:</strong> Blocks access completely</div>
+                          <div><strong>Serious:</strong> Major barrier to access</div>
+                          <div><strong>Moderate:</strong> Noticeable difficulty</div>
+                          <div><strong>Minor:</strong> Inconvenience but accessible</div>
                         </div>
+                      }
+                      position="top"
+                    />
+                  </div>
+                </th>
+                <th className="px-4 py-4 md:px-8 md:py-5 text-sm text-slate-400 tracking-widest whitespace-nowrap">
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => handleSort('ease_of_fix')} className="flex items-center gap-1 hover:text-slate-600 transition-colors">
+                      Ease of Fix {sortKey === 'ease_of_fix' && (direction === 'asc' ? '↑' : '↓')}
+                    </button>
+                    <InfoTooltip content="Estimated difficulty to resolve this issue. Based on severity and whether automated testing is available." position="top" />
+                  </div>
+                </th>
+                <th className="px-4 py-4 md:px-8 md:py-5 text-sm text-slate-400 tracking-widest whitespace-nowrap">
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => handleSort('priority')} className="flex items-center gap-1 hover:text-slate-600 transition-colors">
+                      Priority {sortKey === 'priority' && (direction === 'asc' ? '↑' : '↓')}
+                    </button>
+                    <InfoTooltip
+                      content={
+                        <div className="space-y-2">
+                          <div><strong>Priority Score:</strong> Impact² / Effort</div>
+                          <div className="text-xs space-y-1 mt-2 pt-2 border-t border-slate-200">
+                            <div><strong>P0 (10+):</strong> Critical priority - fix immediately</div>
+                            <div><strong>P1 (6-10):</strong> High priority - fix soon</div>
+                            <div><strong>P2 (3-6):</strong> Medium priority - schedule fix</div>
+                            <div><strong>P3 (&lt;3):</strong> Low priority - backlog</div>
+                          </div>
+                        </div>
+                      }
+                      position="top"
+                    />
+                  </div>
+                </th>
+                <th className="px-4 py-4 md:px-8 md:py-5 text-sm text-slate-400 tracking-widest">
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => handleSort('wcag_reference')} className="flex items-center gap-1 hover:text-slate-600 transition-colors">
+                      Standards {sortKey === 'wcag_reference' && (direction === 'asc' ? '↑' : '↓')}
+                    </button>
+                    <InfoTooltip content="WCAG 2.2 Success Criteria violated. Click to view official documentation." position="top" />
+                  </div>
+                </th>
+                <th className="px-4 py-4 md:px-8 md:py-5 text-sm text-slate-400 tracking-widest">
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => handleSort('axe_rule_id')} className="flex items-center gap-1 hover:text-slate-600 transition-colors">
+                      Axe Rule {sortKey === 'axe_rule_id' && (direction === 'asc' ? '↑' : '↓')}
+                    </button>
+                    <InfoTooltip content="Axe-core rule ID for automated testing. Links to Deque University documentation." position="top" />
+                  </div>
+                </th>
+                <th className="px-4 py-4 md:px-8 md:py-5 text-sm text-slate-400 tracking-widest">
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm">APG Pattern</span>
+                    <InfoTooltip content="ARIA Authoring Practices Guide pattern reference for design implementation guidance." position="top" />
+                  </div>
+                </th>
+                <th className="px-4 py-4 md:px-8 md:py-5 text-sm text-slate-400 tracking-widest">
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm">Fix Path</span>
+                    <InfoTooltip content="Recommended steps to resolve this accessibility issue." position="top" />
+                  </div>
+                </th>
+                {onUpdateIssue && (
+                  <th className="px-4 py-4 md:px-8 md:py-5 text-sm text-slate-400 tracking-widest sticky right-0 bg-slate-50">
+                    <span className="text-sm">Actions</span>
+                  </th>
+                )}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {sortedIssues.map((issue, idx) => {
+                const isEditing = editingIndex === idx;
+                const currentIssue = isEditing && editForm ? editForm : issue;
+                const isManual = !currentIssue.axe_rule_id ||
+                  currentIssue.axe_rule_id.toLowerCase().includes('manual') ||
+                  currentIssue.axe_rule_id.toLowerCase().includes('none') ||
+                  currentIssue.axe_rule_id === 'no-axe-rule';
+
+                return (
+                  <tr key={idx} className={`transition-colors align-top ${isEditing ? 'bg-indigo-50/50' : 'hover:bg-slate-50/50'}`}>
+                    {/* Timestamp (not editable) */}
+                    <td className="px-4 py-4 md:px-8 md:py-6">
+                      <button
+                        onClick={() => onSeek(issue.timestamp)}
+                        className="text-sm text-slate-900 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 hover:border-indigo-600 transition-colors whitespace-nowrap"
+                      >
+                        {issue.timestamp}
+                      </button>
+                    </td>
+
+                    {/* Issue Title */}
+                    <td className="px-4 py-4 md:px-8 md:py-6 min-w-[250px]">
+                      {isEditing ? (
+                        <textarea
+                          ref={initResize}
+                          value={editForm?.issue_title || ''}
+                          onChange={(e) => handleFormChange('issue_title', e.target.value)}
+                          onInput={autoResize}
+                          className="w-full text-base font-semibold text-slate-900 bg-white px-3 py-2 rounded-lg border border-indigo-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all resize-none min-h-[44px] overflow-hidden"
+                        />
+                      ) : (
+                        <p className="text-base font-semibold text-slate-900 leading-snug">{issue.issue_title}</p>
+                      )}
+                    </td>
+
+                    {/* Description */}
+                    <td className="px-4 py-4 md:px-8 md:py-6 min-w-[300px]">
+                      {isEditing ? (
+                        <textarea
+                          ref={initResize}
+                          value={editForm?.issue_description || ''}
+                          onChange={(e) => handleFormChange('issue_description', e.target.value)}
+                          onInput={autoResize}
+                          className="w-full text-sm text-slate-700 bg-white px-3 py-2 rounded-lg border border-indigo-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all resize-none min-h-[80px] overflow-hidden"
+                        />
+                      ) : (
+                        <p className="text-sm text-slate-500 leading-relaxed">{issue.issue_description}</p>
+                      )}
+                    </td>
+
+                    {/* Impact/Severity */}
+                    <td className="px-4 py-4 md:px-8 md:py-6">
+                      {isEditing ? (
+                        <select
+                          value={editForm?.severity || ''}
+                          onChange={(e) => handleFormChange('severity', e.target.value as Severity)}
+                          className="text-sm bg-white px-3 py-2 rounded-lg border border-indigo-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all"
+                        >
+                          <option value="Critical">Critical</option>
+                          <option value="Serious">Serious</option>
+                          <option value="Moderate">Moderate</option>
+                          <option value="Minor">Minor</option>
+                        </select>
+                      ) : (
+                        <span className={`text-sm px-2.5 py-1 rounded-md border tracking-widest whitespace-nowrap ${getSeverityBadge(issue.severity).color}`}>
+                          {getSeverityBadge(issue.severity).label}
+                        </span>
+                      )}
+                    </td>
+
+                    {/* Ease of Fix */}
+                    <td className="px-4 py-4 md:px-8 md:py-6">
+                      {isEditing ? (
+                        <select
+                          value={editForm?.ease_of_fix || ''}
+                          onChange={(e) => handleFormChange('ease_of_fix', e.target.value as 'Quick Win' | 'Easy' | 'Moderate' | 'Hard')}
+                          className="text-sm bg-white px-3 py-2 rounded-lg border border-indigo-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all"
+                        >
+                          <option value="Quick Win">Quick Win</option>
+                          <option value="Easy">Easy</option>
+                          <option value="Moderate">Moderate</option>
+                          <option value="Hard">Hard</option>
+                        </select>
+                      ) : (
+                        <span className={`text-sm px-2.5 py-1 rounded-md border tracking-widest whitespace-nowrap ${getEaseOfFix(issue).color}`}>
+                          {getEaseOfFix(issue).label}
+                        </span>
+                      )}
+                    </td>
+
+                    {/* Priority (read-only - calculated) */}
+                    <td className="px-4 py-4 md:px-8 md:py-6">
+                      <div className="flex flex-col gap-1">
+                        <span className={`text-sm px-2.5 py-1 rounded-md border tracking-widest whitespace-nowrap ${getPriorityBadge(calculatePriority(currentIssue)).color}`}>
+                          {getPriorityBadge(calculatePriority(currentIssue)).label}
+                        </span>
+                        <span className="text-xs text-slate-400 tracking-wider">
+                          Score: {calculatePriority(currentIssue).toFixed(1)}
+                        </span>
+                      </div>
+                    </td>
+
+                    {/* WCAG Reference */}
+                    <td className="px-4 py-4 md:px-8 md:py-6 min-w-[200px]">
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          value={editForm?.wcag_reference || ''}
+                          onChange={(e) => handleFormChange('wcag_reference', e.target.value)}
+                          placeholder="e.g., 1.3.1, 2.4.1"
+                          className="w-full text-sm text-slate-700 bg-white px-3 py-2 rounded-lg border border-indigo-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all"
+                        />
                       ) : (
                         <div className="flex flex-col gap-2">
-                          <button
-                            onClick={() => handleStartEdit(issue, idx)}
-                            className="flex items-center justify-center gap-1.5 px-3 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-sm rounded-lg transition-colors border border-indigo-200"
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                            </svg>
-                            Edit
-                          </button>
-                          {onDeleteIssue && (
-                            <button
-                              onClick={() => {
-                                if (window.confirm('Are you sure you want to delete this issue?')) {
-                                  handleDeleteIssue(issue);
-                                }
-                              }}
-                              className="flex items-center justify-center gap-1.5 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-700 text-sm rounded-lg transition-colors border border-red-200"
+                          {parseWCAGStandards(issue.wcag_reference).map((standard, stdIdx) => (
+                            <a
+                              key={stdIdx}
+                              href={getWCAGLink(standard.number)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="group/link flex flex-col gap-1 underline"
                             >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                              Delete
-                            </button>
-                          )}
+                              <span className="text-sm text-indigo-600 tracking-widest">
+                                {standard.number}
+                              </span>
+                              {standard.name && (
+                                <span className="text-sm text-slate-400 group-hover/link:text-slate-900 transition-colors">
+                                  {standard.name} ({standard.level}{standard.introducedVersion ? `, ${standard.introducedVersion}` : ''})
+                                </span>
+                              )}
+                            </a>
+
+                          ))}
                         </div>
                       )}
                     </td>
-                  )}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-      {sortedIssues.length === 0 && (
-        <div className="p-20 text-center">
-          <p className="text-slate-400 text-sm tracking-[0.2em]">No audit data present</p>
-          <p className="text-slate-300 text-sm mt-2 italic">Upload and process a recording to generate insights</p>
+
+                    {/* Axe Rule */}
+                    <td className="px-4 py-4 md:px-8 md:py-6">
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          value={editForm?.axe_rule_id || ''}
+                          onChange={(e) => handleFormChange('axe_rule_id', e.target.value)}
+                          placeholder="e.g., color-contrast"
+                          className="w-full text-sm text-slate-700 bg-white px-3 py-2 rounded-lg border border-indigo-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all"
+                        />
+                      ) : isManual ? (
+                        <span className="text-sm text-slate-300 tracking-widest italic">
+                          Manual Verification
+                        </span>
+                      ) : (
+                        <a
+                          href={`https://dequeuniversity.com/rules/axe/4.1/${issue.axe_rule_id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-indigo-600 tracking-widest underline whitespace-nowrap"
+                        >
+                          {issue.axe_rule_id}
+                        </a>
+                      )}
+                    </td>
+
+                    {/* APG Pattern */}
+                    <td className="px-4 py-4 md:px-8 md:py-6">
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          value={editForm?.apg_pattern || ''}
+                          onChange={(e) => handleFormChange('apg_pattern', e.target.value)}
+                          placeholder="e.g., toolbar, menubar"
+                          className="w-full text-sm text-slate-700 bg-white px-3 py-2 rounded-lg border border-indigo-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all"
+                        />
+                      ) : issue.apg_pattern ? (
+                        <div className="flex flex-col gap-2">
+                          {parseAPGPatterns(issue.apg_pattern).map((pattern, patIdx) => (
+                            <a
+                              key={patIdx}
+                              href={pattern.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-sm text-purple-600 tracking-widest underline whitespace-nowrap"
+                              title={`ARIA APG: ${pattern.name}`}
+                            >
+                              {pattern.id}
+                            </a>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-sm text-slate-300">-</span>
+                      )}
+                    </td>
+
+                    {/* Suggested Fix */}
+                    <td className="px-4 py-4 md:px-8 md:py-6 min-w-[300px]">
+                      {isEditing ? (
+                        <textarea
+                          ref={initResize}
+                          value={editForm?.suggested_fix || ''}
+                          onChange={(e) => handleFormChange('suggested_fix', e.target.value)}
+                          onInput={autoResize}
+                          className="w-full text-sm text-slate-700 bg-white px-3 py-2 rounded-lg border border-indigo-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all resize-none min-h-[80px] overflow-hidden"
+                        />
+                      ) : (
+                        <p className="text-sm text-slate-900 leading-relaxed">{issue.suggested_fix}</p>
+                      )}
+                    </td>
+
+                    {/* Actions */}
+                    {onUpdateIssue && (
+                      <td className="px-4 py-4 md:px-8 md:py-6 sticky right-0 bg-white">
+                        {isEditing ? (
+                          <div className="flex flex-col gap-2">
+                            <button
+                              onClick={() => handleSaveEdit(issue)}
+                              className="flex items-center justify-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm rounded-lg transition-colors"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                              </svg>
+                              Save
+                            </button>
+                            <button
+                              onClick={handleCancelEdit}
+                              className="flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm rounded-lg transition-colors"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                              Cancel
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col gap-2">
+                            <button
+                              onClick={() => handleStartEdit(issue, idx)}
+                              className="flex items-center justify-center gap-1.5 px-3 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-sm rounded-lg transition-colors border border-indigo-200"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
+                              Edit
+                            </button>
+                            {onDeleteIssue && (
+                              <button
+                                onClick={() => handleDeleteClick(issue)}
+                                className="flex items-center justify-center gap-1.5 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-700 text-sm rounded-lg transition-colors border border-red-200"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                                Delete
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </td>
+                    )}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
-      )}
-    </div>
+        {sortedIssues.length === 0 && (
+          <div className="p-20 text-center">
+            <p className="text-slate-400 text-sm tracking-[0.2em]">No audit data present</p>
+            <p className="text-slate-300 text-sm mt-2 italic">Upload and process a recording to generate insights</p>
+          </div>
+        )}
+      </div>
+
+      <Modal
+        isOpen={!!issueToDelete}
+        onClose={cancelDelete}
+        title="Delete Issue"
+        primaryAction={{
+          label: 'Delete',
+          onClick: confirmDelete,
+          variant: 'danger'
+        }}
+        secondaryAction={{
+          label: 'Cancel',
+          onClick: cancelDelete
+        }}
+      >
+        <p>Are you sure you want to delete this issue?</p>
+        {issueToDelete && (
+          <p className="mt-2 text-sm text-slate-500 font-medium">
+            "{issueToDelete.issue_title}"
+          </p>
+        )}
+      </Modal>
+    </>
   );
 };

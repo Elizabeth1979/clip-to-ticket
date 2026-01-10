@@ -1,105 +1,78 @@
 
 import React, { useState, useMemo } from 'react';
 import { AnalysisMetadata } from '../types';
-import { CostDisplay } from './CostDisplay';
-import { JsonViewer } from './JsonViewer';
 import wcag22Full from '../data/wcag22-full.json';
 import { AxeRulesService } from '../services/axeRulesService';
+import { getAPGPatternCount, getAPGPracticeCount } from '../services/apgPatternsService';
 
 interface TransparencyPanelProps {
     metadata: AnalysisMetadata;
     issueCount: number;
 }
 
-// Parse the system prompt into structured sections
-const parseSystemPrompt = (prompt: string) => {
-    // Convert escaped newlines
-    const unescaped = prompt.replace(/\\n/g, '\n');
-
-    // Find the split points
-    const jsonStart = unescaped.indexOf('COMPREHENSIVE WCAG 2.2 REFERENCE:');
-    const pipelineStart = unescaped.indexOf('ANALYSIS PIPELINE:');
-
-    // Extract intro and pipeline, skipping the JSON blocks in the middle
-    let introText = jsonStart > 0 ? unescaped.substring(0, jsonStart) : unescaped;
-    let pipelineText = pipelineStart > 0 ? unescaped.substring(pipelineStart) : '';
-
-    // Combine them while cleaning up leading whitespace from template literal indentation
-    const instructionText = (introText + '\n' + pipelineText)
+// Clean up the prompt for display (minimal processing - just whitespace cleanup)
+const cleanPrompt = (prompt: string): string => {
+    // Convert escaped newlines and clean up template literal indentation
+    return prompt
+        .replace(/\\n/g, '\n')
         .split('\n')
         .map(line => line.trim())
-        .join('\n');
+        .filter((line, idx, arr) => {
+            // Remove consecutive empty lines
+            if (line === '' && idx > 0 && arr[idx - 1] === '') return false;
+            return true;
+        })
+        .join('\n')
+        .trim();
+};
 
-    let wcagData = null;
-    let axeRulesData = null;
+// Extract just the instructions (skip the JSON data blocks)
+const extractInstructions = (prompt: string): string => {
+    const cleaned = cleanPrompt(prompt);
 
-    if (jsonStart > 0) {
-        // Try to extract WCAG JSON
-        try {
-            const wcagMatch = unescaped.match(/COMPREHENSIVE WCAG 2\.2 REFERENCE:\s*([\s\S]*?)\s*COMPLETE AXE-CORE RULES/);
-            if (wcagMatch && wcagMatch[1]) {
-                wcagData = JSON.parse(wcagMatch[1].trim());
-            }
-        } catch (e) {
-            console.error('Failed to parse WCAG data:', e);
-        }
+    // Find the boundaries of the JSON data sections
+    const wcagStart = cleaned.indexOf('COMPREHENSIVE WCAG 2.2 REFERENCE:');
+    const pipelineStart = cleaned.indexOf('ANALYSIS PIPELINE:');
 
-        // Try to extract Axe Rules JSON
-        try {
-            const axeRowMatch = unescaped.match(/COMPLETE AXE-CORE RULES[^:]*:\s*([\s\S]*?)\s*QUICK REFERENCE/);
-            if (axeRowMatch && axeRowMatch[1]) {
-                axeRulesData = JSON.parse(axeRowMatch[1].trim());
-            }
-        } catch (e) {
-            console.error('Failed to parse Axe rules data:', e);
-        }
+    if (wcagStart === -1) {
+        return cleaned; // No JSON data, return as-is
     }
 
-    // Format the instruction text to be more readable
-    const formattedInstructions = instructionText
-        .replace(/You are a Senior Accessibility QA Architect/g, '🎯 YOUR ROLE:\nYou\'re an accessibility expert')
-        .replace(/analyzing (?:a screen recording|comprehensive screen recordings).*?for accessibility issues\./g, 'reviewing media to find barriers that prevent people with disabilities.\n\n📹 WHAT YOU\'RE WATCHING:')
-        .replace(/analyzing comprehensive screen recordings that include:/g, 'reviewing screen recordings to find barriers that prevent people with disabilities from using websites and apps.\n\n📹 WHAT YOU\'RE WATCHING:')
-        .replace(/The video includes:/g, '📹 VIDEO ANALYSIS:')
-        .replace(/For screenshots:/g, '\n📸 SCREENSHOT ANALYSIS:')
-        .replace(/- Visual UI inspection \(color, layout, focus indicators, responsive design\)/g, '• How the website/app looks visually (colors, layout, buttons, text)')
-        .replace(/- Screen reader output \(NVDA, JAWS, VoiceOver, etc\.\)/g, '• What screen readers announce to blind users (NVDA, JAWS, VoiceOver)')
-        .replace(/- Keyboard navigation demonstrations/g, '• How someone navigates using only a keyboard (no mouse)')
-        .replace(/- Expert commentary and narration on accessibility barriers/g, '• Expert narration explaining what\'s wrong and why it matters')
-        .replace(/Through this multimodal analysis, you can detect ALL WCAG 2\.2 Success Criteria\./g, '\n📚 YOUR KNOWLEDGE BASE:\nYou have access to the complete WCAG 2.2 accessibility guidelines and automated testing rules.')
-        .replace(/ANALYSIS PIPELINE:/g, '\n🔍 HOW TO ANALYZE THE MEDIA:')
-        .replace(/1\. TRANSCRIPT:/g, '\n📝 Step 1 - Create a Transcript:')
-        .replace(/2\. ISSUE INTERPRETATION:/g, '\n🎯 Step 2 - Find Accessibility Problems:')
-        .replace(/3\. AXE RULE & APG PATTERN MATCHING:/g, '\n📋 Step 3 - Match Problems to Standards:')
-        .replace(/4\. SEVERITY ASSIGNMENT:/g, '\n⚠️ Step 4 - Rate How Serious It Is:')
-        .replace(/5\. EASE OF FIX ASSESSMENT:/g, '\n🔧 Step 5 - Assess Ease of Fix:')
-        .replace(/6\. REMEDIATION:/g, '\n✅ Step 6 - Explain How to Fix It:')
-        .replace(/COMMON APG PRACTICE REFERENCES:/g, '\n📘 ARIA APG BEST PRACTICES:')
-        .replace(/ACCURACY REQUIREMENTS:/g, '\n✅ ACCURACY IS CRITICAL:')
-        .replace(/FORMATTING: JSON ONLY[\s\S]*$/g, '\n💾 OUTPUT FORMAT:\nRespond with JSON only.')
-        .replace(/\* WCAG conformance level \(Level A → Critical, Level AA → Serious\)/g, '• Level A issues → Critical priority')
-        .replace(/\* User impact \(blocks access → Critical, major barrier → Serious\)/g, '• Issues that block access → Critical, major barriers → Serious')
-        .replace(/\* Best practices → Moderate/g, '• Best practice issues → Moderate priority')
-        .replace(/\* Minor issues → Minor/g, '• Minor issues → Low priority');
+    // Get intro (before WCAG data) and pipeline (analysis steps)
+    const intro = cleaned.substring(0, wcagStart).trim();
+    const pipeline = pipelineStart > 0 ? cleaned.substring(pipelineStart).trim() : '';
 
-    return {
-        instructions: formattedInstructions,
-        wcagData: wcagData || wcag22Full,
-        axeRulesData: axeRulesData || AxeRulesService.getAllRules()
-    };
+    return `${intro}\n\n[Reference data loaded - see summary below]\n\n${pipeline}`;
 };
 
 export const TransparencyPanel: React.FC<TransparencyPanelProps> = ({ metadata, issueCount }) => {
     const [isExpanded, setIsExpanded] = useState(false);
 
-    // Parse the system prompt once
-    const parsedPrompt = useMemo(() => parseSystemPrompt(metadata.systemPrompt), [metadata.systemPrompt]);
+    // Get reference data counts
+    const wcagCount = useMemo(() => {
+        // wcag22Full has principles > guidelines > successcriteria structure
+        const data = wcag22Full as { principles: { guidelines: { successcriteria: unknown[] }[] }[] };
+        let count = 0;
+        for (const principle of data.principles) {
+            for (const guideline of principle.guidelines) {
+                count += guideline.successcriteria?.length || 0;
+            }
+        }
+        return count;
+    }, []);
+
+    const axeRuleCount = AxeRulesService.getRuleCount();
+    const apgPatternCount = getAPGPatternCount();
+    const apgPracticeCount = getAPGPracticeCount();
+
+    // Clean the prompt for display
+    const displayPrompt = useMemo(() => extractInstructions(metadata.systemPrompt), [metadata.systemPrompt]);
 
     return (
         <div className="bg-white rounded-[2rem] shadow-sm border border-slate-200 overflow-hidden">
             <button
                 onClick={() => setIsExpanded(!isExpanded)}
-                className="w-full px-8 py-5 flex items-center justify-between hover:bg-slate-50 transition-colors"
+                className="w-full px-4 py-4 md:px-8 md:py-5 flex items-center justify-between hover:bg-slate-50 transition-colors"
             >
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center">
@@ -112,7 +85,7 @@ export const TransparencyPanel: React.FC<TransparencyPanelProps> = ({ metadata, 
                             System Prompt
                         </h3>
                         <p className="text-sm text-slate-500 mt-1">
-                            View the exact instructions and reference data used for this analysis
+                            View the exact instructions sent to the AI for this analysis
                         </p>
                     </div>
                 </div>
@@ -127,69 +100,44 @@ export const TransparencyPanel: React.FC<TransparencyPanelProps> = ({ metadata, 
             </button>
 
             {isExpanded && (
-                <div className="border-t border-slate-100 animate-in slide-in-from-top-4 duration-300">
-                    {/* Content */}
-                    <div className="p-8 space-y-6">
-                        {/* Instructions Section */}
+                <div className="border-t border-slate-100 animate-in slide-in-from-top-4 duration-300 max-w-full">
+                    <div className="p-4 md:p-8 space-y-6 max-w-full">
+                        {/* Reference Data Summary */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+                                <div className="text-2xl font-bold text-blue-700">{wcagCount}</div>
+                                <div className="text-sm text-blue-600">WCAG 2.2 Criteria</div>
+                            </div>
+                            <div className="bg-purple-50 rounded-xl p-4 border border-purple-100">
+                                <div className="text-2xl font-bold text-purple-700">{axeRuleCount}</div>
+                                <div className="text-sm text-purple-600">Axe-core Rules</div>
+                            </div>
+                            <div className="bg-emerald-50 rounded-xl p-4 border border-emerald-100">
+                                <div className="text-2xl font-bold text-emerald-700">{apgPatternCount + apgPracticeCount}</div>
+                                <div className="text-sm text-emerald-600">APG Patterns & Practices</div>
+                            </div>
+                        </div>
+
+                        {/* AI Instructions */}
                         <div>
                             <h4 className="text-sm tracking-widest text-slate-900 mb-3">
                                 AI Instructions
                             </h4>
-                            <div className="bg-slate-50 rounded-xl p-6">
-                                <pre className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap font-sans">
-                                    {parsedPrompt.instructions}
+                            <div className="bg-slate-50 rounded-xl p-4 md:p-6 max-h-[500px] overflow-y-auto overflow-x-hidden custom-scrollbar max-w-full">
+                                <pre className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap break-words font-mono max-w-full">
+                                    {displayPrompt}
                                 </pre>
                             </div>
                         </div>
 
-                        {/* WCAG Reference Data */}
-                        {parsedPrompt.wcagData && (
-                            <div>
-                                <h4 className="text-sm tracking-widest text-slate-900 mb-3">
-                                    📖 WCAG 2.2 Reference Data
-                                </h4>
-                                <div className="bg-slate-900 rounded-xl p-6 overflow-x-auto max-h-96 overflow-y-auto custom-scrollbar">
-                                    <div className="text-sm font-mono">
-                                        <JsonViewer data={parsedPrompt.wcagData} />
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Axe Rules Data */}
-                        {parsedPrompt.axeRulesData && (
-                            <div>
-                                <h4 className="text-sm tracking-widest text-slate-900 mb-3">
-                                    🔧 Axe-core Testing Rules
-                                </h4>
-                                <div className="bg-slate-900 rounded-xl p-6 overflow-x-auto max-h-96 overflow-y-auto custom-scrollbar">
-                                    <div className="text-sm font-mono">
-                                        <JsonViewer data={parsedPrompt.axeRulesData} />
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Copy Button */}
+                        {/* Actions */}
                         <div className="flex justify-end">
                             <button
                                 onClick={() => navigator.clipboard.writeText(metadata.systemPrompt)}
                                 className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm tracking-widest rounded-lg transition-colors"
                             >
-                                Copy Full Prompt
+                                Copy Full Prompt (with JSON data)
                             </button>
-                        </div>
-
-                        {/* Info Note */}
-                        <div className="p-4 bg-amber-50 rounded-xl border border-amber-100">
-                            <div className="flex items-start gap-2">
-                                <svg className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                                </svg>
-                                <p className="text-sm text-amber-900 leading-relaxed">
-                                    This prompt contains comprehensive WCAG 2.2 and Axe-core rule data. Click on the arrows to expand/collapse JSON sections and explore the reference materials.
-                                </p>
-                            </div>
                         </div>
                     </div>
                 </div>

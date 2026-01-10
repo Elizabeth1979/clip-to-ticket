@@ -35,7 +35,7 @@ export const RICEExplainer: React.FC = () => {
             </button>
 
             {isExpanded && (
-                <div className="border-t border-slate-100 p-8 animate-in slide-in-from-top-4 duration-300">
+                <div className="border-t border-slate-100 p-4 md:p-8 animate-in slide-in-from-top-4 duration-300">
 
                     {/* Formula */}
                     <div className="bg-indigo-50 rounded-xl p-6 mb-6 border border-indigo-100">
@@ -104,7 +104,7 @@ export const RICEExplainer: React.FC = () => {
                     {/* Priority Tiers */}
                     <div className="border-t border-slate-200 pt-6">
                         <h3 className="text-sm text-slate-900 mb-4">Priority Tiers</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                             <div className="bg-red-50 rounded-lg p-4 border border-red-100">
                                 <div className="flex items-center gap-2 mb-2">
                                     <span className="text-lg">🔥</span>
