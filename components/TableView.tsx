@@ -8,9 +8,10 @@ import { Modal } from './Modal';
 
 interface TableViewProps {
   issues: A11yIssue[];
-  onSeek: (timestamp: string) => void;
+  onSeek: (timestamp: string, videoIndex?: number) => void;
   onUpdateIssue?: (index: number, updatedIssue: A11yIssue) => void;
   onDeleteIssue?: (index: number) => void;
+  totalVideoCount?: number; // Total number of videos analyzed (to show/hide V# indicator)
 }
 
 type SortKey = 'timestamp' | 'severity' | 'wcag_reference' | 'axe_rule_id' | 'ease_of_fix' | 'priority';
@@ -112,7 +113,7 @@ const getPriorityBadge = (score: number): { label: string; color: string } => {
   }
 };
 
-export const TableView: React.FC<TableViewProps> = ({ issues, onSeek, onUpdateIssue, onDeleteIssue }) => {
+export const TableView: React.FC<TableViewProps> = ({ issues, onSeek, onUpdateIssue, onDeleteIssue, totalVideoCount = 1 }) => {
   const [sortKey, setSortKey] = useState<SortKey>('priority');
   const [direction, setDirection] = useState<SortDirection>('desc');
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
@@ -349,10 +350,17 @@ export const TableView: React.FC<TableViewProps> = ({ issues, onSeek, onUpdateIs
                     {/* Timestamp (not editable) */}
                     <td className="px-4 py-4 md:px-8 md:py-6">
                       <button
-                        onClick={() => onSeek(issue.timestamp)}
+                        onClick={() => onSeek(issue.timestamp, issue.video_index)}
                         className="text-sm text-slate-900 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 hover:border-indigo-600 transition-colors whitespace-nowrap"
                       >
-                        {issue.timestamp}
+                        {issue.video_index !== undefined && totalVideoCount > 1 ? (
+                          <span className="flex items-center gap-1.5">
+                            <span className="text-xs text-indigo-600 font-medium">V{issue.video_index + 1}</span>
+                            {issue.timestamp}
+                          </span>
+                        ) : (
+                          issue.timestamp
+                        )}
                       </button>
                     </td>
 

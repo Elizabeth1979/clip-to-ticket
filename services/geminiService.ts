@@ -3,6 +3,7 @@ import { Type } from "@google/genai";
 import { A11yIssue, Severity, AnalysisResult } from "../types";
 import { ARIA_APG_REFERENCE, WCAG22_QUICKREF } from "../documentation";
 import wcag22Full from "../data/wcag22-full.json";
+import { safeJsonParse } from '../utils/safeJson';
 import { AxeRulesService } from "./axeRulesService";
 import { getFormattedPatternsForAI, getAPGPatternCount, getAPGPracticeCount } from "./apgPatternsService";
 
@@ -14,258 +15,77 @@ const API_BASE_URL = import.meta.env.PROD
   : 'http://localhost:3001';
 
 export class GeminiService {
-  async analyzeVideo(videoBase64: string, mimeType: string, targetLanguage: string = 'Original', signal?: AbortSignal): Promise<AnalysisResult> {
-    // Construct language instruction
-    let languageInstruction = "";
-    if (targetLanguage === 'Original') {
-      languageInstruction = "TRANSCRIPT: Generate a full verbatim diarized transcript of the video audio in its ORIGINAL language (do not translate). Detect and report the language code in 'detected_language'.";
-    } else {
-      languageInstruction = `TRANSCRIPT: Generate a full diarized transcript of the video audio and TRANSLATE it into ${targetLanguage}. Report the ORIGINAL detected source language code in 'detected_language'.`;
-    }
-
-    const systemInstruction = `
-      You are a Senior Accessibility QA Architect analyzing comprehensive screen recordings that include:
-      - Visual UI inspection (color, layout, focus indicators, responsive design)
-      - Screen reader output (NVDA, JAWS, VoiceOver, etc.)
-      - Keyboard navigation demonstrations
-      - Expert commentary and narration on accessibility barriers
-      
-      Through this multimodal analysis, you can detect ALL WCAG 2.2 Success Criteria.
-      
-      CONTENT FOCUS: When analyzing audio/narration, focus on actionable accessibility insights.
-      - Ignore filler words (um, uh, like, you know), false starts, and verbal tics
-      - Disregard off-topic commentary unrelated to accessibility barriers
-      - Prioritize statements that describe specific UI issues, user frustrations, or WCAG violations
-      - Extract the core meaning even from rambling or repetitive explanations
-      
-      COMPREHENSIVE WCAG 2.2 REFERENCE:
-      ${JSON.stringify(wcag22Full, null, 2)}
-      
-      COMPLETE AXE-CORE RULES (${AxeRulesService.getRuleCount()} rules):
-      ${AxeRulesService.getFormattedRulesForAI()}
-      
-      ARIA APG (${getAPGPatternCount()} patterns + ${getAPGPracticeCount()} practices):
-      ${getFormattedPatternsForAI()}
-      
-      QUICK REFERENCE LINKS:
-      - WCAG 2.2 Quick Reference: ${WCAG22_QUICKREF}
-      - ARIA APG Patterns: ${ARIA_APG_REFERENCE}
-      
-      ANALYSIS PIPELINE:
-      1. ${languageInstruction}
-         IMPORTANT: Every time a different person speaks, or after a short pause, start a NEW LINE.
-         FORMAT: Speaker Name [MM:SS]: Message content here.
-         
-      2. ISSUE INTERPRETATION: For each accessibility barrier you observe:
-         - Describe what the issue is (e.g., "Link text is not descriptive")
-         - Identify which WCAG 2.2 criteria it violates
-         - Note the context and severity of impact
-         
-      3. AXE RULE & APG PATTERN MATCHING: For each issue identified above:
-         - First, check if this is an ARIA APG design pattern issue (e.g., toolbar, menubar, dialog)
-         - If it's an APG pattern:
-           * Set apg_pattern to the pattern ID (e.g., "toolbar", "menubar")
-           * You can provide MULTIPLE patterns separated by commas (e.g., "button, link")
-           * Set axe_rule_id to "none"
-           * The severity will be determined by AI heuristics (not axe-core)
-         - If it's NOT an APG pattern:
-           * Search the Axe-core rules for a rule that matches THIS SPECIFIC issue
-           * If you find a confident match, provide the axe_rule_id and leave apg_pattern empty
-           * If no clear match exists, leave both axe_rule_id and apg_pattern empty
-         - IMPORTANT: Do not force a match - it's better to leave fields empty than to provide incorrect values
-         
-      4. SEVERITY ASSIGNMENT:
-         - If you provided an axe_rule_id (not "none"): The system will use that rule's impact level automatically
-         - If you provided an apg_pattern OR axe_rule_id is empty: Use AI heuristics based on:
-           * WCAG conformance level (Level A → Critical, Level AA → Serious)
-           * User impact (blocks access → Critical, major barrier → Serious)
-           * Best practices → Moderate
-           * Minor issues → Minor
-      
-      5. EASE OF FIX ASSESSMENT: Classify the difficulty to fix this issue:
-         - Quick Win: Boilerplate fixes with no content creation - removing attributes or using standard values
-           Examples: alt="" for decorative images, removing tabindex, aria-hidden="true", role="presentation", type="button"
-         - Easy: Static/fixed ARIA attributes that require meaningful content but no logic
-           Examples: Descriptive aria-label, meaningful alt text, lang attribute, aria-describedby with custom text
-         - Moderate: Focus management or dynamic ARIA that changes based on state
-           Examples: Setting focus on modal open/close, aria-expanded, aria-checked, aria-live regions, aria-activedescendant
-         - Hard: Complex widget implementation, keyboard navigation patterns, or fixes requiring design/functionality changes
-           Examples: Custom combobox/dropdown, data grid keyboard navigation, carousel controls, drag-and-drop, color contrast requiring design approval
-      
-      6. REMEDIATION: Provide code-level fixes using:
-         - Examples from the Axe-core rules above
-         - ARIA APG patterns where applicable
-         - Specific, actionable code snippets
-      
-      COMMON APG PRACTICE REFERENCES:
-      - For button-name, image-alt, label issues → Use "names-and-descriptions" practice
-      - For keyboard navigation issues → Use "keyboard-interface" practice  
-      - For landmark/region issues → Use "landmark-regions" practice
-      - For table/grid ARIA properties → Use "grid-and-table-properties" practice
-      - For role='presentation' issues → Use "hiding-semantics" practice
-      - For slider/progress bar properties → Use "range-related-properties" practice
-      - For heading/list/article roles → Use "structural-roles" practice
-      - For specific widget patterns → Use the pattern name (e.g., "toolbar", "menubar")
-      
-      ACCURACY REQUIREMENTS:
-      - Use EXACT WCAG criteria numbers from the comprehensive reference
-      - Use EXACT Axe-core rule IDs from the enhanced rules
-      - Base suggestions on the code examples provided in the knowledge base
-      - Include links to official documentation
-      
-      FORMATTING: JSON ONLY. Use actual newline characters in the transcript string.
-    `;
-
-    const responseSchema = {
-      type: Type.OBJECT,
-      properties: {
-        transcript: { type: Type.STRING },
-        detected_language: { type: Type.STRING },
-        issues: {
-          type: Type.ARRAY,
-          items: {
-            type: Type.OBJECT,
-            properties: {
-              issue_title: { type: Type.STRING },
-              issue_description: { type: Type.STRING },
-              wcag_reference: { type: Type.STRING },
-              axe_rule_id: { type: Type.STRING },
-              apg_pattern: { type: Type.STRING },
-              severity: { type: Type.STRING, enum: Object.values(Severity) },
-              ease_of_fix: { type: Type.STRING, enum: ['Quick Win', 'Easy', 'Moderate', 'Hard'] },
-              suggested_fix: { type: Type.STRING },
-              generated_alt_text: { type: Type.STRING },
-              timestamp: { type: Type.STRING },
-              status: { type: Type.STRING },
-              disclaimer: { type: Type.STRING }
-            },
-            required: ["issue_title", "issue_description", "wcag_reference", "axe_rule_id", "severity", "ease_of_fix", "suggested_fix", "timestamp", "status", "disclaimer"]
-          }
-        }
-      },
-      required: ["transcript", "issues"]
-    };
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/analyze-video`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          videoBase64,
-          mimeType,
-          systemInstruction,
-          responseSchema
-        }),
-        signal
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: response.statusText }));
-        throw new Error(errorData.error || `Backend Analysis Request Failed: The server at ${API_BASE_URL} returned an error (${response.status} ${response.statusText}). This could indicate: (1) Backend service is down or restarting, (2) Invalid API request format, or (3) Server resource limits exceeded. Please wait a moment and try again.`);
-      }
-
-      const data = await response.json();
-      const parsedData = JSON.parse(data.text || '{}');
-
-      // Helper function to capitalize impact values from Axe rules
-      const capitalizeImpact = (impact: string): string => {
-        return impact.charAt(0).toUpperCase() + impact.slice(1);
-      };
-
-      // Post-process issues to enforce Axe-core impact levels
-      const issues = (parsedData.issues || []).map((issue: any) => {
-        // If AI provided an APG pattern, use AI heuristics for severity
-        if (issue.apg_pattern && issue.apg_pattern.trim() !== '') {
-          return {
-            ...issue,
-            impact_source: 'apg-pattern-heuristic'
-          };
-        }
-
-        // If AI provided an Axe rule ID (and it's not "none"), enforce that rule's impact
-        if (issue.axe_rule_id && issue.axe_rule_id.trim() !== '' && issue.axe_rule_id.toLowerCase() !== 'none') {
-          const axeRule = AxeRulesService.getRuleById(issue.axe_rule_id);
-          if (axeRule?.impact) {
-            return {
-              ...issue,
-              severity: capitalizeImpact(axeRule.impact),
-              impact_source: 'axe-core'
-            };
-          }
-        }
-
-        // Otherwise trust AI's WCAG-based assessment
-        return {
-          ...issue,
-          impact_source: 'wcag-heuristic'
-        };
-      });
-
-      return {
-        transcript: parsedData.transcript || "No transcript generated.",
-        detected_language: parsedData.detected_language,
-        issues,
-        metadata: data.metadata // Include metadata from backend
-      };
-    } catch (err: any) {
-      // Re-throw abort errors so they can be handled properly by the caller
-      if (err.name === 'AbortError' || signal?.aborted) {
-        const abortError = new Error('Analysis cancelled');
-        abortError.name = 'AbortError';
-        throw abortError;
-      }
-      console.error("Failed to analyze video:", err);
-      throw new Error(err.message || `Video Analysis Pipeline Error: Unable to complete the analysis process. Common causes include: (1) Backend server unreachable at ${API_BASE_URL}, (2) Network connectivity issues, (3) Video encoding not supported, or (4) Response parsing failure. Check your network connection and ensure the backend server is running.`);
-    }
-  }
-
-  // New method to analyze mixed media (video + images)
   async analyzeMedia(
-    video?: { base64: string; mimeType: string },
-    images?: { base64: string; mimeType: string; comment?: string }[],
+    mediaItems: { base64: string; mimeType: string; type: 'video' | 'audio' | 'image' | 'pdf'; comment?: string; filename?: string }[],
     targetLanguage: string = 'Original',
     signal?: AbortSignal
   ): Promise<AnalysisResult> {
-    // If only video provided, use the existing analyzeVideo method (adapted for new signature)
-    if (video && (!images || images.length === 0)) {
-      return this.analyzeVideo(video.base64, video.mimeType, targetLanguage, signal);
-    }
+    const videos = mediaItems.filter(i => i.type === 'video');
+    const audios = mediaItems.filter(i => i.type === 'audio');
+    const images = mediaItems.filter(i => i.type === 'image');
+    const pdfs = mediaItems.filter(i => i.type === 'pdf');
 
-    const hasVideo = !!video;
-    const imageCount = images?.length || 0;
+    const hasTimeBasedMedia = videos.length > 0 || audios.length > 0;
+    const hasVisualMedia = videos.length > 0 || images.length > 0 || pdfs.length > 0;
 
     // Construct language instruction
     let languageInstruction = "";
     if (targetLanguage === 'Original') {
-      languageInstruction = "TRANSCRIPT: Generate a full verbatim diarized transcript of the video audio in its ORIGINAL language (do not translate). Detect and report the language code in 'detected_language'.";
+      languageInstruction = "TRANSCRIPT: Generate a full verbatim diarized transcript of any audio content in its ORIGINAL language (do not translate). Detect and report the language code in 'detected_language'.";
     } else {
-      languageInstruction = `TRANSCRIPT: Generate a full diarized transcript of the video audio and TRANSLATE it into ${targetLanguage}. Report the ORIGINAL detected source language code in 'detected_language'.`;
+      languageInstruction = `TRANSCRIPT: Generate a full diarized transcript of any audio content and TRANSLATE it into ${targetLanguage}. Report the ORIGINAL detected source language code in 'detected_language'.`;
     }
 
     const systemInstruction = `
-      You are a Senior Accessibility QA Architect analyzing ${hasVideo ? 'a screen recording' : ''}${hasVideo && imageCount > 0 ? ' and ' : ''}${imageCount > 0 ? `${imageCount} screenshot${imageCount > 1 ? 's' : ''}` : ''} for accessibility issues.
+      You are a Senior Accessibility QA Architect analyzing a collection of media files for accessibility issues.
+      The files include:
+      ${videos.length > 0 ? `- ${videos.length} Video recording(s) (screen captures with narration)` : ''}
+      ${audios.length > 0 ? `- ${audios.length} Audio recording(s)` : ''}
+      ${images.length > 0 ? `- ${images.length} Screenshot(s)` : ''}
+      ${pdfs.length > 0 ? `- ${pdfs.length} PDF Document(s)` : ''}
       
-      ${hasVideo ? `The video includes:
-      - Visual UI inspection (color, layout, focus indicators, responsive design)
-      - Screen reader output (NVDA, JAWS, VoiceOver, etc.)
-      - Keyboard navigation demonstrations
-      - Expert commentary and narration on accessibility barriers` : ''}
+      ${hasTimeBasedMedia ? `AUDIO/VIDEO ANALYSIS:
+      - Listen to ALL narration and dialogue from EVERY video/audio file completely.
+      - ${languageInstruction}
+      - IMPORTANT: Every time a different person speaks, or after a short pause, start a NEW LINE.
       
-      ${imageCount > 0 ? `For screenshots:
-      - Analyze each image for visual accessibility issues
-      - If a description is provided with the image, use it as context
-      - If no description is provided, infer issues from visual inspection
-      - Common issues to look for: color contrast, missing labels, focus indicators, touch targets, text alternatives` : ''}
+      CRITICAL TRANSCRIPT FORMAT REQUIREMENT:
+      Each line of the transcript MUST follow this EXACT format:
+      SpeakerName [MM:SS]: Message text here
+      
+      Examples of CORRECT format:
+      - Narrator [00:05]: Welcome to this accessibility demo.
+      - User [00:12]: I'm going to test the keyboard navigation.
+      - ScreenReader [01:30]: Button, Submit Order
+      
+      Examples of WRONG format (DO NOT USE):
+      - Welcome to this accessibility demo (missing speaker and timestamp)
+      - [00:05]: Welcome to this demo (missing speaker name)
+      - Narrator: Welcome to this demo (missing timestamp)
+      
+      ${videos.length > 1 ? `MULTIPLE VIDEOS: You are analyzing ${videos.length} separate video files.
+      - Return a SEPARATE transcript for EACH video in the "transcripts" array.
+      - The array must have exactly ${videos.length} elements, one per video in order.
+      - Each video's transcript starts fresh at [00:00].` : `SINGLE VIDEO: Return ONE transcript starting at [00:00].`}
+      
+      - Ignore filler words (um, uh, like) and off-topic commentary. Focus on accessibility insights.` : 'Since there is no time-based media, leave the transcript field empty.'}
+      
+      ${videos.length > 0 ? `VIDEO VISUAL ANALYSIS:
+      - Inspect visual UI (color, layout, focus indicators, responsive design).
+      - Analyze screen reader output if captured.
+      - Observe keyboard navigation demonstrations.
+      ${videos.length > 1 ? `- For each issue, set video_index to indicate which video (0-based: 0 for Video 1, 1 for Video 2, etc.)` : ''}` : ''}
+
+      ${images.length > 0 ? `SCREENSHOT ANALYSIS:
+      - Analyze each image for visual accessibility issues (contrast, labels, touch targets).
+      - Use "Screenshot X" or the filename as context reference.` : ''}
+
+      ${pdfs.length > 0 ? `PDF DOCUMENT ANALYSIS:
+      - Analyze document structure (headings, reading order, tables).
+      - Check for tagging and semantic structure.
+      - Evaluate color contrast and text alternatives within the document.` : ''}
       
       Through this multimodal analysis, you can detect ALL WCAG 2.2 Success Criteria.
-      
-      CONTENT FOCUS: When analyzing audio/narration, focus on actionable accessibility insights.
-      - Ignore filler words (um, uh, like, you know), false starts, and verbal tics
-      - Disregard off-topic commentary unrelated to accessibility barriers
-      - Prioritize statements that describe specific UI issues, user frustrations, or WCAG violations
-      - Extract the core meaning even from rambling or repetitive explanations
       
       COMPREHENSIVE WCAG 2.2 REFERENCE:
       ${JSON.stringify(wcag22Full, null, 2)}
@@ -281,15 +101,16 @@ export class GeminiService {
       - ARIA APG Patterns: ${ARIA_APG_REFERENCE}
       
       ANALYSIS PIPELINE:
-      1. ${hasVideo ? languageInstruction : 'Since there is no video, leave the transcript field empty or provide a brief summary of what you analyzed.'}
-         ${hasVideo ? `IMPORTANT: Every time a different person speaks, or after a short pause, start a NEW LINE.
-         FORMAT: Speaker Name [MM:SS]: Message content here.` : ''}
+      1. TRANSCRIPT (if audio/video present).
+         - Transcribe ALL content from ALL videos completely.
+         ${videos.length > 1 ? '- Include video number in timestamps.' : ''}
          
       2. ISSUE INTERPRETATION: For each accessibility barrier you observe:
          - Describe what the issue is (e.g., "Link text is not descriptive")
          - Identify which WCAG 2.2 criteria it violates
          - Note the context and severity of impact
-         ${imageCount > 0 ? '- For screenshot issues, use "Screenshot X" as the timestamp reference' : ''}
+         - Explicitly mention which file the issue was found in (Filename or Type).
+         ${videos.length > 1 ? '- Set video_index (0-based) to indicate which video the issue is from.' : ''}
          
       3. AXE RULE & APG PATTERN MATCHING: For each issue identified above:
          - First, check if this is an ARIA APG design pattern issue
@@ -301,22 +122,9 @@ export class GeminiService {
          - If you provided an axe_rule_id (not "none"): The system will use that rule's impact level automatically
          - Otherwise: Use AI heuristics based on WCAG conformance level and user impact
       
-      5. EASE OF FIX ASSESSMENT: Classify the difficulty to fix this issue:
-         - Quick Win: Boilerplate fixes with no content creation - removing attributes or using standard values
-           Examples: alt="" for decorative images, removing tabindex, aria-hidden="true", role="presentation", type="button"
-         - Easy: Static/fixed ARIA attributes that require meaningful content but no logic
-           Examples: Descriptive aria-label, meaningful alt text, lang attribute, aria-describedby with custom text
-         - Moderate: Focus management or dynamic ARIA that changes based on state
-           Examples: Setting focus on modal open/close, aria-expanded, aria-checked, aria-live regions, aria-activedescendant
-         - Hard: Complex widget implementation, keyboard navigation patterns, or fixes requiring design/functionality changes
-           Examples: Custom combobox/dropdown, data grid keyboard navigation, carousel controls, drag-and-drop, color contrast requiring design approval
+      5. EASE OF FIX ASSESSMENT: Classify the difficulty to fix this issue (Quick Win, Easy, Moderate, Hard).
       
       6. REMEDIATION: Provide code-level fixes using ARIA APG patterns where applicable.
-      
-      ACCURACY REQUIREMENTS:
-      - Use EXACT WCAG criteria numbers from the comprehensive reference
-      - Use EXACT Axe-core rule IDs from the enhanced rules
-      - Include links to official documentation
       
       FORMATTING: JSON ONLY. Use actual newline characters in the transcript string.
     `;
@@ -325,6 +133,7 @@ export class GeminiService {
       type: Type.OBJECT,
       properties: {
         transcript: { type: Type.STRING },
+        transcripts: { type: Type.ARRAY, items: { type: Type.STRING } },
         detected_language: { type: Type.STRING },
         issues: {
           type: Type.ARRAY,
@@ -341,6 +150,7 @@ export class GeminiService {
               suggested_fix: { type: Type.STRING },
               generated_alt_text: { type: Type.STRING },
               timestamp: { type: Type.STRING },
+              video_index: { type: Type.INTEGER },
               status: { type: Type.STRING },
               disclaimer: { type: Type.STRING }
             },
@@ -348,7 +158,7 @@ export class GeminiService {
           }
         }
       },
-      required: ["transcript", "issues"]
+      required: ["transcript", "transcripts", "issues"]
     };
 
     try {
@@ -358,8 +168,7 @@ export class GeminiService {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          video: video || null,
-          images: images || [],
+          media: mediaItems,
           systemInstruction,
           responseSchema
         }),
@@ -372,7 +181,7 @@ export class GeminiService {
       }
 
       const data = await response.json();
-      const parsedData = JSON.parse(data.text || '{}');
+      const parsedData = safeJsonParse(data.text || '{}');
 
       // Helper function to capitalize impact values from Axe rules
       const capitalizeImpact = (impact: string): string => {
@@ -396,13 +205,13 @@ export class GeminiService {
       });
 
       return {
-        transcript: parsedData.transcript || (hasVideo ? "No transcript generated." : "Screenshot analysis - no video transcript."),
+        transcript: parsedData.transcript || (hasTimeBasedMedia ? "No transcript generated." : "Visual/Document analysis - no transcript."),
+        transcripts: parsedData.transcripts || (parsedData.transcript ? [parsedData.transcript] : []),
         detected_language: parsedData.detected_language,
         issues,
         metadata: data.metadata
       };
     } catch (err: any) {
-      // Re-throw abort errors so they can be handled properly by the caller
       if (err.name === 'AbortError' || signal?.aborted) {
         const abortError = new Error('Analysis cancelled');
         abortError.name = 'AbortError';

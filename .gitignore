@@ -34,3 +34,10 @@ server/dist
 public/examples/*.mp4
 public/examples/*.webm
 public/examples/*.mov
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/

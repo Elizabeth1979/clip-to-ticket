@@ -4,7 +4,9 @@
     "type": "module",
     "scripts": {
         "start": "node index.js",
-        "dev": "nodemon index.js"
+        "dev": "nodemon index.js",
+        "test": "cross-env NODE_ENV=test node --experimental-vm-modules node_modules/jest/bin/jest.js",
+        "test:watch": "cross-env NODE_ENV=test node --experimental-vm-modules node_modules/jest/bin/jest.js --watch"
     },
     "dependencies": {
         "@google/genai": "^1.34.0",
@@ -14,6 +16,9 @@
         "express-rate-limit": "^7.1.5"
     },
     "devDependencies": {
-        "nodemon": "^3.0.2"
+        "cross-env": "^10.1.0",
+        "jest": "^30.2.0",
+        "nodemon": "^3.0.2",
+        "supertest": "^7.1.4"
     }
 }

@@ -8,7 +8,11 @@
     "dev:client": "vite",
     "dev:server": "cd server && npm run dev",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "cd server && npm test",
+    "test:watch": "cd server && npm run test:watch",
+    "test:e2e": "npx playwright test",
+    "test:e2e:ui": "npx playwright test --ui"
   },
   "dependencies": {
     "@google/genai": "^1.34.0",
@@ -17,6 +21,7 @@
     "react-dom": "^19.2.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.57.0",
     "@types/axe-core": "^2.0.2",
     "@types/node": "^22.14.0",
     "@vitejs/plugin-react": "^5.0.0",

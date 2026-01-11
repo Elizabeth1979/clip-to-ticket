@@ -1,14 +1,14 @@
 
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { GeminiService } from './services/geminiService';
-import { A11yIssue, GroupedReport, Severity, AnalysisResult, TranscriptLine, ImageItem } from './types';
+import { A11yIssue, GroupedReport, Severity, AnalysisResult, TranscriptLine, ImageItem, MediaItem } from './types';
 import { ExportSection } from './components/ExportSection';
 import { TableView } from './components/TableView';
 import { AIAnalyst } from './components/AIAnalyst';
 import { TransparencyPanel } from './components/TransparencyPanel';
 import { InfoTooltip } from './components/InfoTooltip';
 import { RICEExplainer } from './components/RICEExplainer';
-import { ImageUploadSection } from './components/ImageUploadSection';
+import { UnifiedMediaUpload } from './components/UnifiedMediaUpload';
 import { Chat } from '@google/genai';
 
 // Elli is the queen
@@ -27,9 +27,9 @@ const STATUS_MESSAGES = [
 ];
 
 const App: React.FC = () => {
-  const [file, setFile] = useState<File | null>(null);
-  const [videoUrl, setVideoUrl] = useState<string | null>(null);
-  const [images, setImages] = useState<ImageItem[]>([]);
+  const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
+  const [activeVideoUrl, setActiveVideoUrl] = useState<string | null>(null);
+  const [activeVideoIndex, setActiveVideoIndex] = useState<number>(0);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<AnalysisResult | null>(null);
@@ -61,7 +61,7 @@ const App: React.FC = () => {
   const [captionBgColor, setCaptionBgColor] = useState('#000000');
   const [captionBgOpacity, setCaptionBgOpacity] = useState(0.8);
 
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
   const previewVideoRef = useRef<HTMLVideoElement>(null);
   const transcriptContainerRef = useRef<HTMLDivElement>(null);
   const activeLineRef = useRef<HTMLDivElement>(null);
@@ -70,18 +70,37 @@ const App: React.FC = () => {
 
   useEffect(() => {
     return () => {
-      if (videoUrl) URL.revokeObjectURL(videoUrl);
+      // Cleanup object URLs when items are removed
+      mediaItems.forEach(item => URL.revokeObjectURL(item.url));
     };
-  }, [videoUrl]);
+  }, []); // Only run on unmount? Or we need to be careful about revocation.
+  // Actually UnifiedMediaUpload handles revocation on remove.
+  // We just need to handle activeVideoUrl if it differs.
 
   useEffect(() => {
     if (result?.transcript) {
-      setEditedTranscript(result.transcript);
+      // Debug: log transcript format
+      console.log('[Transcript Debug] Raw transcript:', result.transcript?.substring(0, 500));
+      console.log('[Transcript Debug] Transcripts array:', result.transcripts);
+
+      // Use per-video transcript if available, otherwise use combined transcript
+      if (result.transcripts && result.transcripts.length > activeVideoIndex) {
+        setEditedTranscript(result.transcripts[activeVideoIndex]);
+      } else {
+        setEditedTranscript(result.transcript);
+      }
       // Initialize AI Chat when results arrive
       const chat = geminiService.createAnalystChat(result);
       setAnalystChat(chat);
     }
   }, [result, geminiService]);
+
+  // Switch transcript when active video changes
+  useEffect(() => {
+    if (result?.transcripts && result.transcripts.length > activeVideoIndex) {
+      setEditedTranscript(result.transcripts[activeVideoIndex]);
+    }
+  }, [activeVideoIndex, result?.transcripts]);
 
   const parseTimestamp = (ts: string): number => {
     const clean = ts.replace(/[\[\]s]/g, '').trim();
@@ -98,17 +117,53 @@ const App: React.FC = () => {
     return editedTranscript.split('\n')
       .filter(line => line.trim())
       .map(line => {
-        const pattern = /^([^\[\n:]+)\s\[(\d{1,2}:\d{2})\]:\s*(.*)$/;
-        const match = line.match(pattern);
-        if (match) {
-          const [, speaker, ts, message] = match;
+        // Try multiple patterns to handle different AI transcript formats
+        // Pattern 1: "Speaker [MM:SS]: Message" (original format)
+        // Pattern 2: "Speaker [M:SS]: Message" (single digit minutes)
+        // Pattern 3: "Speaker [HH:MM:SS]: Message" (with hours)
+        // Pattern 4: "[MM:SS] Speaker: Message" (timestamp first)
+        // Pattern 5: "Speaker (MM:SS): Message" (parentheses instead of brackets)
+
+        // Original pattern: Speaker Name [MM:SS]: Message
+        const pattern1 = /^([^\[\n]+?)\s*\[(\d{1,2}:\d{2}(?::\d{2})?)\]:\s*(.*)$/;
+        const match1 = line.match(pattern1);
+        if (match1) {
+          const [, speaker, ts, message] = match1;
           return {
-            speaker,
+            speaker: speaker.trim(),
             timestamp: ts,
             seconds: parseTimestamp(ts),
             message
           };
         }
+
+        // Pattern 2: [MM:SS] Speaker: Message
+        const pattern2 = /^\[(\d{1,2}:\d{2}(?::\d{2})?)\]\s*([^:]+):\s*(.*)$/;
+        const match2 = line.match(pattern2);
+        if (match2) {
+          const [, ts, speaker, message] = match2;
+          return {
+            speaker: speaker.trim(),
+            timestamp: ts,
+            seconds: parseTimestamp(ts),
+            message
+          };
+        }
+
+        // Pattern 3: Speaker (MM:SS): Message (parentheses)
+        const pattern3 = /^([^(\n]+?)\s*\((\d{1,2}:\d{2}(?::\d{2})?)\):\s*(.*)$/;
+        const match3 = line.match(pattern3);
+        if (match3) {
+          const [, speaker, ts, message] = match3;
+          return {
+            speaker: speaker.trim(),
+            timestamp: ts,
+            seconds: parseTimestamp(ts),
+            message
+          };
+        }
+
+        // Fallback: treat line as system message
         return { speaker: 'System', timestamp: '00:00', seconds: 0, message: line };
       });
   }, [editedTranscript]);
@@ -193,38 +248,20 @@ const App: React.FC = () => {
   }, []);
 
   // Control native caption visibility based on fullscreen and showCaptions state
+  // Control native caption visibility based on fullscreen and showCaptions state
   useEffect(() => {
-    if (videoRef.current && videoRef.current.textTracks.length > 0) {
-      const track = videoRef.current.textTracks[0];
+    const activeVideo = videoRefs.current[activeVideoIndex];
+    if (activeVideo && activeVideo.textTracks.length > 0) {
+      const track = activeVideo.textTracks[0];
       // Show native captions only in fullscreen mode when captions are enabled
       track.mode = (isFullscreen && showCaptions) ? 'showing' : 'hidden';
     }
-  }, [isFullscreen, showCaptions]);
-
-
+  }, [isFullscreen, showCaptions, activeVideoIndex]);
 
   const handleTimeUpdate = (e: React.SyntheticEvent<HTMLVideoElement>) => {
-    setCurrentTime(e.currentTarget.currentTime);
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selected = e.target.files?.[0];
-    if (selected && selected.type.startsWith('video/')) {
-      if (videoUrl) URL.revokeObjectURL(videoUrl);
-      setFile(selected);
-      setVideoUrl(URL.createObjectURL(selected));
-      setError(null);
-      setResult(null);
-      setEditedTranscript("");
-      setProgress(0);
-      setEditedTranscript("");
-      setProgress(0);
-      setCurrentTime(0);
-      setAnalystChat(null);
-      // Reset language on new file
-      setTargetLanguage('Original');
-    } else if (selected) {
-      setError("Invalid File Format: The selected file is not a supported video format. Please choose a video file with one of these extensions: MP4, WebM, MOV, or MKV.");
+    // Only update time if this event comes from the active video
+    if (e.currentTarget === videoRefs.current[activeVideoIndex]) {
+      setCurrentTime(e.currentTarget.currentTime);
     }
   };
 
@@ -238,14 +275,17 @@ const App: React.FC = () => {
       const blob = await response.blob();
       const exampleFile = new File([blob], 'wix-video.mp4', { type: 'video/mp4' });
 
-      if (videoUrl) URL.revokeObjectURL(videoUrl);
-      setFile(exampleFile);
-      setVideoUrl(URL.createObjectURL(exampleFile));
+      const newItem: MediaItem = {
+        id: `media_${Date.now()}_video`,
+        file: exampleFile,
+        type: 'video',
+        url: URL.createObjectURL(exampleFile),
+        comment: ''
+      };
+
+      setMediaItems(prev => [...prev, newItem]);
       setError(null);
       setResult(null);
-      setEditedTranscript("");
-      setProgress(0);
-      setCurrentTime(0);
       setEditedTranscript("");
       setProgress(0);
       setCurrentTime(0);
@@ -269,8 +309,8 @@ const App: React.FC = () => {
   };
 
   const processMedia = async () => {
-    if (!file && images.length === 0) {
-      setError("No Media Selected: Please upload a video file or screenshots before starting the analysis.");
+    if (mediaItems.length === 0) {
+      setError("No Media Selected: Please upload a file (Video, Audio, Image, or PDF) before starting the analysis.");
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
@@ -285,6 +325,16 @@ const App: React.FC = () => {
     setResult(null);
     setButtonLabel("Processing media...");
 
+    // Find first video to set as active for playback
+    const videoItems = mediaItems.filter(item => item.type === 'video');
+    if (videoItems.length > 0) {
+      setActiveVideoUrl(videoItems[0].url);
+      setActiveVideoIndex(0);
+    } else {
+      setActiveVideoUrl(null);
+      setActiveVideoIndex(0);
+    }
+
     const startTime = Date.now();
     const totalEstimatedMs = 30000;
 
@@ -297,22 +347,17 @@ const App: React.FC = () => {
     }, 200);
 
     try {
-      // Prepare video data if present
-      const videoData = file ? {
-        base64: await convertToBase64(file),
-        mimeType: file.type
-      } : undefined;
-
-      // Prepare images data if present
-      const imagesData = images.length > 0 ? await Promise.all(
-        images.map(async (img) => ({
-          base64: await convertToBase64(img.file),
-          mimeType: img.file.type,
-          comment: img.comment
+      const mediaData = await Promise.all(
+        mediaItems.map(async (item) => ({
+          base64: await convertToBase64(item.file),
+          mimeType: item.file.type,
+          type: item.type,
+          comment: item.comment,
+          filename: item.file.name
         }))
-      ) : undefined;
+      );
 
-      const analysis = await geminiService.analyzeMedia(videoData, imagesData, targetLanguage, abortController.signal);
+      const analysis = await geminiService.analyzeMedia(mediaData, targetLanguage, abortController.signal);
       clearInterval(interval);
       setProgress(100);
       setStatusMessage("Audit complete. Ready for review!");
@@ -339,11 +384,24 @@ const App: React.FC = () => {
     }
   };
 
-  const seekTo = (timestamp: string) => {
-    if (videoRef.current) {
+  const seekTo = (timestamp: string, videoIdx?: number) => {
+    const targetIndex = videoIdx !== undefined ? videoIdx : activeVideoIndex;
+
+    // Switch to the target video if not already active
+    if (targetIndex !== activeVideoIndex) {
+      setActiveVideoIndex(targetIndex);
+      const videoItems = mediaItems.filter(item => item.type === 'video');
+      if (videoItems[targetIndex]) {
+        setActiveVideoUrl(videoItems[targetIndex].url);
+      }
+    }
+
+    // Seek in the target video
+    const videoEl = videoRefs.current[targetIndex];
+    if (videoEl) {
       const seconds = parseTimestamp(timestamp);
-      videoRef.current.currentTime = seconds;
-      videoRef.current.play();
+      videoEl.currentTime = seconds;
+      videoEl.play();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
@@ -416,7 +474,13 @@ const App: React.FC = () => {
           </div>
           <div className="flex items-center gap-4">
             {result && (
-              <button onClick={() => { setResult(null); setFile(null); setVideoUrl(null); setImages([]); setEditedTranscript(""); setCurrentTime(0); }} className="text-sm tracking-widest text-slate-500 hover:text-slate-900 px-4 py-2 transition-colors">
+              <button onClick={() => {
+                setResult(null);
+                setMediaItems([]);
+                setActiveVideoUrl(null);
+                setEditedTranscript("");
+                setCurrentTime(0);
+              }} className="text-sm tracking-widest text-slate-500 hover:text-slate-900 px-4 py-2 transition-colors">
                 New Audit
               </button>
             )}
@@ -436,132 +500,31 @@ const App: React.FC = () => {
               <p className="text-base text-slate-500">Upload video recordings, screenshots, or both for a WCAG-compliant audit.</p>
             </div>
 
-            {/* Two Column Layout for Upload Cards */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
-              {/* Video Upload Card */}
-              <section className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-200 overflow-hidden h-full w-full">
-                <div className="p-6 flex flex-col h-full">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-                    </div>
-                    <div>
-                      <h3 className="text-base font-medium text-slate-900">Video Recording</h3>
-                      <p className="text-sm text-slate-400">MP4, WebM, or MOV</p>
-                    </div>
-                  </div>
+            {/* Unified Upload Section */}
+            <div className="w-full">
+              < UnifiedMediaUpload
+                mediaItems={mediaItems}
+                onMediaItemsChange={setMediaItems}
+                disabled={isProcessing}
+              />
 
-                  <div className="flex-1 min-h-[320px]">
-                    {!file ? (
-                      <label className="flex flex-col items-center justify-center cursor-pointer border-2 border-dashed border-slate-200 rounded-xl p-6 hover:border-indigo-400 hover:bg-indigo-50/30 transition-all h-full">
-                        <input type="file" accept="video/mp4,video/webm,video/quicktime,video/x-matroska" onChange={handleFileChange} className="hidden" />
-                        <svg className="w-10 h-10 text-slate-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
-                        <span className="text-sm text-slate-600">Drop video here or click to browse</span>
-                      </label>
-                    ) : (
-                      <div className="space-y-3 h-full">
-                        <div className="rounded-xl overflow-hidden bg-slate-900 shadow-lg border border-slate-800 h-[calc(100%-48px)]">
-                          <video ref={previewVideoRef} src={videoUrl || ""} className="w-full h-full object-contain" controls />
-                        </div>
-                        <div className="flex items-center justify-between bg-slate-50 px-4 py-2 rounded-lg border border-slate-100">
-                          <span className="text-sm text-slate-700 truncate max-w-[200px]">{file.name}</span>
-                          <button onClick={() => { setFile(null); setVideoUrl(null); }} className="text-sm text-red-500 hover:text-red-700 transition-colors">Remove</button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
+              {mediaItems.length === 0 && (
+                <div className="flex justify-center gap-4 mt-4">
                   <button
                     onClick={loadExampleVideo}
-                    className="w-full mt-4 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-600 hover:border-indigo-500 hover:text-indigo-600 transition-all flex items-center justify-center gap-2"
+                    className="px-4 py-2 text-sm text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors flex items-center gap-2"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                     Load Example Video
                   </button>
                 </div>
-              </section>
-
-              {/* Screenshots Upload Card */}
-              <section className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-200 overflow-hidden h-full">
-                <div className="p-6 flex flex-col h-full">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center text-amber-600">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                      </div>
-                      <div>
-                        <h3 className="text-base font-medium text-slate-900">Screenshots</h3>
-                        <p className="text-sm text-slate-400">PNG, JPG, WebP, GIF</p>
-                      </div>
-                    </div>
-                    <label className="ml-4 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm text-slate-700 hover:border-amber-500 hover:text-amber-600 transition-all cursor-pointer flex items-center gap-2 flex-shrink-0">
-                      <input
-                        type="file"
-                        accept="image/png,image/jpeg,image/jpg,image/webp,image/gif"
-                        multiple
-                        onChange={(e) => {
-                          const files = e.target.files;
-                          if (!files) return;
-                          const newImages = Array.from(files)
-                            .filter((f: File) => f.type.startsWith('image/'))
-                            .map((file: File) => ({
-                              id: `img_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-                              file,
-                              url: URL.createObjectURL(file),
-                              comment: ''
-                            }));
-                          if (newImages.length > 0) setImages(prev => [...prev, ...newImages]);
-                          e.target.value = '';
-                        }}
-                        className="hidden"
-                        disabled={isProcessing}
-                      />
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
-                      Add Image
-                    </label>
-                  </div>
-
-                  <div className="flex-1 min-h-[320px]">
-                    <ImageUploadSection
-                      images={images}
-                      onImagesChange={setImages}
-                      disabled={isProcessing}
-                      compact={true}
-                    />
-                  </div>
-
-                  <button
-                    onClick={async () => {
-                      try {
-                        const response = await fetch('/examples/iframe.png');
-                        if (!response.ok) return;
-                        const blob = await response.blob();
-                        const exampleFile = new File([blob], 'iframe.png', { type: 'image/png' });
-                        const newImage = {
-                          id: `img_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-                          file: exampleFile,
-                          url: URL.createObjectURL(exampleFile),
-                          comment: ''
-                        };
-                        setImages(prev => [...prev, newImage]);
-                      } catch (err) {
-                        console.error('Failed to load example image:', err);
-                      }
-                    }}
-                    className="w-full mt-4 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-600 hover:border-amber-500 hover:text-amber-600 transition-all flex items-center justify-center gap-2"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                    Load Example Image
-                  </button>
-                </div>
-
-              </section>
+              )}
             </div>
 
             {/* Language Selector */}
             {
-              (file) && (
-                <div className="mt-4 flex justify-center">
+              (mediaItems.length > 0) && (
+                <div className="mt-8 flex justify-center">
                   <div className="bg-white px-6 py-3 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
                     <div className="flex items-center gap-2 text-slate-500">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" /></svg>
@@ -587,16 +550,16 @@ const App: React.FC = () => {
               )
             }
 
-            {/* Analyze Button - Below Both Cards */}
+            {/* Analyze Button - Below Cards */}
             {
-              (file || images.length > 0) && (
+              (mediaItems.length > 0) && (
                 <div className="mt-6 flex justify-center">
                   <button
                     onClick={processMedia}
                     disabled={isProcessing}
                     className={`px-10 py-4 rounded-2xl text-lg transition-all active:scale-[0.98] shadow-xl ${isProcessing ? 'bg-slate-100 text-slate-400' : 'bg-slate-900 text-white hover:bg-indigo-700 shadow-indigo-200'}`}
                   >
-                    {isProcessing ? "Analyzing..." : file && images.length > 0 ? `Analyze Video + ${images.length} Screenshot${images.length > 1 ? 's' : ''}` : file ? "Analyze Video Recording" : `Analyze ${images.length} Screenshot${images.length > 1 ? 's' : ''}`}
+                    {isProcessing ? "Analyzing..." : `Analyze ${mediaItems.length} File${mediaItems.length > 1 ? 's' : ''}`}
                   </button>
                 </div>
               )
@@ -681,17 +644,32 @@ const App: React.FC = () => {
                 {/* Video Panel */}
                 <div className={`flex-grow bg-slate-900 rounded-[2rem] shadow-2xl overflow-hidden border border-slate-800 transition-all duration-500 relative ${isTranscriptVisible ? 'lg:w-2/3' : 'lg:w-full'}`}>
                   <div className="w-full h-full relative bg-black flex items-center justify-center">
-                    {videoUrl && (
-                      <video ref={videoRef} src={videoUrl} onTimeUpdate={handleTimeUpdate} controls className="w-full h-full object-contain">
-                        {captionTrackUrl && (
-                          <track
-                            kind="captions"
-                            src={captionTrackUrl}
-                            srcLang="en"
-                            label="English"
-                          />
-                        )}
-                      </video>
+                    {/* Render ALL videos but only show the active one */}
+                    {mediaItems.filter(item => item.type === 'video').length > 0 ? (
+                      mediaItems.filter(item => item.type === 'video').map((video, idx) => (
+                        <video
+                          key={video.id || idx}
+                          ref={(el) => {
+                            if (el) videoRefs.current[idx] = el;
+                          }}
+                          src={video.url}
+                          onTimeUpdate={handleTimeUpdate}
+                          controls
+                          className={`w-full h-full object-contain ${idx === activeVideoIndex ? 'block' : 'hidden'}`}
+                          style={{ display: idx === activeVideoIndex ? 'block' : 'none' }}
+                        >
+                          {captionTrackUrl && (
+                            <track
+                              kind="captions"
+                              src={captionTrackUrl}
+                              srcLang="en"
+                              label="English"
+                            />
+                          )}
+                        </video>
+                      ))
+                    ) : (
+                      <div className="text-slate-500">No video selected</div>
                     )}
 
                     {/* Custom Caption Overlay - YouTube Style (only in normal mode) */}
@@ -837,6 +815,60 @@ const App: React.FC = () => {
                       </div>
                     )}
                   </div>
+
+                  {/* Video Gallery Thumbnails - shown when multiple videos */}
+                  {(() => {
+                    const videoItems = mediaItems.filter(item => item.type === 'video');
+                    if (videoItems.length > 1) {
+                      return (
+                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent px-4 py-3">
+                          <div className="flex gap-2 overflow-x-auto pb-1 custom-scrollbar">
+                            {videoItems.map((video, idx) => (
+                              <button
+                                key={video.id}
+                                onClick={() => {
+                                  // Pause the currently playing video
+                                  const currentVideo = videoRefs.current[activeVideoIndex];
+                                  if (currentVideo) {
+                                    currentVideo.pause();
+                                  }
+                                  setActiveVideoIndex(idx);
+                                  setActiveVideoUrl(video.url);
+                                }}
+                                className={`relative flex-shrink-0 w-24 h-14 rounded-lg overflow-hidden border-2 transition-all ${idx === activeVideoIndex
+                                  ? 'border-indigo-500 ring-2 ring-indigo-400/50'
+                                  : 'border-white/20 hover:border-white/50'
+                                  }`}
+                              >
+                                <video
+                                  src={video.url}
+                                  className="w-full h-full object-cover"
+                                  muted
+                                  preload="metadata"
+                                />
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                  <span className="text-white text-xs font-medium bg-black/60 px-2 py-0.5 rounded">
+                                    {idx + 1}
+                                  </span>
+                                </div>
+                                {idx === activeVideoIndex && (
+                                  <div className="absolute top-1 right-1">
+                                    <div className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse" />
+                                  </div>
+                                )}
+                              </button>
+                            ))}
+                          </div>
+                          <div className="text-center mt-1">
+                            <span className="text-white/70 text-xs">
+                              Video {activeVideoIndex + 1} of {videoItems.length}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
                 </div>
 
                 {/* Transcript Panel (Scrollable) */}
@@ -933,6 +965,7 @@ const App: React.FC = () => {
                   onSeek={seekTo}
                   onUpdateIssue={handleUpdateIssue}
                   onDeleteIssue={handleDeleteIssue}
+                  totalVideoCount={mediaItems.filter(item => item.type === 'video').length}
                 />
               </div>
 

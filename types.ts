@@ -33,6 +33,7 @@ export interface A11yIssue {
   suggested_fix: string;
   generated_alt_text?: string;
   timestamp: string;
+  video_index?: number; // Which video (0-based) this issue was found in (for multi-video uploads)
   screenshot_context?: string; // Base64 or description of visual
   status: 'Open' | 'Resolved' | 'Triaged';
   disclaimer: string;
@@ -80,6 +81,7 @@ export interface AnalysisMetadata {
 
 export interface AnalysisResult {
   transcript: string;
+  transcripts?: string[]; // Per-video transcripts (for multi-video uploads)
   detected_language?: string;
   issues: A11yIssue[];
   metadata?: AnalysisMetadata;
