@@ -64,7 +64,17 @@ Video File → Base64 Encoding → Gemini API → JSON Response → State Manage
 ### 1. Video Analysis
 - Accepts video/mp4, video/webm, video/quicktime, video/x-matroska
 - Converts to base64 for Gemini API submission
-- Progress tracking with 8-stage status messages
+- **Asymptotic progress tracking**: Progress uses a two-phase approach - fast linear progress up to 60%, then logarithmic slowdown approaching 99%. This ensures the progress bar never appears "stuck" even for long-running analyses.
+- Dynamic time estimates based on media type (40s/video, 25s/audio, 10s/image)
+- Status messages update based on progress percentage:
+  - 0-10%: "Uploading media to AI..."
+  - 10-25%: "Transcribing audio content..."
+  - 25-45%: "Analyzing visual frames..."
+  - 45-60%: "Mapping WCAG 2.2 criteria..."
+  - 60-75%: "Checking axe-core rules..."
+  - 75-85%: "Calculating severity scores..."
+  - 85-95%: "Generating fix suggestions..."
+  - 95%+: "Compiling accessibility report..."
 - Synchronized video playback with transcript highlighting
 
 ### 2. Transcript Management
@@ -109,7 +119,7 @@ Video File → Base64 Encoding → Gemini API → JSON Response → State Manage
 
 ### Interaction Patterns
 - **File Upload**: Drag-and-drop zone with visual feedback
-- **Progress**: Real-time percentage + status messages during analysis
+- **Progress**: Asymptotic progress bar (fast 0-60%, gradual slowdown 60-99%) with contextual status messages. Never appears stuck - always shows movement even for long analyses.
 - **Video Controls**: Native HTML5 controls + custom timestamp navigation
 - **Transcript**: Click line to seek, hover effects, active state highlighting
 - **AI Chat**: Streaming text, typing indicators, keyboard shortcuts (Enter to send)
@@ -281,7 +291,8 @@ npm run preview      # Preview production build
 - Base64 encoding blocks main thread for large videos
 - No lazy loading for issue cards
 - No virtualization for long transcript lists
-- Gemini API calls can take 20-40 seconds
+- Gemini API calls can take 20-90+ seconds depending on video length
+- Progress tracking uses time-based estimation with asymptotic formula: `progress = 60 + 39 * (1 - e^(-extraTime/2*baseTime))` to ensure smooth visual feedback even for unpredictable API response times
 
 ---
 
@@ -398,7 +409,7 @@ See `PRODUCT_ROADMAP.md` for detailed feature proposals and prioritization.
 ## Metadata
 
 **Created**: 2024  
-**Last Updated**: 2026-01-11  
+**Last Updated**: 2026-01-11 (Progress tracking improvements)  
 **Maintainer**: Elizabeth P.  
 **License**: MIT  
 **Repository**: [Add GitHub URL]  

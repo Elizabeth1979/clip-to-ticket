@@ -15,22 +15,6 @@ import { Chat } from '@google/genai';
 
 // Elli is the queen
 
-
-
-const STATUS_MESSAGES = [
-  { message: "Initializing analysis...", threshold: 0 },
-  { message: "Uploading media to AI...", threshold: 5 },
-  { message: "Transcribing audio content...", threshold: 15 },
-  { message: "Analyzing visual frames...", threshold: 30 },
-  { message: "Identifying UI components...", threshold: 45 },
-  { message: "Mapping WCAG 2.2 criteria...", threshold: 55 },
-  { message: "Checking axe-core rules...", threshold: 65 },
-  { message: "Calculating severity scores...", threshold: 75 },
-  { message: "Generating fix suggestions...", threshold: 85 },
-  { message: "Compiling accessibility report...", threshold: 92 },
-  { message: "Almost there, finalizing...", threshold: 96 },
-];
-
 const App: React.FC = () => {
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
   const [activeVideoUrl, setActiveVideoUrl] = useState<string | null>(null);
@@ -343,15 +327,51 @@ const App: React.FC = () => {
       setActiveVideoIndex(0);
     }
 
+    // Status messages for different progress ranges
+    const getStatusMessage = (progress: number): string => {
+      if (progress < 10) return "Uploading media to AI...";
+      if (progress < 25) return "Transcribing audio content...";
+      if (progress < 45) return "Analyzing visual frames...";
+      if (progress < 60) return "Mapping WCAG 2.2 criteria...";
+      if (progress < 75) return "Checking axe-core rules...";
+      if (progress < 85) return "Calculating severity scores...";
+      if (progress < 95) return "Generating fix suggestions...";
+      return "Compiling accessibility report...";
+    };
+
+    // Dynamic time estimate based on media count
+    const videoCount = mediaItems.filter(item => item.type === 'video').length;
+    const audioCount = mediaItems.filter(item => item.type === 'audio').length;
+    const imageCount = mediaItems.filter(item => item.type === 'image').length;
+    const baseTimeMs = Math.max(30000,
+      videoCount * 40000 + audioCount * 25000 + imageCount * 10000
+    );
+
     const startTime = Date.now();
-    const totalEstimatedMs = 30000;
+
+    // Smooth progress that uses asymptotic approach - never truly "stuck"
+    // Fast at first (linear), then gradually slows down approaching 99%
+    const calculateProgress = (): number => {
+      const elapsed = Date.now() - startTime;
+
+      // Fast linear progress up to 60%
+      const linearPhase = Math.min(60, (elapsed / baseTimeMs) * 60);
+
+      if (elapsed < baseTimeMs) {
+        return Math.floor(linearPhase);
+      }
+
+      // After base time, use asymptotic approach from 60% to 99%
+      // Progress slows down logarithmically but never stops
+      const extraTime = elapsed - baseTimeMs;
+      const slowPhase = 39 * (1 - Math.exp(-extraTime / (baseTimeMs * 2)));
+      return Math.min(99, Math.floor(60 + slowPhase));
+    };
 
     const interval = setInterval(() => {
-      const elapsed = Date.now() - startTime;
-      const newProgress = Math.min(98, Math.floor((elapsed / totalEstimatedMs) * 100));
+      const newProgress = calculateProgress();
       setProgress(newProgress);
-      const msgIndex = Math.min(STATUS_MESSAGES.length - 1, Math.floor((elapsed / totalEstimatedMs) * STATUS_MESSAGES.length));
-      setStatusMessage(STATUS_MESSAGES[msgIndex]);
+      setStatusMessage(getStatusMessage(newProgress));
     }, 200);
 
     try {
@@ -365,7 +385,13 @@ const App: React.FC = () => {
         }))
       );
 
-      const analysis = await geminiService.analyzeMedia(mediaData, targetLanguage, abortController.signal, promptSettings);
+      const analysis = await geminiService.analyzeMedia(
+        mediaData,
+        targetLanguage,
+        abortController.signal,
+        promptSettings
+      );
+
       clearInterval(interval);
       setProgress(100);
       setStatusMessage("Audit complete. Ready for review!");
