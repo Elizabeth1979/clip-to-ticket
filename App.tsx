@@ -18,14 +18,17 @@ import { Chat } from '@google/genai';
 
 
 const STATUS_MESSAGES = [
-  "Initializing assistant...",
-  "Transcribing narration...",
-  "Analyzing visual frames...",
-  "Mapping WCAG criteria...",
-  "Checking axe-core rules...",
-  "Calculating severity...",
-  "Generating fixes...",
-  "Finalizing report..."
+  { message: "Initializing analysis...", threshold: 0 },
+  { message: "Uploading media to AI...", threshold: 5 },
+  { message: "Transcribing audio content...", threshold: 15 },
+  { message: "Analyzing visual frames...", threshold: 30 },
+  { message: "Identifying UI components...", threshold: 45 },
+  { message: "Mapping WCAG 2.2 criteria...", threshold: 55 },
+  { message: "Checking axe-core rules...", threshold: 65 },
+  { message: "Calculating severity scores...", threshold: 75 },
+  { message: "Generating fix suggestions...", threshold: 85 },
+  { message: "Compiling accessibility report...", threshold: 92 },
+  { message: "Almost there, finalizing...", threshold: 96 },
 ];
 
 const App: React.FC = () => {

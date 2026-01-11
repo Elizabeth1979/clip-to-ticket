@@ -1,4 +1,5 @@
 import { GoogleGenAI, Type } from '@google/genai';
+import { GEMINI_MODELS } from './config.js';
 
 const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
@@ -28,7 +29,7 @@ export default async function handler(req, res) {
         console.log(`[${new Date().toISOString()}] Analyzing video (${mimeType})...`);
 
         const response = await genAI.models.generateContent({
-            model: 'gemini-3-flash-preview',
+            model: GEMINI_MODELS.ANALYSIS,
             contents: {
                 parts: [
                     {
@@ -38,7 +39,24 @@ export default async function handler(req, res) {
                         },
                     },
                     {
-                        text: 'Perform an exhaustive accessibility audit using Deque WCAG 2.2 and Axe-core 4.11 standards. Provide the transcript and structured issues list.',
+                        text: `Perform an exhaustive accessibility audit using Deque WCAG 2.2 and Axe-core 4.11 standards.
+
+TRANSCRIPT FORMAT (STRICT - DO NOT DEVIATE):
+- Each speaker turn MUST be on its OWN LINE (separated by newline characters)
+- Format: SpeakerName [MM:SS]: Message
+- Use actual newline characters to separate each speaker turn
+- Do NOT put multiple speaker turns on the same line
+- Do NOT output as a continuous paragraph
+
+CORRECT EXAMPLE:
+Narrator [00:00]: Welcome to this demo.
+User [00:05]: I'm going to test the navigation.
+Narrator [00:12]: The focus moves to the menu.
+
+INCORRECT (DO NOT DO THIS):
+Narrator [00:00]: Welcome. User [00:05]: Testing. Narrator [00:12]: Focus moves.
+
+Provide the complete transcript and structured issues list.`,
                     },
                 ],
             },

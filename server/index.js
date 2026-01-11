@@ -3,6 +3,7 @@ import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import { GoogleGenAI, Type } from '@google/genai';
+import { GEMINI_MODELS, getModelPricing } from './config.js';
 
 dotenv.config();
 
@@ -70,7 +71,7 @@ app.post('/api/analyze-video', async (req, res) => {
     const startTime = Date.now();
 
     const response = await genAI.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: GEMINI_MODELS.ANALYSIS,
       contents: {
         parts: [
           {
@@ -80,7 +81,24 @@ app.post('/api/analyze-video', async (req, res) => {
             },
           },
           {
-            text: 'Perform an exhaustive accessibility audit using Deque WCAG 2.2 and Axe-core 4.11 standards. Provide the transcript and structured issues list.',
+            text: `Perform an exhaustive accessibility audit using Deque WCAG 2.2 and Axe-core 4.11 standards.
+
+TRANSCRIPT FORMAT (STRICT - DO NOT DEVIATE):
+- Each speaker turn MUST be on its OWN LINE (separated by newline characters)
+- Format: SpeakerName [MM:SS]: Message
+- Use actual newline characters to separate each speaker turn
+- Do NOT put multiple speaker turns on the same line
+- Do NOT output as a continuous paragraph
+
+CORRECT EXAMPLE:
+Narrator [00:00]: Welcome to this demo.
+User [00:05]: I'm going to test the navigation.
+Narrator [00:12]: The focus moves to the menu.
+
+INCORRECT (DO NOT DO THIS):
+Narrator [00:00]: Welcome. User [00:05]: Testing. Narrator [00:12]: Focus moves.
+
+Provide the complete transcript and structured issues list.`,
           },
         ],
       },
@@ -99,11 +117,10 @@ app.post('/api/analyze-video', async (req, res) => {
     const inputTokens = usageMetadata.promptTokenCount || 0;
     const outputTokens = usageMetadata.candidatesTokenCount || 0;
 
-    // Calculate costs (Gemini 3 Flash pricing)
-    const FLASH_INPUT_PER_1M = 0.075;
-    const FLASH_OUTPUT_PER_1M = 0.30;
-    const inputCost = (inputTokens / 1_000_000) * FLASH_INPUT_PER_1M;
-    const outputCost = (outputTokens / 1_000_000) * FLASH_OUTPUT_PER_1M;
+    // Calculate costs using centralized pricing
+    const pricing = getModelPricing(GEMINI_MODELS.ANALYSIS);
+    const inputCost = (inputTokens / 1_000_000) * pricing.inputPer1M;
+    const outputCost = (outputTokens / 1_000_000) * pricing.outputPer1M;
     const totalCost = inputCost + outputCost;
 
     console.log(`[${new Date().toISOString()}] Analysis complete - ${processingTimeMs}ms, ${inputTokens} input tokens, ${outputTokens} output tokens, $${totalCost.toFixed(4)}`);
@@ -112,7 +129,7 @@ app.post('/api/analyze-video', async (req, res) => {
       text: response.text,
       metadata: {
         systemPrompt: systemInstruction,
-        model: 'gemini-3-flash-preview',
+        model: GEMINI_MODELS.ANALYSIS,
         processingTimeMs,
         costBreakdown: {
           inputTokens,
@@ -204,14 +221,34 @@ app.post('/api/analyze-media', async (req, res) => {
         parts.push({
           text: `Analyze this ${item.type} specifically. Perform an exhaustive accessibility audit using Deque WCAG 2.2 and Axe-core 4.11 standards.
 
-CRITICAL TRANSCRIPT FORMAT: Each line MUST follow: SpeakerName [MM:SS]: Message
-Example: Narrator [00:05]: Welcome to this demo.
+CRITICAL TRANSCRIPT REQUIREMENT:
+- You MUST provide a COMPLETE verbatim transcript of ALL spoken audio in this file
+- Transcribe EVERY word spoken from start to finish
+- Do NOT use placeholder text like "Transcription will start soon" or "No transcript available"
+- If there is audio content, transcribe it completely
 
-Provide the transcript and structured issues list. Timestamps must be relative to the start of this file starting at [00:00].`,
+TRANSCRIPT FORMAT (STRICT - DO NOT DEVIATE):
+- Each speaker turn MUST be on its OWN LINE (separated by newline characters)
+- Format: SpeakerName [MM:SS]: Message
+- Use actual newline characters (\\n) to separate each speaker turn
+- Do NOT put multiple speaker turns on the same line
+- Do NOT output as a continuous paragraph
+
+CORRECT EXAMPLE:
+Narrator [00:00]: Welcome to this demo.
+User [00:05]: I'm going to test the navigation.
+Narrator [00:12]: The focus moves to the menu.
+
+INCORRECT (DO NOT DO THIS):
+Narrator [00:00]: Welcome. User [00:05]: Testing. Narrator [00:12]: Focus moves.
+
+Timestamps must be relative to the start of THIS file, starting at [00:00].
+Provide the full transcript and structured issues list.`,
         });
 
+
         const response = await genAI.models.generateContent({
-          model: 'gemini-2.0-flash-exp',
+          model: GEMINI_MODELS.ANALYSIS,
           contents: { parts },
           config: {
             systemInstruction,
@@ -244,10 +281,14 @@ Provide the transcript and structured issues list. Timestamps must be relative t
           const parsed = JSON.parse(textResponse);
           if (parsed.transcript) {
             transcript = parsed.transcript;
+            console.log(`[${new Date().toISOString()}] ${itemLabel} transcript extracted (${transcript.length} chars, first 100: "${transcript.substring(0, 100)}...")`);
+          } else {
+            console.warn(`[${new Date().toISOString()}] ${itemLabel} - No transcript field in AI response`);
           }
         } catch (e) {
           // Already logged above
         }
+
 
         return {
           success: true,
@@ -299,7 +340,7 @@ Provide the transcript and structured issues list. Timestamps must be relative t
         });
 
         const response = await genAI.models.generateContent({
-          model: 'gemini-2.0-flash-exp',
+          model: GEMINI_MODELS.ANALYSIS,
           contents: { parts },
           config: {
             systemInstruction,
@@ -407,12 +448,10 @@ Provide the transcript and structured issues list. Timestamps must be relative t
     const endTime = Date.now();
     const processingTimeMs = endTime - startTime;
 
-    // Calculate costs (Gemini 2.0 Flash Exp pricing assumption - check if it's free or has pricing)
-    // Using Flash Preview pricing as placeholder if unknown
-    const FLASH_INPUT_PER_1M = 0.075;
-    const FLASH_OUTPUT_PER_1M = 0.30;
-    const inputCost = (totalInputTokens / 1_000_000) * FLASH_INPUT_PER_1M;
-    const outputCost = (totalOutputTokens / 1_000_000) * FLASH_OUTPUT_PER_1M;
+    // Calculate costs using centralized pricing
+    const pricing = getModelPricing(GEMINI_MODELS.ANALYSIS);
+    const inputCost = (totalInputTokens / 1_000_000) * pricing.inputPer1M;
+    const outputCost = (totalOutputTokens / 1_000_000) * pricing.outputPer1M;
     const totalCost = inputCost + outputCost;
 
     console.log(`[${new Date().toISOString()}] Unified Analysis complete - ${processingTimeMs}ms, ${allIssues.length} issues found.`);
@@ -462,8 +501,8 @@ Provide the transcript and structured issues list. Timestamps must be relative t
       text: combinedJson, // Send valid JSON here so frontend parsing succeeds
       metadata: {
         systemPrompt: systemInstruction,
-        model: 'gemini-2.0-flash-exp (multi-pass)',
         processingTimeMs,
+        model: GEMINI_MODELS.ANALYSIS,
         costBreakdown: {
           inputTokens: totalInputTokens,
           outputTokens: totalOutputTokens,
@@ -504,7 +543,7 @@ app.post('/api/create-chat', async (req, res) => {
     console.log(`[${new Date().toISOString()}] Creating chat session...`);
 
     const chat = genAI.chats.create({
-      model: 'gemini-3-pro-preview',
+      model: GEMINI_MODELS.CHAT,
       config: {
         systemInstruction,
         tools: [{ googleSearch: {} }]
@@ -586,12 +625,56 @@ app.use((err, req, res, next) => {
   });
 });
 
+// Validate model configuration at startup
+async function validateModels() {
+  console.log('🔍 Validating Gemini model configuration...');
+
+  const modelsToValidate = [
+    { name: 'ANALYSIS', model: GEMINI_MODELS.ANALYSIS },
+    { name: 'CHAT', model: GEMINI_MODELS.CHAT },
+  ];
+
+  for (const { name, model } of modelsToValidate) {
+    try {
+      // Make a minimal API call to verify the model exists
+      const response = await genAI.models.generateContent({
+        model,
+        contents: { parts: [{ text: 'Test' }] },
+        config: { maxOutputTokens: 1 }
+      });
+      console.log(`  ✅ ${name}: ${model}`);
+    } catch (error) {
+      if (error.message?.includes('not found') || error.message?.includes('not supported')) {
+        console.error(`  ❌ ${name}: ${model} - MODEL NOT FOUND!`);
+        console.error(`     Error: ${error.message}`);
+        console.error('');
+        console.error('⚠️  Please update server/config.js with a valid model name.');
+        console.error('   See: https://ai.google.dev/gemini-api/docs/models');
+        process.exit(1);
+      } else {
+        // Other errors (rate limits, etc.) - model exists but other issue
+        console.log(`  ⚠️  ${name}: ${model} - ${error.message?.substring(0, 50)}...`);
+      }
+    }
+  }
+
+  console.log('✅ Model configuration validated successfully!');
+}
+
 if (process.env.NODE_ENV !== 'test') {
-  app.listen(PORT, () => {
+  app.listen(PORT, async () => {
     console.log(`🔒 MediaToTicket API Proxy running on port ${PORT}`);
     console.log(`📍 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
     console.log(`🔑 API Key configured: ${!!process.env.GEMINI_API_KEY}`);
+
+    // Validate models on startup (non-blocking warning if it fails)
+    if (process.env.GEMINI_API_KEY) {
+      validateModels().catch(err => {
+        console.warn('⚠️  Model validation failed:', err.message);
+      });
+    }
   });
 }
 
 export { app };
+

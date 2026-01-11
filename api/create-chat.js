@@ -1,4 +1,5 @@
 import { GoogleGenAI } from '@google/genai';
+import { GEMINI_MODELS } from './config.js';
 
 const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
@@ -27,7 +28,7 @@ export default async function handler(req, res) {
         console.log(`[${new Date().toISOString()}] Creating chat session...`);
 
         const chat = genAI.chats.create({
-            model: 'gemini-3-pro-preview',
+            model: GEMINI_MODELS.CHAT,
             config: {
                 systemInstruction,
                 tools: [{ googleSearch: {} }]

@@ -8,7 +8,7 @@ An AI-powered accessibility QA tool that transforms narrated screen recordings i
 
 [![WCAG 2.2](https://img.shields.io/badge/WCAG-2.2%20AA-blue)](https://www.w3.org/WAI/WCAG22/quickref/)
 [![Axe-core](https://img.shields.io/badge/Axe--core-4.11-purple)](https://dequeuniversity.com/rules/axe/4.11)
-[![Powered by Gemini](https://img.shields.io/badge/AI-Google%20Gemini-orange)](https://ai.google.dev/)
+[![Powered by Gemini](https://img.shields.io/badge/AI-Google%20Gemini%202.5-orange)](https://ai.google.dev/)
 
 </div>
 
@@ -171,7 +171,7 @@ ClipToTicket analyzes **all aspects** of your accessibility testing. Here's how 
 |----------|-----------|
 | **Frontend** | React 19, TypeScript, Vite |
 | **Styling** | TailwindCSS, Custom CSS |
-| **AI/ML** | Google Gemini 3 (Flash & Pro) |
+| **AI/ML** | Google Gemini 2.5 Flash |
 | **Standards** | WCAG 2.2 AA, Axe-core 4.11, ARIA APG |
 | **Build Tool** | Vite 6 |
 

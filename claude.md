@@ -22,7 +22,7 @@ ClipToTicket analyzes video recordings of accessibility audits where QA engineer
 
 ### How It Works
 1. **Upload**: User uploads MP4/WebM/MOV screen recording
-2. **Analysis**: Gemini 3 Flash processes video (audio + visual frames)
+2. **Analysis**: Gemini 2.5 Flash processes video (audio + visual frames)
 3. **Extraction**: AI generates transcript and identifies accessibility barriers
 4. **Mapping**: Issues are mapped to WCAG criteria and Axe-core rules
 5. **Review**: User reviews results in synchronized video + transcript interface
@@ -35,7 +35,7 @@ ClipToTicket analyzes video recordings of accessibility audits where QA engineer
 ### Stack
 - **Frontend**: React 19 + TypeScript + Vite
 - **Styling**: TailwindCSS (via CDN) + custom CSS
-- **AI**: Google Gemini 3 (Flash for analysis, Pro for chat)
+- **AI**: Google Gemini 2.5 Flash (unified model for analysis and chat)
 - **Standards**: WCAG 2.2 AA, Axe-core 4.11, ARIA APG
 
 ### Key Files
@@ -127,19 +127,49 @@ Video File → Base64 Encoding → Gemini API → JSON Response → State Manage
 
 ## AI Integration Details
 
-### Gemini 3 Flash (Video Analysis)
-- **Model**: `gemini-3-flash-preview`
+### Model Configuration
+All models are defined in centralized config files:
+- `server/config.js` - For Express backend (includes pricing)
+- `api/config.js` - For Vercel serverless functions
+
+To change models, edit these files:
+```javascript
+export const GEMINI_MODELS = {
+  ANALYSIS: 'gemini-2.5-flash',  // Video/media analysis
+  CHAT: 'gemini-2.5-flash',      // AI Analyst chat
+};
+```
+
+### Gemini 2.5 Flash (Video Analysis & Chat)
+- **Model**: `gemini-2.5-flash`
 - **Input**: Base64 video + analysis prompt
 - **System Instruction**: Embedded WCAG 2.2 + Axe-core 4.11 documentation
 - **Output Schema**: Structured JSON with transcript + issues array
 - **Response Format**: `application/json` with strict type validation
+- **Context Window**: 1M tokens
+- **Pricing**: $0.30/1M input, $2.50/1M output
+- **Strengths**: Fast, cost-effective, excellent transcription quality
 
-### Gemini 3 Pro (AI Analyst)
-- **Model**: `gemini-3-pro-preview`
-- **Mode**: Streaming chat with context
-- **System Instruction**: Ultra-concise technical support, documentation links
-- **Tools**: Google Search integration
-- **Context**: Audit results (issue count, titles, severity distribution)
+### Model Selection Rationale
+
+**Current choice: Gemini 2.5 Flash** was selected because:
+- ✅ Excellent transcription quality (reported better than Whisper for accents/technical vocabulary)
+- ✅ Cost-effective ($0.30/1M input vs $0.50/1M for 3.0 Flash, $2.50/1M for 3 Pro)
+- ✅ Stable (not a preview/experimental model)
+- ✅ Good rate limits
+
+**Future consideration: Gemini 3 Pro** should be evaluated if:
+- ❓ AI analysis quality is insufficient (complex WCAG reasoning, nuanced issue detection)
+- ❓ Need for deeper contextual understanding of accessibility barriers
+- Note: Early user feedback indicated Gemini 3.0 may produce shorter/less accurate transcripts without specific prompting, so 2.5 Flash was chosen for transcription reliability
+
+To upgrade analysis to Gemini 3 Pro, update `server/config.js` and `api/config.js`:
+```javascript
+export const GEMINI_MODELS = {
+  ANALYSIS: 'gemini-3-pro-preview',  // Upgraded for better reasoning
+  CHAT: 'gemini-2.5-flash',          // Keep Flash for cost-effective chat
+};
+```
 
 ### Schema Definition
 ```typescript
@@ -368,7 +398,7 @@ See `PRODUCT_ROADMAP.md` for detailed feature proposals and prioritization.
 ## Metadata
 
 **Created**: 2024  
-**Last Updated**: 2025-12-24  
+**Last Updated**: 2026-01-11  
 **Maintainer**: Elizabeth P.  
 **License**: MIT  
 **Repository**: [Add GitHub URL]  
