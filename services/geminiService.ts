@@ -2,10 +2,10 @@
 import { Type } from "@google/genai";
 import { A11yIssue, Severity, AnalysisResult } from "../types";
 import { ARIA_APG_REFERENCE, WCAG22_QUICKREF } from "../documentation";
-import wcag22Full from "../data/wcag22-full.json";
 import { safeJsonParse } from '../utils/safeJson';
 import { AxeRulesService } from "./axeRulesService";
-import { getFormattedPatternsForAI, getAPGPatternCount, getAPGPracticeCount } from "./apgPatternsService";
+import { getAPGPatternCount, getAPGPracticeCount } from "./apgPatternsService";
+import { buildSystemPrompt, PromptSettings, DEFAULT_PROMPT_SETTINGS, MediaContext } from "./promptTemplate";
 
 // Elli is the queen
 
@@ -18,7 +18,8 @@ export class GeminiService {
   async analyzeMedia(
     mediaItems: { base64: string; mimeType: string; type: 'video' | 'audio' | 'image' | 'pdf'; comment?: string; filename?: string }[],
     targetLanguage: string = 'Original',
-    signal?: AbortSignal
+    signal?: AbortSignal,
+    promptSettings: PromptSettings = DEFAULT_PROMPT_SETTINGS
   ): Promise<AnalysisResult> {
     const videos = mediaItems.filter(i => i.type === 'video');
     const audios = mediaItems.filter(i => i.type === 'audio');
@@ -26,108 +27,18 @@ export class GeminiService {
     const pdfs = mediaItems.filter(i => i.type === 'pdf');
 
     const hasTimeBasedMedia = videos.length > 0 || audios.length > 0;
-    const hasVisualMedia = videos.length > 0 || images.length > 0 || pdfs.length > 0;
 
-    // Construct language instruction
-    let languageInstruction = "";
-    if (targetLanguage === 'Original') {
-      languageInstruction = "TRANSCRIPT: Generate a full verbatim diarized transcript of any audio content in its ORIGINAL language (do not translate). Detect and report the language code in 'detected_language'.";
-    } else {
-      languageInstruction = `TRANSCRIPT: Generate a full diarized transcript of any audio content and TRANSLATE it into ${targetLanguage}. Report the ORIGINAL detected source language code in 'detected_language'.`;
-    }
+    // Build media context for prompt template
+    const mediaContext: MediaContext = {
+      videoCount: videos.length,
+      audioCount: audios.length,
+      imageCount: images.length,
+      pdfCount: pdfs.length,
+      targetLanguage,
+    };
 
-    const systemInstruction = `
-      You are a Senior Accessibility QA Architect analyzing a collection of media files for accessibility issues.
-      The files include:
-      ${videos.length > 0 ? `- ${videos.length} Video recording(s) (screen captures with narration)` : ''}
-      ${audios.length > 0 ? `- ${audios.length} Audio recording(s)` : ''}
-      ${images.length > 0 ? `- ${images.length} Screenshot(s)` : ''}
-      ${pdfs.length > 0 ? `- ${pdfs.length} PDF Document(s)` : ''}
-      
-      ${hasTimeBasedMedia ? `AUDIO/VIDEO ANALYSIS:
-      - Listen to ALL narration and dialogue from EVERY video/audio file completely.
-      - ${languageInstruction}
-      - IMPORTANT: Every time a different person speaks, or after a short pause, start a NEW LINE.
-      
-      CRITICAL TRANSCRIPT FORMAT REQUIREMENT:
-      Each line of the transcript MUST follow this EXACT format:
-      SpeakerName [MM:SS]: Message text here
-      
-      Examples of CORRECT format:
-      - Narrator [00:05]: Welcome to this accessibility demo.
-      - User [00:12]: I'm going to test the keyboard navigation.
-      - ScreenReader [01:30]: Button, Submit Order
-      
-      Examples of WRONG format (DO NOT USE):
-      - Welcome to this accessibility demo (missing speaker and timestamp)
-      - [00:05]: Welcome to this demo (missing speaker name)
-      - Narrator: Welcome to this demo (missing timestamp)
-      
-      ${videos.length > 1 ? `MULTIPLE VIDEOS: You are analyzing ${videos.length} separate video files.
-      - Return a SEPARATE transcript for EACH video in the "transcripts" array.
-      - The array must have exactly ${videos.length} elements, one per video in order.
-      - Each video's transcript starts fresh at [00:00].` : `SINGLE VIDEO: Return ONE transcript starting at [00:00].`}
-      
-      - Ignore filler words (um, uh, like) and off-topic commentary. Focus on accessibility insights.` : 'Since there is no time-based media, leave the transcript field empty.'}
-      
-      ${videos.length > 0 ? `VIDEO VISUAL ANALYSIS:
-      - Inspect visual UI (color, layout, focus indicators, responsive design).
-      - Analyze screen reader output if captured.
-      - Observe keyboard navigation demonstrations.
-      ${videos.length > 1 ? `- For each issue, set video_index to indicate which video (0-based: 0 for Video 1, 1 for Video 2, etc.)` : ''}` : ''}
-
-      ${images.length > 0 ? `SCREENSHOT ANALYSIS:
-      - Analyze each image for visual accessibility issues (contrast, labels, touch targets).
-      - Use "Screenshot X" or the filename as context reference.` : ''}
-
-      ${pdfs.length > 0 ? `PDF DOCUMENT ANALYSIS:
-      - Analyze document structure (headings, reading order, tables).
-      - Check for tagging and semantic structure.
-      - Evaluate color contrast and text alternatives within the document.` : ''}
-      
-      Through this multimodal analysis, you can detect ALL WCAG 2.2 Success Criteria.
-      
-      COMPREHENSIVE WCAG 2.2 REFERENCE:
-      ${JSON.stringify(wcag22Full, null, 2)}
-      
-      COMPLETE AXE-CORE RULES (${AxeRulesService.getRuleCount()} rules):
-      ${AxeRulesService.getFormattedRulesForAI()}
-      
-      ARIA APG (${getAPGPatternCount()} patterns + ${getAPGPracticeCount()} practices):
-      ${getFormattedPatternsForAI()}
-      
-      QUICK REFERENCE LINKS:
-      - WCAG 2.2 Quick Reference: ${WCAG22_QUICKREF}
-      - ARIA APG Patterns: ${ARIA_APG_REFERENCE}
-      
-      ANALYSIS PIPELINE:
-      1. TRANSCRIPT (if audio/video present).
-         - Transcribe ALL content from ALL videos completely.
-         ${videos.length > 1 ? '- Include video number in timestamps.' : ''}
-         
-      2. ISSUE INTERPRETATION: For each accessibility barrier you observe:
-         - Describe what the issue is (e.g., "Link text is not descriptive")
-         - Identify which WCAG 2.2 criteria it violates
-         - Note the context and severity of impact
-         - Explicitly mention which file the issue was found in (Filename or Type).
-         ${videos.length > 1 ? '- Set video_index (0-based) to indicate which video the issue is from.' : ''}
-         
-      3. AXE RULE & APG PATTERN MATCHING: For each issue identified above:
-         - First, check if this is an ARIA APG design pattern issue
-         - If it's an APG pattern, set apg_pattern to the pattern ID
-         - If it's NOT an APG pattern, search Axe-core rules for a match
-         - IMPORTANT: Do not force a match - it's better to leave fields empty than provide incorrect values
-         
-      4. SEVERITY ASSIGNMENT:
-         - If you provided an axe_rule_id (not "none"): The system will use that rule's impact level automatically
-         - Otherwise: Use AI heuristics based on WCAG conformance level and user impact
-      
-      5. EASE OF FIX ASSESSMENT: Classify the difficulty to fix this issue (Quick Win, Easy, Moderate, Hard).
-      
-      6. REMEDIATION: Provide code-level fixes using ARIA APG patterns where applicable.
-      
-      FORMATTING: JSON ONLY. Use actual newline characters in the transcript string.
-    `;
+    // Build system instruction using the prompt template
+    const systemInstruction = buildSystemPrompt(mediaContext, promptSettings);
 
     const responseSchema = {
       type: Type.OBJECT,

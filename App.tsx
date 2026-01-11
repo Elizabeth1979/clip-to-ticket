@@ -9,6 +9,8 @@ import { TransparencyPanel } from './components/TransparencyPanel';
 import { InfoTooltip } from './components/InfoTooltip';
 import { RICEExplainer } from './components/RICEExplainer';
 import { UnifiedMediaUpload } from './components/UnifiedMediaUpload';
+import { PromptSettings } from './components/PromptSettings';
+import { PromptSettings as PromptSettingsType, loadPromptSettings, MediaContext } from './services/promptTemplate';
 import { Chat } from '@google/genai';
 
 // Elli is the queen
@@ -49,6 +51,9 @@ const App: React.FC = () => {
 
   // Transcription language state
   const [targetLanguage, setTargetLanguage] = useState('Original');
+
+  // Prompt customization settings (loaded from localStorage)
+  const [promptSettings, setPromptSettings] = useState<PromptSettingsType>(() => loadPromptSettings());
 
   const [showCaptions, setShowCaptions] = useState(true);
   const [captionTrackUrl, setCaptionTrackUrl] = useState<string | null>(null);
@@ -357,7 +362,7 @@ const App: React.FC = () => {
         }))
       );
 
-      const analysis = await geminiService.analyzeMedia(mediaData, targetLanguage, abortController.signal);
+      const analysis = await geminiService.analyzeMedia(mediaData, targetLanguage, abortController.signal, promptSettings);
       clearInterval(interval);
       setProgress(100);
       setStatusMessage("Audit complete. Ready for review!");
@@ -426,6 +431,15 @@ const App: React.FC = () => {
     const regex = new RegExp(`^${escapedOldName}(?=\\s\\[\\d{1,2}:\\d{2}\\])`, 'gm');
     setEditedTranscript(prev => prev.replace(regex, newName.trim()));
   };
+
+  // Compute media context for PromptSettings
+  const mediaContext: MediaContext = useMemo(() => ({
+    videoCount: mediaItems.filter(i => i.type === 'video').length,
+    audioCount: mediaItems.filter(i => i.type === 'audio').length,
+    imageCount: mediaItems.filter(i => i.type === 'image').length,
+    pdfCount: mediaItems.filter(i => i.type === 'pdf').length,
+    targetLanguage,
+  }), [mediaItems, targetLanguage]);
 
   const groupedIssues = useMemo(() => {
     if (!result) return {};
@@ -549,6 +563,18 @@ const App: React.FC = () => {
                 </div>
               )
             }
+
+            {/* Analysis Settings */}
+            {(mediaItems.length > 0) && (
+              <div className="mt-6">
+                <PromptSettings
+                  mediaContext={mediaContext}
+                  settings={promptSettings}
+                  onSettingsChange={setPromptSettings}
+                  disabled={isProcessing}
+                />
+              </div>
+            )}
 
             {/* Analyze Button - Below Cards */}
             {
